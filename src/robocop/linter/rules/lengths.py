@@ -23,7 +23,7 @@ try:  # RF7+
 except ImportError:
     Var = None
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, RawFileChecker, VisitorChecker
+from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker
 from robocop.linter.utils import get_section_name, normalize_robot_name, pattern_type, str2bool
 from robocop.linter.utils.misc import RETURN_CLASSES
 

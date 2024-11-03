@@ -6,7 +6,7 @@ from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32
 from robot.api import Token
 from robot.utils import FileReader
 
-from robocop.linter.rules import RawFileChecker, VisitorChecker, Rule, RuleParam, RuleSeverity
+from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.utils import ROBOT_VERSION
 
 

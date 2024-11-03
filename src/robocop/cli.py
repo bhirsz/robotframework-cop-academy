@@ -1,18 +1,20 @@
-from __future__ import annotations
-from enum import Enum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Optional
 
 import typer
 
 from robocop.config import ConfigManager
+from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import Linter
+from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form  # TODO: move higher up
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
     "Full documentation available at https://robocop.readthedocs.io .",
     rich_markup_mode="rich",
 )
+list_app = typer.Typer(help="List available rules, reports or formatters.")
+app.add_typer(list_app, name="list")
 
 
 config_option = Annotated[
@@ -38,12 +40,6 @@ project_root_option = Annotated[
         resolve_path=True,
     ),
 ]
-
-
-class ListResource(Enum):
-    rules = "rules"
-    reports = "reports"
-    formatters = "formatters"
 
 
 @app.command(name="check")
@@ -72,18 +68,46 @@ def format_files(
     )
 
 
-@app.command(name="list")
-def list_rules_or_formatters(
-    resource: Annotated[ListResource, typer.Argument(show_default=False)],
-    filter_pattern: Annotated[str, typer.Argument(help="Filter list with pattern.")] = None,
+@list_app.command(name="rules")
+def list_rules(
+    filter_category: Annotated[
+        RuleFilter, typer.Option("--filter", case_sensitive=False, help="Filter rules by category.")
+    ] = RuleFilter.DEFAULT,
+    filter_pattern: Annotated[Optional[str], typer.Option("--pattern", help="Filter rules by pattern")] = None,
 ) -> None:
-    """List available rules or formatters."""
+    """List available rules."""
     # We will need ConfigManager later for listing based on configuration
-    if resource == ListResource.rules:
-        runner = Linter()
+    # TODO: support list-configurables (maybe as separate robocop rule <>)
+    # TODO: rich support (colorized enabled, severity etc)
+    runner = Linter()
+    if filter_pattern:
+        rules = filter_rules_by_pattern(runner.rules, filter_pattern)
+    else:
+        rules = filter_rules_by_category(runner.rules, filter_category)
+    severity_counter = {"E": 0, "W": 0, "I": 0}
+    for rule in rules:
+        print(rule)
+        severity_counter[rule.severity.value] += 1
+    configurable_rules_sum = sum(severity_counter.values())
+    plural = get_plural_form(configurable_rules_sum)
+    print(
+        f"\nAltogether {configurable_rules_sum} rule{plural} with following severity:\n"
+        f"    {severity_counter['E']} error rule{get_plural_form(severity_counter['E'])},\n"
+        f"    {severity_counter['W']} warning rule{get_plural_form(severity_counter['W'])},\n"
+        f"    {severity_counter['I']} info rule{get_plural_form(severity_counter['I'])}.\n"
+    )
+    print(f"Visit {ROBOCOP_RULES_URL.format(version='stable')} page for detailed documentation.")
 
 
-# list configurables, reports, rules, formatters
+@list_app.command(name="formatters")
+def list_formatters(
+    filter_category: Annotated[
+        RuleFilter, typer.Option("--filter", case_sensitive=False, help="Filter formatters by category.")
+    ] = RuleFilter.DEFAULT,
+    filter_pattern: Annotated[Optional[str], typer.Option("--pattern", help="Filter formatters by pattern")] = None,
+) -> None:
+    """List available formatters."""
+    # We will need ConfigManager later for listing based on configuration
 
 
 def main() -> None:

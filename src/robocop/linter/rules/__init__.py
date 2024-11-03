@@ -130,7 +130,12 @@ class RuleSeverity(Enum):
         return {"I": 3, "W": 2, "E": 1}.get(self.value, 4)
 
 
-class RuleFilter:
+def rules_sorted_by_id(rules: dict[str, Rule]) -> list[Rule]:
+    """Return rules list from rules dictionary sorted by rule id."""
+    return sorted(rules.values(), key=lambda x: int(x.rule_id))
+
+
+class RuleFilter(str, Enum):
     DEFAULT = "DEFAULT"
     ALL = "ALL"
     ENABLED = "ENABLED"
@@ -138,28 +143,35 @@ class RuleFilter:
     COMMUNITY = "COMMUNITY"
     DEPRECATED = "DEPRECATED"
 
-    def get_filtered_rules(self, rules, pattern):
-        if pattern in (self.ENABLED, self.DISABLED):
-            rule_by_id = {
-                rule.rule_id: rule
-                for rule in rules.values()
-                if pattern.lower() in rule.get_enabled_status_desc() and not rule.community_rule and not rule.deprecated
-            }
-        elif pattern == self.COMMUNITY:
-            rule_by_id = {rule.rule_id: rule for rule in rules.values() if rule.community_rule and not rule.deprecated}
-        elif pattern == self.DEFAULT:
-            rule_by_id = {
-                rule.rule_id: rule for rule in rules.values() if not rule.community_rule and not rule.deprecated
-            }
-        elif pattern == self.ALL:
-            rule_by_id = {rule.rule_id: rule for rule in rules.values() if not rule.deprecated}
-        elif pattern == self.DEPRECATED:
-            rule_by_id = {rule.rule_id: rule for rule in rules.values() if rule.deprecated}
-        else:
-            rule_by_id = {
-                rule.rule_id: rule for rule in rules.values() if rule.matches_pattern(pattern) and not rule.deprecated
-            }
-        return sorted(rule_by_id.values(), key=lambda x: int(x.rule_id))
+
+def filter_rules_by_pattern(rules: dict[str, Rule], pattern: str) -> list[Rule]:
+    """Return sorted list of Rules from rules dictionary, filtered out by pattern."""
+    return rules_sorted_by_id(
+        {rule.rule_id: rule for rule in rules.values() if rule.matches_pattern(pattern) and not rule.deprecated}
+    )
+
+
+def filter_rules_by_category(rules: dict[str, Rule], category: RuleFilter) -> list[Rule]:
+    """Return sorted list of Rules from rules dictionary, filtered by rule category."""
+    if category == RuleFilter.DEFAULT:
+        rules_by_id = {rule.rule_id: rule for rule in rules.values() if not rule.community_rule and not rule.deprecated}
+    elif category == RuleFilter.ALL:
+        rules_by_id = {rule.rule_id: rule for rule in rules.values() if not rule.deprecated}
+    elif category in (RuleFilter.ENABLED, RuleFilter.DISABLED):
+        rules_by_id = {
+            rule.rule_id: rule
+            for rule in rules.values()
+            if category.value.lower() in rule.get_enabled_status_desc()
+            and not rule.community_rule
+            and not rule.deprecated
+        }
+    elif category == RuleFilter.COMMUNITY:
+        rules_by_id = {rule.rule_id: rule for rule in rules.values() if rule.community_rule and not rule.deprecated}
+    elif category == RuleFilter.DEPRECATED:
+        rules_by_id = {rule.rule_id: rule for rule in rules.values() if rule.deprecated}
+    else:
+        raise ValueError(f"Unrecognized rule category '{category}'")
+    return rules_sorted_by_id(rules_by_id)
 
 
 class RuleParam:
