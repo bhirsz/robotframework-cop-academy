@@ -268,7 +268,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "jinja2", specifier = ">=3.1.4,<4.0" },
-    { name = "pathspec", specifier = ">=0.12.1" },
+    { name = "pathspec", specifier = ">=0.12.1,<0.13" },
     { name = "robotframework", specifier = ">=4.0,<8.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.0.2" },
     { name = "typer", specifier = ">=0.12.5,<0.13" },
