@@ -1,11 +1,9 @@
-from os.path import exists
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from robocop.config import ConfigManager
-
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
