@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from robocop.utils.misc import normalize_robot_name
+from robocop.linter.utils.misc import normalize_robot_name
 
 
 class RunKeywordVariant:

@@ -2,10 +2,9 @@ from robot.api import Token
 from robot.model import Keyword
 from robot.utils.robottime import timestr_to_secs
 
-from robocop.checkers import VisitorChecker
-from robocop.rules import Rule, RuleParam, RuleSeverity
-from robocop.utils.misc import normalize_robot_name
-from robocop.utils.run_keywords import iterate_keyword_names
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker
+from robocop.linter.utils.misc import normalize_robot_name
+from robocop.linter.utils.run_keywords import iterate_keyword_names
 
 RULE_CATEGORY_ID = "00"
 

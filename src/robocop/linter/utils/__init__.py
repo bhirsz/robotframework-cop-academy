@@ -1,8 +1,8 @@
 """Parsing utils"""
 
-from robocop.utils.disablers import DisablersFinder
-from robocop.utils.file_types import FileType, FileTypeChecker
-from robocop.utils.misc import (
+from robocop.linter.utils.disablers import DisablersFinder
+from robocop.linter.utils.file_types import FileType, FileTypeChecker
+from robocop.linter.utils.misc import (  # FIXME: import directly
     ROBOT_VERSION,
     AssignmentTypeDetector,
     RecommendationFinder,

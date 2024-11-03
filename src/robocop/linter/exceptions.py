@@ -118,7 +118,7 @@ class RobotFrameworkParsingError(Exception):
 
 def handle_robot_errors(func):
     """
-    If the user uses older version of Robot Framework, it many fail while parsing the
+    If the user uses older version of Robot Framework, it may fail while parsing the
     source code due to bug that is already fixed in the more recent version.
     """
 

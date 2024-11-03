@@ -22,9 +22,9 @@ except ImportError:
 from robot.variables.search import search_variable
 from robot.version import VERSION as RF_VERSION
 
-from robocop.utils.variable_matcher import VariableMatches
-from robocop.utils.version_matching import Version
-from robocop.version import __version__
+from robocop.linter.utils.variable_matcher import VariableMatches
+from robocop.linter.utils.version_matching import Version
+from robocop import __version__
 
 ROBOT_VERSION = Version(RF_VERSION)
 ROBOT_WITH_LANG = Version("6.0")

@@ -16,7 +16,7 @@ try:
 except ImportError:
     InlineIfHeader = None
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker, RawFileChecker
 from robocop.linter.utils import get_errors, get_section_name, str2bool, token_col
 from robocop.linter.utils.run_keywords import is_run_keyword
 

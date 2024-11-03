@@ -1,8 +1,7 @@
 from robot.api import Token
 from robot.libraries import STDLIBS
 
-from robocop.checkers import VisitorChecker
-from robocop.rules import Rule, RuleSeverity
+from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker
 
 RULE_CATEGORY_ID = "01"
 

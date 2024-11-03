@@ -10,10 +10,9 @@ from robot.parsing.model.blocks import Keyword
 from robot.parsing.model.statements import Tags
 from robot.running.arguments import EmbeddedArguments
 
-from robocop.checkers import ProjectChecker
-from robocop.rules import Message, Rule, RuleSeverity
-from robocop.utils.misc import ROBOT_VERSION, normalize_robot_name
-from robocop.utils.run_keywords import iterate_keyword_names
+from robocop.linter.rules import Message, Rule, RuleSeverity, ProjectChecker
+from robocop.linter.utils.misc import ROBOT_VERSION, normalize_robot_name
+from robocop.linter.utils.run_keywords import iterate_keyword_names
 
 RULE_CATEGORY_ID = "01"
 

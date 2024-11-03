@@ -1,9 +1,12 @@
+from __future__ import annotations
+from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from robocop.config import ConfigManager
+from robocop.linter.runner import Linter
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
@@ -37,6 +40,12 @@ project_root_option = Annotated[
 ]
 
 
+class ListResource(Enum):
+    rules = "rules"
+    reports = "reports"
+    formatters = "formatters"
+
+
 @app.command(name="check")
 def check_files(
     config: config_option = None,
@@ -64,8 +73,14 @@ def format_files(
 
 
 @app.command(name="list")
-def list_rules_or_formatters() -> None:
+def list_rules_or_formatters(
+    resource: Annotated[ListResource, typer.Argument(show_default=False)],
+    filter_pattern: Annotated[str, typer.Argument(help="Filter list with pattern.")] = None,
+) -> None:
     """List available rules or formatters."""
+    # We will need ConfigManager later for listing based on configuration
+    if resource == ListResource.rules:
+        runner = Linter()
 
 
 # list configurables, reports, rules, formatters
