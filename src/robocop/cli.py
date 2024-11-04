@@ -5,7 +5,7 @@ import typer
 
 from robocop.config import ConfigManager
 from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern
-from robocop.linter.runner import Linter
+from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form  # TODO: move higher up
 
 app = typer.Typer(
@@ -53,6 +53,8 @@ def check_files(
     config_manager = ConfigManager(
         config=config, root=root, ignore_git_dir=ignore_git_dir, skip_gitignore=skip_gitignore
     )
+    runner = RobocopLinter(config_manager)
+    runner.run()
 
 
 @app.command(name="format")
@@ -76,10 +78,10 @@ def list_rules(
     filter_pattern: Annotated[Optional[str], typer.Option("--pattern", help="Filter rules by pattern")] = None,
 ) -> None:
     """List available rules."""
-    # We will need ConfigManager later for listing based on configuration
     # TODO: support list-configurables (maybe as separate robocop rule <>)
     # TODO: rich support (colorized enabled, severity etc)
-    runner = Linter()
+    config_manager = ConfigManager()
+    runner = RobocopLinter(config_manager)
     if filter_pattern:
         rules = filter_rules_by_pattern(runner.rules, filter_pattern)
     else:
