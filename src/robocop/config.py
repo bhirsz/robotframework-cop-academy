@@ -82,6 +82,7 @@ class ConfigManager:
             ignore_git_dir: Flag for project root discovery to decide if directories with `.git` should be ignored.
 
         """
+        self.cached_configs: dict[Path, Config] = {}
         self.ignore_git_dir = ignore_git_dir
         self.root = Path(root) if root else files.find_project_root(sources, ignore_git_dir)
         self.root_parent = self.root.parent if self.root.parent else self.root
@@ -90,7 +91,6 @@ class ConfigManager:
         self.default_config: Config = self.get_default_config(config)
         self.sources = sources if sources else self.default_config.sources
         self.overridden_sources = self.get_overridden_sources(sources)
-        self.cached_configs: dict[Path, Config] = {}
 
     def get_and_cache_config_from_toml(self, config_path: Path) -> Config:
         # TODO: merge with cli options
@@ -199,6 +199,8 @@ class ConfigManager:
         if config_path is None:
             self.cached_configs[source_file.parent] = self.default_config
             return self.default_config
+        if config_path.parent in self.cached_configs:
+            return self.cached_configs[config_path.parent]
         return self.get_and_cache_config_from_toml(config_path)
 
     def get_sources_with_configs(self) -> Generator[tuple[Path, Config], None, None]:

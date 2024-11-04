@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from robocop.linter.runner import RobocopLinter
+from robocop.config import ConfigManager
 
 # from robocop.config import Config
 from robocop.linter.utils.misc import ROBOT_VERSION
@@ -57,31 +58,32 @@ def load_expected_file(test_data, expected_file):
         )
 
 
-# def configure_robocop_with_rule(args, runner, rule, path, src_files: list | None, format):
-#     runner.from_cli = True
-#     config = Config()
-#     if src_files is None:
-#         paths = [str(path)]
-#     else:
-#         paths = [str(path / src_file) for src_file in src_files]
-#     if args is None:
-#         args = []
-#     elif isinstance(args, str):
-#         args = args.split()
-#     arguments = ["--include", ",".join(rule)]
-#     arguments.extend(
-#         [
-#             "--format",
-#             format,
-#             "--configure",
-#             "return_status:quality_gate:E=0:W=0:I=0",
-#             *args,
-#             *paths,
-#         ]
-#     )
-#     config.parse_args(arguments)
-#     runner.config = config
-#     return runner
+def configure_robocop_with_rule(args, rule, path, src_files: list | None, format):
+    if src_files is None:
+        paths = [str(path)]
+    else:
+        paths = [str(path / src_file) for src_file in src_files]
+    # if args is None:
+    #     args = []
+    # elif isinstance(args, str):
+    #     args = args.split()
+    # arguments = ["--include", ",".join(rule)]
+    # arguments.extend(
+    #     [
+    #         "--format",
+    #         format,
+    #         "--configure",
+    #         "return_status:quality_gate:E=0:W=0:I=0",
+    #         *args,
+    #         *paths,
+    #     ]
+    # )
+    # config.parse_args(arguments)
+    config_manager = ConfigManager(sources=paths)  # TODO: disable searching for config file
+    config_manager.default_config.format = format
+    config_manager.default_config.include = set(rule)
+    runner = RobocopLinter(config_manager)
+    return runner
 
 
 class RuleAcceptance:
@@ -107,18 +109,18 @@ class RuleAcceptance:
         format = self.get_issue_format(issue_format)
         if rule is None:
             rule = [self.rule_name]
-        # robocop_instance = configure_robocop_with_rule(config, Robocop(), rule, test_data, src_files, format=format)
+        runner = configure_robocop_with_rule(config, rule, test_data, src_files, format=format)
         with isolated_output() as output:
             try:
-                with pytest.raises(SystemExit):
-                    robocop_instance.run()
+                #with pytest.raises(SystemExit):
+                runner.run()
             finally:
                 sys.stdout.flush()
                 result = get_result(output)
                 parsed_results = result.splitlines()
         actual = normalize_result(parsed_results, test_data)
         if deprecated:
-            assert robocop_instance.rules[self.rule_name].deprecation_warning in actual
+            assert runner.rules[self.rule_name].deprecation_warning in actual
         elif actual != expected:
             missing_expected = sorted(set(actual) - set(expected))
             missing_actual = sorted(set(expected) - set(actual))

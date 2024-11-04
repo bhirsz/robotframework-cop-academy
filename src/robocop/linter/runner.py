@@ -81,16 +81,16 @@ class RobocopLinter:
             # TODO: language
             # TODO: recognize file types? or at least if __init__ or resource
             model = get_model(source=source)
-            found_issues = self.run_check(model, source)
+            found_issues = self.run_check(model, str(source))
             found_issues.sort()
             issues_no += len(found_issues)
             for issue in found_issues:
                 self.report(issue)
-        print(f"\n\n{issues_no} issues found.")
+        # print(f"\n\n{issues_no} issues found.")
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
 
-    def run_check(self, ast_model, filename, source=None) -> list["Message"]:
+    def run_check(self, ast_model, filename: str, source=None) -> list["Message"]:
         # disablers = DisablersFinder(ast_model)  # TODO:
         # if disablers.file_disabled:
         #     return []
