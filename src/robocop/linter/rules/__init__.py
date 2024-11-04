@@ -69,7 +69,7 @@ except ImportError:
 if TYPE_CHECKING:
     from re import Pattern
 
-    from robocop.linter.runner import Linter
+    from robocop.linter.runner import RobocopLinter
 
 
 @total_ordering
@@ -850,7 +850,7 @@ class RobocopImporter:
         return checker_instances
 
 
-def init(linter: Linter) -> None:
+def init(linter: RobocopLinter) -> None:
     robocop_importer = RobocopImporter(external_rules_paths=[])  # linter.config.ext_rules FIXME: None is failing
     for checker in robocop_importer.get_initialized_checkers():
         linter.register_checker(checker)

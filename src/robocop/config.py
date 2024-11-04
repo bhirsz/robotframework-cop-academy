@@ -43,6 +43,11 @@ class FormatConfig:
 @dataclass
 class Config:
     sources: list[str] = field(default_factory=lambda: ["."])
+    include: set[str] = field(default_factory=set)
+    include_patterns: set[str] = field(default_factory=set)
+    exclude: set[str] = field(default_factory=set)
+    exclude_patterns: set[str] = field(default_factory=set)
+    format: str = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
     @classmethod
     def from_toml(cls, config_path: Path) -> Config:
@@ -77,6 +82,7 @@ class ConfigManager:
             ignore_git_dir: Flag for project root discovery to decide if directories with `.git` should be ignored.
 
         """
+        self.cached_configs: dict[Path, Config] = {}
         self.ignore_git_dir = ignore_git_dir
         self.root = Path(root) if root else files.find_project_root(sources, ignore_git_dir)
         self.root_parent = self.root.parent if self.root.parent else self.root
@@ -85,7 +91,6 @@ class ConfigManager:
         self.default_config: Config = self.get_default_config(config)
         self.sources = sources if sources else self.default_config.sources
         self.overridden_sources = self.get_overridden_sources(sources)
-        self.cached_configs: dict[Path, Config] = {}
 
     def get_and_cache_config_from_toml(self, config_path: Path) -> Config:
         # TODO: merge with cli options
@@ -134,18 +139,18 @@ class ConfigManager:
                 filtered.add(path)
         return filtered
 
-    def get_source_files(self, sources: list[str]) -> set[Path]:
+    def get_source_files(self, sources: list[str]) -> list[Path]:
         """
-        Return set of source files paths that should be parsed by Robocop.
+        Return list of source files paths that should be parsed by Robocop.
 
         Args:
             sources: List of sources from CLI or default configuration file.
 
         Returns:
-            Set of source files paths.
+            List of source paths.
 
         """
-        source_files = set()
+        source_files = []
         exclude, extend_exclude = (
             re.compile(r"/(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)/"),
             None,
@@ -161,9 +166,9 @@ class ConfigManager:
             ):
                 continue
             if path.is_file():
-                source_files.add(path)
+                source_files.append(path)
             elif path.is_dir():
-                source_files.update(
+                source_files.extend(
                     files.iterate_dir(
                         path.iterdir(),
                         self.overridden_sources,
@@ -194,10 +199,12 @@ class ConfigManager:
         if config_path is None:
             self.cached_configs[source_file.parent] = self.default_config
             return self.default_config
+        if config_path.parent in self.cached_configs:
+            return self.cached_configs[config_path.parent]
         return self.get_and_cache_config_from_toml(config_path)
 
-    def get_sources_with_configs(self, sources: list[str]) -> Generator[tuple[Path, Config], None, None]:
-        source_files = self.get_source_files(sources)
+    def get_sources_with_configs(self) -> Generator[tuple[Path, Config], None, None]:
+        source_files = self.get_source_files(self.sources)
         for source in source_files:
             config = self.get_config_for_source_file(source)
             yield source, config
