@@ -43,7 +43,8 @@ class RuleMatcher:
         if rule.rule_id in self.config.linter.exclude_rules or rule.name in self.config.linter.exclude_rules:
             return True
         return any(
-            pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.linter.exclude_rules_patterns
+            pattern.match(rule.rule_id) or pattern.match(rule.name)
+            for pattern in self.config.linter.exclude_rules_patterns
         )
 
 
@@ -67,27 +68,18 @@ class LinterConfig:
         We need to remove optional severity and split it into patterns and not patterns for easier filtering.
 
         """
-        if self.include:
-            for rule in self.include:
-                rule_without_sev = replace_severity_values(rule)
-                if "*" in rule_without_sev:
-                    self.include_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
-                else:
-                    self.include_rules.add(rule_without_sev)
-        else:
-            self.include_rules = {}
-            self.include_rules_patterns = {}
-        if self.exclude:
-            for rule in self.exclude:
-                rule_without_sev = replace_severity_values(rule)
-                if "*" in rule_without_sev:
-                    self.exclude_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
-                else:
-                    self.exclude_rules.add(rule_without_sev)
-        else:
-            self.exclude_rules = {}
-            self.exclude_rules_patterns = {}
-
+        for rule in self.include:
+            rule_without_sev = replace_severity_values(rule)
+            if "*" in rule_without_sev:
+                self.include_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+            else:
+                self.include_rules.add(rule_without_sev)
+        for rule in self.exclude:
+            rule_without_sev = replace_severity_values(rule)
+            if "*" in rule_without_sev:
+                self.exclude_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+            else:
+                self.exclude_rules.add(rule_without_sev)
 
     def compile_rule_pattern(self, rule_pattern: str) -> re.Pattern:
         return re.compile(fnmatch.translate(rule_pattern))
@@ -108,7 +100,6 @@ class LinterConfig:
     #             rule_def = rules[rule]
     #             if rule_def.deprecated:
     #                 print(rule_def.deprecation_warning)
-
 
 
 @dataclass
