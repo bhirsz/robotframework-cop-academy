@@ -44,6 +44,7 @@ from enum import Enum
 from functools import total_ordering
 from importlib import import_module
 from pathlib import Path
+import re
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
@@ -870,3 +871,8 @@ def get_community_rules() -> Generator[tuple[str, Rule], None, None]:
     robocop_importer = RobocopImporter()
     rule_modules = robocop_importer.get_community_modules()
     yield from robocop_importer.get_imported_rules(rule_modules)
+
+
+def replace_severity_values(rule_name: str) -> str:
+    """Replace severity value (I, W, E) from the rule name."""
+    return re.sub("^([IWE])(?=[0-9]{4,})", "", rule_name)
