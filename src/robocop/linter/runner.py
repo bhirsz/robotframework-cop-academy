@@ -4,43 +4,13 @@ from typing import Optional, TYPE_CHECKING
 
 from robot.api import get_model, get_init_model, get_resource_model
 
-from robocop.config import Config, ConfigManager
+from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import rules, exceptions
 from robocop.linter.utils.misc import is_suite_templated
 from robocop.linter.utils.disablers import DisablersFinder
 
 if TYPE_CHECKING:
     from robocop.linter.rules import Message, Rule  # TODO: Check if circular import will not happen
-
-
-class RuleMatcher:
-    def __init__(self, config: Config):
-        self.config = config
-
-    def is_rule_enabled(self, rule: "Rule") -> bool:
-        if self.is_rule_disabled(rule):
-            return False
-        if (
-            self.config.linter.include or self.config.linter.include_patterns
-        ):  # if any include pattern, it must match with something
-            if rule.rule_id in self.config.linter.include or rule.name in self.config.linter.include:
-                return True
-            return any(
-                pattern.match(rule.rule_id) or pattern.match(rule.name)
-                for pattern in self.config.linter.include_patterns
-            )
-        return rule.enabled
-
-    def is_rule_disabled(self, rule: "Rule") -> bool:
-        if rule.deprecated or not rule.enabled_in_version:
-            return True
-        if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
-            return True
-        if rule.rule_id in self.config.linter.exclude or rule.name in self.config.linter.exclude:
-            return True
-        return any(
-            pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.linter.exclude_patterns
-        )
 
 
 class RobocopLinter:
@@ -160,7 +130,7 @@ class RobocopLinter:
             # TODO: applying configuration change original rule/report. We should have way of restoring it for multiple configurations (or store separately)
             # TODO: should be validated in Config class, here only applying values
             # TODO: there could be rules and reports containers that accept config and apply, instead of doing it in the runner
-            try:
+            try:  # TODO: replace severity values
                 name, param_and_value = config.split(".", maxsplit=1)
                 param, value = param_and_value.split("=", maxsplit=1)
             except ValueError:

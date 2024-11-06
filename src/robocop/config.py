@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import fnmatch
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
@@ -8,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from robocop import files
-from robocop.linter.rules import RuleSeverity
+from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
 
 DEFAULT_EXCLUDES = r"(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)"
 
@@ -16,41 +17,90 @@ if TYPE_CHECKING:
     import pathspec
 
 
+class RuleMatcher:
+    def __init__(self, config: Config):
+        self.config = config
+
+    def is_rule_enabled(self, rule: Rule) -> bool:
+        if self.is_rule_disabled(rule):
+            return False
+        if (
+            self.config.linter.include_rules or self.config.linter.include_rules_patterns
+        ):  # if any include pattern, it must match with something
+            if rule.rule_id in self.config.linter.include_rules or rule.name in self.config.linter.include_rules:
+                return True
+            return any(
+                pattern.match(rule.rule_id) or pattern.match(rule.name)
+                for pattern in self.config.linter.include_rules_patterns
+            )
+        return rule.enabled
+
+    def is_rule_disabled(self, rule: Rule) -> bool:
+        if rule.deprecated or not rule.enabled_in_version:
+            return True
+        if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
+            return True
+        if rule.rule_id in self.config.linter.exclude_rules or rule.name in self.config.linter.exclude_rules:
+            return True
+        return any(
+            pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.linter.exclude_rules_patterns
+        )
+
+
 @dataclass
 class LinterConfig:
     configure: list[str] = field(default_factory=list)
-    include: list[str] = field(default_factory=set)
-    include_patterns: set[str] = field(default_factory=set)
-    exclude: list[str] = field(default_factory=set)
-    exclude_patterns: set[str] = field(default_factory=set)
+    include: list[str] = field(default_factory=list)
+    exclude: list[str] = field(default_factory=list)
     issue_format: str = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
     threshold: RuleSeverity | None = RuleSeverity.INFO
     ext_rules: list[str] = field(default_factory=list)
+    include_rules: set[str] = field(default_factory=set)
+    exclude_rules: set[str] = field(default_factory=set)
+    include_rules_patterns: set[re.Pattern] = field(default_factory=set)
+    exclude_rules_patterns: set[re.Pattern] = field(default_factory=set)
+
+    def __post_init__(self):
+        """
+        --include and --exclude accept both rule names and rule patterns.
+
+        We need to remove optional severity and split it into patterns and not patterns for easier filtering.
+
+        """
+        if self.include:
+            for rule in self.include:
+                rule_without_sev = replace_severity_values(rule)
+                if "*" in rule_without_sev:
+                    self.include_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+                else:
+                    self.include_rules.add(rule_without_sev)
+        else:
+            self.include_rules = {}
+            self.include_rules_patterns = {}
+        if self.exclude:
+            for rule in self.exclude:
+                rule_without_sev = replace_severity_values(rule)
+                if "*" in rule_without_sev:
+                    self.exclude_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+                else:
+                    self.exclude_rules.add(rule_without_sev)
+        else:
+            self.exclude_rules = {}
+            self.exclude_rules_patterns = {}
+
+
+    def compile_rule_pattern(self, rule_pattern: str) -> re.Pattern:
+        return re.compile(fnmatch.translate(rule_pattern))
+
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]
     # reports: list[str]
-    # # threshold = RuleSeverity("I")
-    # configure: list[str]
     # ignore: re.Pattern = re.compile(DEFAULT_EXCLUDES)
-    # ext_rules = set()
-    #         self.include_patterns = []
-    #         self.exclude_patterns = []
     #         self.filetypes = {".robot", ".resource", ".tsv"}
-    #         self.language = []
     #         self.output = None
     #         self.recursive = True  TODO do we need it anymore?
     #         self.persistent = False  TODO maybe better name, ie cache-results
 
-    # TODO: Some values needs to be normalized, for example E0103 -> 0103 for includes/excludes/configure
-    #     def remove_severity(self):
-    #         self.include = {self.replace_severity_values(rule) for rule in self.include}
-    #         self.exclude = {self.replace_severity_values(rule) for rule in self.exclude}
-    #         for index, conf in enumerate(self.configure):
-    #             if conf.count(":") != 2:
-    #                 continue
-    #             message, param, value = conf.split(":")
-    #             message = self.replace_severity_values(message)
-    #             self.configure[index] = f"{message}:{param}:{value}"
     #     def validate_rules_exists_and_not_deprecated(self, rules: dict[str, "Rule"]):
     #         for rule in chain(self.include, self.exclude):
     #             if rule not in rules:
@@ -58,9 +108,7 @@ class LinterConfig:
     #             rule_def = rules[rule]
     #             if rule_def.deprecated:
     #                 print(rule_def.deprecation_warning)
-    #     def translate_patterns(self): # it splits include into normal include and include patterns
-    #         self.include = self.filter_patterns_from_names(self.include, self.include_patterns)
-    #         self.exclude = self.filter_patterns_from_names(self.exclude, self.exclude_patterns)
+
 
 
 @dataclass
