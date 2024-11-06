@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from robocop import files
+from robocop.linter.rules import RuleSeverity
 
 DEFAULT_EXCLUDES = r"(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)"
 
@@ -15,16 +17,21 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class CheckConfig:
-    exec_dir: str  # it will not be passed, but generated
-    include: set[str]
-    exclude: set[str]
-    extend_ignore: set[str]
-    reports: list[str]
-    # threshold = RuleSeverity("I")
-    configure: list[str]
-    ignore: re.Pattern = re.compile(DEFAULT_EXCLUDES)
+class LinterConfig:
+    configure: list[str] = field(default_factory=list)
+    include: list[str] = field(default_factory=set)
+    include_patterns: set[str] = field(default_factory=set)
+    exclude: list[str] = field(default_factory=set)
+    exclude_patterns: set[str] = field(default_factory=set)
     issue_format: str = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+    threshold: RuleSeverity | None = RuleSeverity.INFO
+    ext_rules: list[str] = field(default_factory=list)
+    # exec_dir: str  # it will not be passed, but generated
+    # extend_ignore: set[str]
+    # reports: list[str]
+    # # threshold = RuleSeverity("I")
+    # configure: list[str]
+    # ignore: re.Pattern = re.compile(DEFAULT_EXCLUDES)
     # ext_rules = set()
     #         self.include_patterns = []
     #         self.exclude_patterns = []
@@ -33,6 +40,27 @@ class CheckConfig:
     #         self.output = None
     #         self.recursive = True  TODO do we need it anymore?
     #         self.persistent = False  TODO maybe better name, ie cache-results
+
+    # TODO: Some values needs to be normalized, for example E0103 -> 0103 for includes/excludes/configure
+    #     def remove_severity(self):
+    #         self.include = {self.replace_severity_values(rule) for rule in self.include}
+    #         self.exclude = {self.replace_severity_values(rule) for rule in self.exclude}
+    #         for index, conf in enumerate(self.configure):
+    #             if conf.count(":") != 2:
+    #                 continue
+    #             message, param, value = conf.split(":")
+    #             message = self.replace_severity_values(message)
+    #             self.configure[index] = f"{message}:{param}:{value}"
+    #     def validate_rules_exists_and_not_deprecated(self, rules: dict[str, "Rule"]):
+    #         for rule in chain(self.include, self.exclude):
+    #             if rule not in rules:
+    #                 raise exceptions.RuleDoesNotExist(rule, rules) from None
+    #             rule_def = rules[rule]
+    #             if rule_def.deprecated:
+    #                 print(rule_def.deprecation_warning)
+    #     def translate_patterns(self): # it splits include into normal include and include patterns
+    #         self.include = self.filter_patterns_from_names(self.include, self.include_patterns)
+    #         self.exclude = self.filter_patterns_from_names(self.exclude, self.exclude_patterns)
 
 
 @dataclass
@@ -43,17 +71,33 @@ class FormatConfig:
 @dataclass
 class Config:
     sources: list[str] = field(default_factory=lambda: ["."])
-    include: set[str] = field(default_factory=set)
-    include_patterns: set[str] = field(default_factory=set)
-    exclude: set[str] = field(default_factory=set)
-    exclude_patterns: set[str] = field(default_factory=set)
-    format: str = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+    linter: LinterConfig = field(default_factory=LinterConfig)
+    language: list[str] = field(default_factory=list)
 
     @classmethod
     def from_toml(cls, config_path: Path) -> Config:
+        """
+        Load configuration from toml file. If there is parent configuration, use it to overwrite loaded configuration.
+        """
         configuration = files.read_toml_config(config_path)
         # TODO: validate all key and types
         return cls(**configuration)
+
+    def overwrite_from_config(self, overwrite_config: Config | None) -> None:
+        if not overwrite_config:
+            return
+        for field in dataclasses.fields(overwrite_config):
+            if field.name == "linter":
+                continue
+            value = getattr(overwrite_config, field.name)
+            if value:
+                setattr(self, field.name, value)
+        if overwrite_config.linter:
+            for field in dataclasses.fields(overwrite_config.linter):
+                value = getattr(overwrite_config.linter, field.name)
+                if value:
+                    setattr(self.linter, field.name, value)
+        # TODO: same for formatter
 
 
 class ConfigManager:
@@ -70,6 +114,7 @@ class ConfigManager:
         root: str | None = None,
         ignore_git_dir: bool = False,
         skip_gitignore: bool = False,
+        overwrite_config: Config | None = None,
     ):
         """
         Initialize ConfigManager.
@@ -83,20 +128,23 @@ class ConfigManager:
 
         """
         self.cached_configs: dict[Path, Config] = {}
+        self.overwrite_config = overwrite_config
         self.ignore_git_dir = ignore_git_dir
         self.root = Path(root) if root else files.find_project_root(sources, ignore_git_dir)
         self.root_parent = self.root.parent if self.root.parent else self.root
         self.root_gitignore = self.get_root_gitignore(skip_gitignore)
-        self.overridden_config = config is not None
+        self.overridden_config = (
+            config is not None
+        )  # TODO: what if both cli and --config? should take --config then apply cli
         self.default_config: Config = self.get_default_config(config)
         self.sources = sources if sources else self.default_config.sources
         self.overridden_sources = self.get_overridden_sources(sources)
 
     def get_and_cache_config_from_toml(self, config_path: Path) -> Config:
         # TODO: merge with cli options
-        config = Config.from_toml(
-            config_path
-        )  # TODO: some options may require resolving paths (relative paths in config)
+        # TODO: some options may require resolving paths (relative paths in config)
+        config = Config.from_toml(config_path)
+        config.overwrite_from_config(self.overwrite_config)
         self.cached_configs[config_path.parent] = config
         return config
 
@@ -107,7 +155,9 @@ class ConfigManager:
         else:
             config_path = files.get_config_path(self.root)
         if not config_path:
-            return Config()
+            config = Config(self.overwrite_config)
+            config.overwrite_from_config(self.overwrite_config)
+            return config
         return self.get_and_cache_config_from_toml(config_path)
 
     def get_root_gitignore(self, skip_gitignore: bool) -> pathspec.PathSpec | None:
@@ -178,7 +228,7 @@ class ConfigManager:
                         self.root_gitignore,
                     )
                 )
-            return source_files
+        return source_files
 
     def get_config_for_source_file(self, source_file: Path) -> Config:
         """

@@ -1,11 +1,13 @@
 import os
+from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from robot.api import get_model
+from robot.api import get_model, get_init_model, get_resource_model
 
 from robocop.config import Config, ConfigManager
-from robocop.linter import rules
+from robocop.linter import rules, exceptions
 from robocop.linter.utils.misc import is_suite_templated
+from robocop.linter.utils.disablers import DisablersFinder
 
 if TYPE_CHECKING:
     from robocop.linter.rules import Message, Rule  # TODO: Check if circular import will not happen
@@ -18,22 +20,27 @@ class RuleMatcher:
     def is_rule_enabled(self, rule: "Rule") -> bool:
         if self.is_rule_disabled(rule):
             return False
-        if self.config.include or self.config.include_patterns:  # if any include pattern, it must match with something
-            if rule.rule_id in self.config.include or rule.name in self.config.include:
+        if (
+            self.config.linter.include or self.config.linter.include_patterns
+        ):  # if any include pattern, it must match with something
+            if rule.rule_id in self.config.linter.include or rule.name in self.config.linter.include:
                 return True
             return any(
-                pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.include_patterns
+                pattern.match(rule.rule_id) or pattern.match(rule.name)
+                for pattern in self.config.linter.include_patterns
             )
         return rule.enabled
 
     def is_rule_disabled(self, rule: "Rule") -> bool:
         if rule.deprecated or not rule.enabled_in_version:
             return True
-        # if rule.severity < self.config.threshold and not rule.config.get("severity_threshold"):
-        #     return True  # TODO
-        if rule.rule_id in self.config.exclude or rule.name in self.config.exclude:
+        if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
             return True
-        return any(pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.exclude_patterns)
+        if rule.rule_id in self.config.linter.exclude or rule.name in self.config.linter.exclude:
+            return True
+        return any(
+            pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.linter.exclude_patterns
+        )
 
 
 class RobocopLinter:
@@ -41,6 +48,7 @@ class RobocopLinter:
         self.config_manager = config_manager
         self.config: Optional[Config] = None
         self.checkers: list = []  # [type[BaseChecker]]
+        self.reports: dict = {}  # TODO: load reports
         self.rules: dict[str, Rule] = {}
         self.load_checkers()
         # load_reports()
@@ -70,17 +78,26 @@ class RobocopLinter:
             checker.rules[name] = rule
         return any(msg.enabled for msg in checker.rules.values())
 
+    def get_model_for_file_type(self, source: Path):
+        """Recognize model type of the file and load the model."""
+        # TODO: decide to migrate file type recognition based on imports from robocop
+        # TODO: language
+        if "__init__" in source.name:
+            return get_init_model(source)
+        if source.suffix == ".resource":
+            return get_resource_model(source)
+        return get_model(source)
+
     def run(self):
         issues_no = 0
         for source, config in self.config_manager.get_sources_with_configs():
             # TODO: If there is only one config, we do not need to reload it every time - some sort of caching?
             self.config = config  # need to save it for rules to access rules config (also TODO: load rules config)
+            self.configure_checkers_or_reports()
             self.check_for_disabled_rules()
             #             if self.config.verbose:
             #                 print(f"Scanning file: {file}")
-            # TODO: language
-            # TODO: recognize file types? or at least if __init__ or resource
-            model = get_model(source=source)
+            model = self.get_model_for_file_type(source)
             found_issues = self.run_check(model, str(source))
             found_issues.sort()
             issues_no += len(found_issues)
@@ -91,9 +108,9 @@ class RobocopLinter:
         #     self.reports["file_stats"].files_count = len(self.files)
 
     def run_check(self, ast_model, filename: str, source=None) -> list["Message"]:
-        # disablers = DisablersFinder(ast_model)  # TODO:
-        # if disablers.file_disabled:
-        #     return []
+        disablers = DisablersFinder(ast_model)
+        if disablers.file_disabled:
+            return []
         found_issues = []
         templated = is_suite_templated(ast_model)
         for checker in self.checkers:
@@ -102,7 +119,7 @@ class RobocopLinter:
             found_issues += [
                 issue
                 for issue in checker.scan_file(ast_model, filename, source, templated)
-                # if not disablers.is_rule_disabled(issue) and not issue.severity < self.config.threshold  # TODO:
+                if not disablers.is_rule_disabled(issue) and not issue.severity < self.config.linter.threshold
             ]
         return found_issues
 
@@ -129,8 +146,37 @@ class RobocopLinter:
         )
 
     def log_message(self, **kwargs):
-        print(self.config.format.format(**kwargs))
+        print(self.config.linter.issue_format.format(**kwargs))
         # self.write_line(self.config.format.format(**kwargs))
+
+    def configure_checkers_or_reports(self):
+        """
+        Iterate over configuration for rules and reports and apply it.
+
+        Accepted format is rule_name.param=value or report_name.param=value . ``rule_id`` can be used instead of
+        ``rule_name``.
+        """
+        for config in self.config.linter.configure:
+            # TODO: applying configuration change original rule/report. We should have way of restoring it for multiple configurations (or store separately)
+            # TODO: should be validated in Config class, here only applying values
+            # TODO: there could be rules and reports containers that accept config and apply, instead of doing it in the runner
+            try:
+                name, param_and_value = config.split(".", maxsplit=1)
+                param, value = param_and_value.split("=", maxsplit=1)
+            except ValueError:
+                raise exceptions.ConfigGeneralError(
+                    f"Provided invalid config: '{config}' (general pattern: <rule/report>.<param>=<value>)"
+                ) from None
+            if name in self.rules:
+                rule = self.rules[name]
+                if rule.deprecated:
+                    print(rule.deprecation_warning)
+                else:
+                    rule.configure(param, value)
+            elif name in self.reports:
+                self.reports[name].configure(param, value)
+            else:
+                raise exceptions.RuleOrReportDoesNotExist(name, self.rules)
 
 
 # should we rediscover checkers/rules for each source config?

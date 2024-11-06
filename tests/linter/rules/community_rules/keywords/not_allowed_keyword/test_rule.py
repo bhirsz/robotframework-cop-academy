@@ -6,7 +6,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot"],
             expected_file="expected_output.txt",
-            config="-c not-allowed-keyword:keywords:NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib",
+            configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
             target_version=">=5",
         )
@@ -15,7 +15,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot"],
             expected_file="expected_output_rf3.txt",
-            config="-c not-allowed-keyword:keywords:NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib",
+            configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
             target_version="==3.*",
         )
@@ -24,7 +24,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot"],
             expected_file="expected_output_rf4.txt",
-            config="-c not-allowed-keyword:keywords:NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib",
+            configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
             target_version="==4.*",
         )

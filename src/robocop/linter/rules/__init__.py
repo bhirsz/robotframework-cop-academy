@@ -258,6 +258,7 @@ class SeverityThreshold:
 
     @staticmethod
     def parse_severity(value):
+        # TODO can be replaced with RuleSeverity.parse with False flag
         severity = {
             "error": RuleSeverity.ERROR,
             "e": RuleSeverity.ERROR,
@@ -475,7 +476,7 @@ class Rule:
         text = "\n    ".join(params)
         return count, text
 
-    def prepare_message(
+    def prepare_message(  # TODO: maybe rendering should not be in Rule class, but in Message?
         self,
         source,
         node,
@@ -503,7 +504,7 @@ class Rule:
             overwrite_severity=severity,
         )
 
-    def matches_pattern(self, pattern: str | Pattern):
+    def matches_pattern(self, pattern: str | Pattern):  # TODO: move outside, used by one place
         """Check if this rule matches given pattern"""
         if isinstance(pattern, str):
             return pattern in (self.name, self.rule_id)
@@ -851,7 +852,7 @@ class RobocopImporter:
 
 
 def init(linter: RobocopLinter) -> None:
-    robocop_importer = RobocopImporter(external_rules_paths=[])  # linter.config.ext_rules FIXME: None is failing
+    robocop_importer = RobocopImporter(external_rules_paths=linter.config_manager.default_config.linter.ext_rules)
     for checker in robocop_importer.get_initialized_checkers():
         linter.register_checker(checker)
     linter.rules.update(robocop_importer.deprecated_rules)

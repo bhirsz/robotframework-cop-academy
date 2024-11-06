@@ -10,7 +10,7 @@ class TestRuleAcceptance(RuleAcceptance):
 
     def test_severity_threshold(self):
         self.check_rule(
-            config="-c number-of-returned-values:severity_threshold:error=6",
+            configure=["number-of-returned-values.severity_threshold=error=6"],
             src_files=["severity.robot"],
             expected_file="expected_output_severity_threshold_rf5.txt",
             target_version=">=5.0",
@@ -18,7 +18,7 @@ class TestRuleAcceptance(RuleAcceptance):
 
     def test_severity_threshold_pre_rf5(self):
         self.check_rule(
-            config="-c number-of-returned-values:severity_threshold:error=6",
+            configure=["number-of-returned-values.severity_threshold=error=6"],
             src_files=["severity.robot"],
             expected_file="expected_output_severity_threshold.txt",
             target_version="<5.0",

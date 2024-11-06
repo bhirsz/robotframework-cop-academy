@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from robocop.cli import check_files
+from robocop.linter.rules import RuleSeverity
 from robocop.linter.runner import RobocopLinter
 from robocop.config import ConfigManager
 
@@ -80,8 +82,8 @@ def configure_robocop_with_rule(args, rule, path, src_files: list | None, format
     # )
     # config.parse_args(arguments)
     config_manager = ConfigManager(sources=paths)  # TODO: disable searching for config file
-    config_manager.default_config.format = format
-    config_manager.default_config.include = set(rule)
+    config_manager.default_config.linter.issue_format = format
+    config_manager.default_config.linter.include = set(rule)
     runner = RobocopLinter(config_manager)
     return runner
 
@@ -95,33 +97,49 @@ class RuleAcceptance:
     def check_rule(
         self,
         expected_file: str | None = None,
-        config: str | None = None,
-        rule: str | None = None,
+        configure: list[str] | None = None,
+        threshold: RuleSeverity | None = None,
+        include: list[str] | None = None,
         src_files: list | None = None,
         target_version: str | list[str] | None = None,
         issue_format: str = "default",
+        language: list[str] | None = None,
         deprecated: bool = False,
+        **kwargs
     ):
         if not self.enabled_in_version(target_version):
             pytest.skip(f"Test enabled only for RF {target_version}")
         test_data = self.test_class_dir
         expected = load_expected_file(test_data, expected_file)
-        format = self.get_issue_format(issue_format)
-        if rule is None:
-            rule = [self.rule_name]
-        runner = configure_robocop_with_rule(config, rule, test_data, src_files, format=format)
+        issue_format = self.get_issue_format(issue_format)
+        if include is None:
+            include = [self.rule_name]
+        if src_files is None:
+            paths = [test_data]
+        else:
+            paths = [test_data / src_file for src_file in src_files]
+        # runner = configure_robocop_with_rule(config, rule, test_data, src_files, format=format)
         with isolated_output() as output:
             try:
-                #with pytest.raises(SystemExit):
-                runner.run()
+                # with pytest.raises(SystemExit):
+                check_files(
+                    sources=paths,
+                    include=include,
+                    configure=configure,
+                    issue_format=issue_format,
+                    threshold=threshold,
+                    language=language,
+                    **kwargs,
+                )
             finally:
                 sys.stdout.flush()
                 result = get_result(output)
                 parsed_results = result.splitlines()
         actual = normalize_result(parsed_results, test_data)
-        if deprecated:
-            assert runner.rules[self.rule_name].deprecation_warning in actual
-        elif actual != expected:
+        # if deprecated:  # TODO:
+        #     assert runner.rules[self.rule_name].deprecation_warning in actual
+        # elif
+        if actual != expected:
             missing_expected = sorted(set(actual) - set(expected))
             missing_actual = sorted(set(expected) - set(actual))
             error = "Actual issues are different than expected.\n"

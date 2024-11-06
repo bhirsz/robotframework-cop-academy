@@ -3,8 +3,8 @@ from typing import Annotated, Optional
 
 import typer
 
-from robocop.config import ConfigManager
-from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern
+from robocop.config import ConfigManager, LinterConfig, Config
+from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern, RuleSeverity
 from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form  # TODO: move higher up
 
@@ -42,16 +42,41 @@ project_root_option = Annotated[
 ]
 
 
+def parse_rule_severity(value: str):
+    return RuleSeverity.parser(value, rule_severity=False)
+
+
 @app.command(name="check")
 def check_files(
+    sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
+    include: Annotated[list[str], typer.Option(show_default="source paths")] = None,
+    threshold: Annotated[
+        RuleSeverity,
+        typer.Option(
+            "--threshold", "-t", show_default=str(RuleSeverity.INFO), parser=parse_rule_severity, metavar="I/W/E"
+        ),
+    ] = None,
     config: config_option = None,
+    configure: Annotated[list[str], typer.Option("--configure", "-c")] = None,
+    issue_format: Annotated[str, typer.Option("--issue-format")] = None,
+    language: Annotated[list[str], typer.Option("--language", "-l")] = None,
+    ext_rules: Annotated[list[str], typer.Option("--ext-rules")] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
     root: project_root_option = None,
 ) -> None:
     """Lint files."""
+    linter_config = LinterConfig(
+        configure=configure, include=include, issue_format=issue_format, threshold=threshold, ext_rules=ext_rules
+    )
+    overwrite_config = Config(linter=linter_config, language=language)
     config_manager = ConfigManager(
-        config=config, root=root, ignore_git_dir=ignore_git_dir, skip_gitignore=skip_gitignore
+        sources=sources,
+        config=config,
+        root=root,
+        ignore_git_dir=ignore_git_dir,
+        skip_gitignore=skip_gitignore,
+        overwrite_config=overwrite_config,
     )
     runner = RobocopLinter(config_manager)
     runner.run()

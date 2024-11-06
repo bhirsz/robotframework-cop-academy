@@ -9,7 +9,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot"],
             expected_file="expected_output_var.txt",
-            config="-c empty-variable:variable_source:var",
+            configure=["empty-variable.variable_source=var"],
             target_version=">=7",
         )
 
@@ -17,7 +17,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot"],
             expected_file="expected_output_pre_var.txt",
-            config="-c empty-variable:variable_source:section",
+            configure=["empty-variable.variable_source=section"],
             target_version=">=7",
         )
 
