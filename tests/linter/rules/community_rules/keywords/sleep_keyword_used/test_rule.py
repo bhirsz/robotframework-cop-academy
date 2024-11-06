@@ -7,12 +7,14 @@ class TestRuleAcceptance(RuleAcceptance):
 
     def test_rule_1s(self):
         self.check_rule(
-            config="-c sleep-keyword-used:max_time:1s", src_files=["test.robot"], expected_file="expected_output_1s.txt"
+            configure=["sleep-keyword-used.max_time=1s"],
+            src_files=["test.robot"],
+            expected_file="expected_output_1s.txt",
         )
 
     def test_rule_1min(self):
         self.check_rule(
-            config="-c sleep-keyword-used:max_time:1min",
+            configure=["sleep-keyword-used.max_time=1min"],
             src_files=["test.robot"],
             expected_file="expected_output_1min.txt",
         )

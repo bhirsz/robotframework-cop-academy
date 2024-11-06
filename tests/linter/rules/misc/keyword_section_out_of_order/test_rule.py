@@ -15,6 +15,6 @@ class TestRuleAcceptance(RuleAcceptance):
     def test_rule_teardown_keyword(self):
         self.check_rule(
             src_files=["test.robot"],
-            config="-c keyword-section-out-of-order:sections_order:teardown,keyword",
+            configure=["keyword-section-out-of-order.sections_order=teardown,keyword"],
             expected_file="expected_output_teardown_keyword.txt",
         )

@@ -9,7 +9,7 @@ class TestRuleAcceptance(RuleAcceptance):
 
     def test_default_order(self):
         self.check_rule(
-            config="-c section-out-of-order:sections_order:settings,keywords,testcases,variables",
+            configure=["section-out-of-order.sections_order=settings,keywords,testcases,variables"],
             src_files=["custom_order.robot"],
             expected_file="expected_output_custom_order.txt",
         )
@@ -19,7 +19,7 @@ class TestRuleAcceptance(RuleAcceptance):
     )
     def test_custom_order(self, sections_order):
         self.check_rule(
-            config=f"-c section-out-of-order:sections_order:{sections_order}",
+            configure=[f"section-out-of-order.sections_order={sections_order}"],
             src_files=["test.robot"],
             expected_file="expected_output_default_order.txt",
         )
