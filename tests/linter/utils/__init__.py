@@ -105,7 +105,7 @@ class RuleAcceptance:
         issue_format: str = "default",
         language: list[str] | None = None,
         deprecated: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if not self.enabled_in_version(target_version):
             pytest.skip(f"Test enabled only for RF {target_version}")
