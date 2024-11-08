@@ -4,11 +4,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from robocop.cli import list_rules
-from robocop.config import LinterConfig, Config, ConfigManager
+from robocop.config import Config, ConfigManager, LinterConfig
 from robocop.linter.rules import Rule, RuleFilter, RuleParam, RuleSeverity, VisitorChecker
+from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils import pattern_type
 from robocop.linter.utils.misc import ROBOT_VERSION
-from robocop.linter.runner import RobocopLinter
 
 TEST_DATA = Path(__file__).parent.parent / "test_data" / "ext_rules"
 

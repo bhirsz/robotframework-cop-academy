@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from robot.api import get_model, get_init_model, get_resource_model
+from robot.api import get_init_model, get_model, get_resource_model
 
 from robocop.config import Config, ConfigManager, RuleMatcher
-from robocop.linter import rules, exceptions
-from robocop.linter.utils.misc import is_suite_templated
+from robocop.linter import exceptions, reports, rules
 from robocop.linter.utils.disablers import DisablersFinder
+from robocop.linter.utils.misc import is_suite_templated
 
 if TYPE_CHECKING:
     from robocop.linter.rules import Message, Rule  # TODO: Check if circular import will not happen
@@ -21,13 +21,30 @@ class RobocopLinter:
         self.reports: dict = {}  # TODO: load reports
         self.rules: dict[str, Rule] = {}
         self.load_checkers()
-        # load_reports()
-        # configure reports / rules
+        self.load_reports()
 
-    def load_checkers(self):
+    def load_checkers(self) -> None:
+        """
+        Initialize checkers and rules containers and start rules discovery.
+
+        Instance of this class is passed over since it will be used to populare checkers/rules containers.
+        Additionaly rules can also refer to instance of this class to access config class.
+        """
         self.checkers = []
         self.rules = {}
         rules.init(self)
+
+    def load_reports(self) -> None:
+        """
+        Load reports from the internal reports/ directory.
+
+        TODO: External reports, default/non-default
+        """
+        self.reports = reports.get_reports(self.config.linter.reports)
+        # if self.config.list_reports:  # TODO
+        #     available_reports = reports.list_reports(self.reports, self.config.list_reports)
+        #     print(available_reports)
+        #     sys.exit()
 
     def register_checker(self, checker):  # [type[BaseChecker]]
         for rule_name, rule in checker.rules.items():
@@ -73,6 +90,7 @@ class RobocopLinter:
             issues_no += len(found_issues)
             for issue in found_issues:
                 self.report(issue)
+        self.make_reports()
         # print(f"\n\n{issues_no} issues found.")
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
@@ -94,8 +112,8 @@ class RobocopLinter:
         return found_issues
 
     def report(self, rule_msg: "Message"):
-        # for report in self.reports.values():  # TODO:
-        #     report.add_message(rule_msg)
+        for report in self.reports.values():
+            report.add_message(rule_msg)
         try:
             # TODO: reimplement with Path
             # TODO: lazy evaluation in case source_rel is not used
@@ -147,6 +165,27 @@ class RobocopLinter:
                 self.reports[name].configure(param, value)
             else:
                 raise exceptions.RuleOrReportDoesNotExist(name, self.rules)
+
+    def make_reports(self):
+        report_results = {}
+        prev_results = reports.load_reports_result_from_cache()
+        prev_results = prev_results.get(str(self.config_manager.root)) if prev_results is not None else None
+        for report in self.reports.values():
+            if report.name == "sarif":
+                output = report.get_report(self.config_manager.root, self.rules)
+            elif reports.is_report_comparable(report):  # TODO:
+                prev_result = prev_results.get(report.name) if prev_results is not None else None
+                output = report.get_report(prev_result)
+            else:
+                output = report.get_report()
+            if output is not None:
+                print(output)
+            # if self.config.persistent and is_report_comparable(report):  # TODO
+            #     result = report.persist_result()
+            #     if result is not None:
+            #         report_results[report.name] = result
+        # if self.config.persistent:
+        #     save_reports_result_to_cache(str(self.root), report_results)
 
 
 # should we rediscover checkers/rules for each source config?

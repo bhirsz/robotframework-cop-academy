@@ -1,6 +1,6 @@
 import pytest
-from robocop.linter.rules import RuleSeverity
 
+from robocop.linter.rules import RuleSeverity
 from tests.linter.utils import RuleAcceptance
 
 

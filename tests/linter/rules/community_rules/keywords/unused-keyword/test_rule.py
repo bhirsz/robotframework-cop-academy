@@ -1,7 +1,6 @@
-from tests.linter.utils import RuleAcceptance
-
-
 import pytest
+
+from tests.linter.utils import RuleAcceptance
 
 
 class TestRuleAcceptance(RuleAcceptance):

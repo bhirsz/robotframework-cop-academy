@@ -38,13 +38,13 @@ from __future__ import annotations
 import ast
 import importlib.util
 import inspect
+import re
 from collections import defaultdict
 from collections.abc import Generator
 from enum import Enum
 from functools import total_ordering
 from importlib import import_module
 from pathlib import Path
-import re
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Callable, Optional
 

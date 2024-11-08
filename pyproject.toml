@@ -115,7 +115,7 @@ lint.unfixable = [
     "PT022",
 ]
 extend-exclude = [
-    "tests/test_data/"
+    "tests/linter/test_data/"
 ]
 [tool.ruff.lint.extend-per-file-ignores]
 # return type for tests does not make sense

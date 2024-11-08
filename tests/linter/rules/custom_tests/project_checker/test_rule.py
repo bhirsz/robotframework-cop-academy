@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from tests.linter.utils import RuleAcceptance
-
 import pytest
+
+from tests.linter.utils import RuleAcceptance
 
 CUR_DIR = Path(__file__).parent
 

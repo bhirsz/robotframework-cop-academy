@@ -1,4 +1,4 @@
-from robocop.linter.rules import Message, Rule, RuleSeverity, ProjectChecker
+from robocop.linter.rules import Message, ProjectChecker, Rule, RuleSeverity
 
 rules = {
     "9901": Rule(
