@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from robocop.rules import Rule
+    from robocop.linter.rules import Rule
 
 import robot.errors
 

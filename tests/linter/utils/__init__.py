@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 
 from robocop.cli import check_files
+from robocop.config import ConfigManager
 from robocop.linter.rules import RuleSeverity
 from robocop.linter.runner import RobocopLinter
-from robocop.config import ConfigManager
 
 # from robocop.config import Config
 from robocop.linter.utils.misc import ROBOT_VERSION

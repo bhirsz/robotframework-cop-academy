@@ -61,6 +61,7 @@ class LinterConfig:
     exclude_rules: set[str] = field(default_factory=set)
     include_rules_patterns: set[re.Pattern] = field(default_factory=set)
     exclude_rules_patterns: set[re.Pattern] = field(default_factory=set)
+    reports: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """
@@ -69,18 +70,20 @@ class LinterConfig:
         We need to remove optional severity and split it into patterns and not patterns for easier filtering.
 
         """
-        for rule in self.include:
-            rule_without_sev = replace_severity_values(rule)
-            if "*" in rule_without_sev:
-                self.include_rules_patterns.add(compile_rule_pattern(rule_without_sev))
-            else:
-                self.include_rules.add(rule_without_sev)
-        for rule in self.exclude:
-            rule_without_sev = replace_severity_values(rule)
-            if "*" in rule_without_sev:
-                self.exclude_rules_patterns.add(compile_rule_pattern(rule_without_sev))
-            else:
-                self.exclude_rules.add(rule_without_sev)
+        if self.include:
+            for rule in self.include:
+                rule_without_sev = replace_severity_values(rule)
+                if "*" in rule_without_sev:
+                    self.include_rules_patterns.add(compile_rule_pattern(rule_without_sev))
+                else:
+                    self.include_rules.add(rule_without_sev)
+        if self.exclude:
+            for rule in self.exclude:
+                rule_without_sev = replace_severity_values(rule)
+                if "*" in rule_without_sev:
+                    self.exclude_rules_patterns.add(compile_rule_pattern(rule_without_sev))
+                else:
+                    self.exclude_rules.add(rule_without_sev)
 
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]

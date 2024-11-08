@@ -3,10 +3,10 @@ from typing import Annotated, Optional
 
 import typer
 
-from robocop.config import ConfigManager, LinterConfig, Config, DEFAULT_ISSUE_FORMAT
-from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern, RuleSeverity
+from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterConfig
+from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
-from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form, compile_rule_pattern  # TODO: move higher up
+from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, get_plural_form  # TODO: move higher up
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
@@ -68,6 +68,16 @@ def check_files(
             show_default=False,
         ),
     ] = None,
+    reports: Annotated[
+        list[str],
+        typer.Option(
+            "--reports",
+            "-r",
+            show_default=False,
+            help="Generate reports from reported issues. To list available reports use `list reports` command. "
+            "Use `all` to enable all reports.",
+        ),
+    ] = None,
     issue_format: Annotated[str, typer.Option("--issue-format", show_default=DEFAULT_ISSUE_FORMAT)] = None,
     language: Annotated[
         list[str],
@@ -86,7 +96,12 @@ def check_files(
 ) -> None:
     """Lint files."""
     linter_config = LinterConfig(
-        configure=configure, include=include, issue_format=issue_format, threshold=threshold, ext_rules=ext_rules
+        configure=configure,
+        include=include,
+        issue_format=issue_format,
+        threshold=threshold,
+        ext_rules=ext_rules,
+        reports=reports,
     )
     overwrite_config = Config(linter=linter_config, language=language)
     config_manager = ConfigManager(

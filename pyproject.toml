@@ -14,6 +14,7 @@ dependencies = [
     "tomli==2.0.2; python_version < '3.11'",
     "pathspec>=0.12,<0.13",
     "platformdirs>=4.3,<4.4",
+    "pytz>=2022.7,<2024.3",
 ]
 
 keywords = ["robotframework", "automation", "testautomation", "testing", "linter", "qa", "formatting", "formatter"]
@@ -115,7 +116,7 @@ lint.unfixable = [
     "PT022",
 ]
 extend-exclude = [
-    "tests/test_data/"
+    "tests/linter/test_data/"
 ]
 [tool.ruff.lint.extend-per-file-ignores]
 # return type for tests does not make sense
