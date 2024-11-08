@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import ast
 import difflib
+import fnmatch
 import re
 import token as python_token
 import tokenize
 from collections import Counter, defaultdict, namedtuple
 from io import StringIO
 from pathlib import Path
-from re import Pattern
 from tokenize import generate_tokens
 
 import platformdirs
@@ -314,12 +314,16 @@ def find_robot_vars(name: str) -> list[tuple[int, int]]:
     return variables
 
 
-def pattern_type(value: str) -> Pattern:
+def pattern_type(value: str) -> re.Pattern:
     try:
         pattern = re.compile(value)
     except re.error as err:
         raise ValueError(f"Invalid regex pattern: {err}") from err
     return pattern
+
+
+def compile_rule_pattern(rule_pattern: str) -> re.Pattern:
+    return re.compile(fnmatch.translate(rule_pattern))
 
 
 def get_section_name(node):

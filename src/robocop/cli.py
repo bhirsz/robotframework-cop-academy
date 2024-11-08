@@ -3,10 +3,10 @@ from typing import Annotated, Optional
 
 import typer
 
-from robocop.config import ConfigManager, LinterConfig, Config
+from robocop.config import ConfigManager, LinterConfig, Config, DEFAULT_ISSUE_FORMAT
 from robocop.linter.rules import RuleFilter, filter_rules_by_category, filter_rules_by_pattern, RuleSeverity
 from robocop.linter.runner import RobocopLinter
-from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form  # TODO: move higher up
+from robocop.linter.utils.misc import ROBOCOP_RULES_URL, get_plural_form, compile_rule_pattern  # TODO: move higher up
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
@@ -26,6 +26,7 @@ config_option = Annotated[
         dir_okay=False,
         readable=True,
         resolve_path=True,
+        show_default=False,
     ),
 ]
 project_root_option = Annotated[
@@ -49,18 +50,36 @@ def parse_rule_severity(value: str):
 @app.command(name="check")
 def check_files(
     sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
-    include: Annotated[list[str], typer.Option(show_default="source paths")] = None,
+    include: Annotated[list[str], typer.Option(show_default=False)] = None,
     threshold: Annotated[
         RuleSeverity,
         typer.Option(
-            "--threshold", "-t", show_default=str(RuleSeverity.INFO), parser=parse_rule_severity, metavar="I/W/E"
+            "--threshold", "-t", show_default=RuleSeverity.INFO.value, parser=parse_rule_severity, metavar="I/W/E"
         ),
     ] = None,
     config: config_option = None,
-    configure: Annotated[list[str], typer.Option("--configure", "-c")] = None,
-    issue_format: Annotated[str, typer.Option("--issue-format")] = None,
-    language: Annotated[list[str], typer.Option("--language", "-l")] = None,
-    ext_rules: Annotated[list[str], typer.Option("--ext-rules")] = None,
+    configure: Annotated[
+        list[str],
+        typer.Option(
+            "--configure",
+            "-c",
+            help="Configure checker or report with parameter value",
+            metavar="rule.param=value",
+            show_default=False,
+        ),
+    ] = None,
+    issue_format: Annotated[str, typer.Option("--issue-format", show_default=DEFAULT_ISSUE_FORMAT)] = None,
+    language: Annotated[
+        list[str],
+        typer.Option(
+            "--language",
+            "-l",
+            show_default="en",
+            metavar="LANG",
+            help="Parse Robot Framework files using additional languages.",
+        ),
+    ] = None,
+    ext_rules: Annotated[list[str], typer.Option("--ext-rules", show_default=False)] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
     root: project_root_option = None,
@@ -102,12 +121,27 @@ def list_rules(
     ] = RuleFilter.DEFAULT,
     filter_pattern: Annotated[Optional[str], typer.Option("--pattern", help="Filter rules by pattern")] = None,
 ) -> None:
-    """List available rules."""
+    """
+    List available rules.
+
+    Use `--filter`` option to list only selected rules:
+
+    > robocop list rules --filter DISABLED
+
+    You can also specify the patterns to filter by:
+
+    > robocop list rules --pattern *var*
+
+    Use `robocop rule rule_name` for more detailed information on the rule.
+    The output list is affected by default configuration file (if it is found).
+    """
     # TODO: support list-configurables (maybe as separate robocop rule <>)
     # TODO: rich support (colorized enabled, severity etc)
     config_manager = ConfigManager()
     runner = RobocopLinter(config_manager)
+    runner.check_for_disabled_rules()
     if filter_pattern:
+        filter_pattern = compile_rule_pattern(filter_pattern)
         rules = filter_rules_by_pattern(runner.rules, filter_pattern)
     else:
         rules = filter_rules_by_category(runner.rules, filter_category)

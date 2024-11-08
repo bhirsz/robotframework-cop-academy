@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class RobocopLinter:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
-        self.config: Optional[Config] = None
+        self.config: Config = self.config_manager.default_config
         self.checkers: list = []  # [type[BaseChecker]]
         self.reports: dict = {}  # TODO: load reports
         self.rules: dict[str, Rule] = {}
