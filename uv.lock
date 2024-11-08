@@ -233,6 +233,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2024.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/31/3c70bf7603cc2dca0f19bdc53b4537a797747a58875b552c8c413d963a3f/pytz-2024.2.tar.gz", hash = "sha256:2aa355083c50a0f93fa581709deac0c9ad65cca8a9e9beac660adcbd493c798a", size = 319692 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/c3/005fcca25ce078d2cc29fd559379817424e94885510568bc1bc53d7d5846/pytz-2024.2-py2.py3-none-any.whl", hash = "sha256:31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725", size = 508002 },
+]
+
+[[package]]
 name = "rich"
 version = "13.9.3"
 source = { registry = "https://pypi.org/simple" }
@@ -257,12 +266,13 @@ wheels = [
 
 [[package]]
 name = "robotframework-robocop"
-version = "6.0.0"
+version = "6.0.0.dev1"
 source = { editable = "." }
 dependencies = [
     { name = "jinja2" },
     { name = "pathspec" },
     { name = "platformdirs" },
+    { name = "pytz" },
     { name = "robotframework" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typer" },
@@ -280,6 +290,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.4,<4.0" },
     { name = "pathspec", specifier = ">=0.12,<0.13" },
     { name = "platformdirs", specifier = ">=4.3,<4.4" },
+    { name = "pytz", specifier = ">=2022.7,<2024.3" },
     { name = "robotframework", specifier = ">=4.0,<8.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.0.2" },
     { name = "typer", specifier = ">=0.12.5,<0.13" },
