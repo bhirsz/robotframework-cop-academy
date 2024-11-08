@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import fnmatch
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
@@ -10,8 +9,10 @@ from typing import TYPE_CHECKING
 
 from robocop import files
 from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
+from robocop.linter.utils.misc import compile_rule_pattern
 
 DEFAULT_EXCLUDES = r"(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)"
+DEFAULT_ISSUE_FORMAT = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
 if TYPE_CHECKING:
     import pathspec
@@ -53,7 +54,7 @@ class LinterConfig:
     configure: list[str] = field(default_factory=list)
     include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
-    issue_format: str = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+    issue_format: str = DEFAULT_ISSUE_FORMAT
     threshold: RuleSeverity | None = RuleSeverity.INFO
     ext_rules: list[str] = field(default_factory=list)
     include_rules: set[str] = field(default_factory=set)
@@ -71,18 +72,15 @@ class LinterConfig:
         for rule in self.include:
             rule_without_sev = replace_severity_values(rule)
             if "*" in rule_without_sev:
-                self.include_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+                self.include_rules_patterns.add(compile_rule_pattern(rule_without_sev))
             else:
                 self.include_rules.add(rule_without_sev)
         for rule in self.exclude:
             rule_without_sev = replace_severity_values(rule)
             if "*" in rule_without_sev:
-                self.exclude_rules_patterns.add(self.compile_rule_pattern(rule_without_sev))
+                self.exclude_rules_patterns.add(compile_rule_pattern(rule_without_sev))
             else:
                 self.exclude_rules.add(rule_without_sev)
-
-    def compile_rule_pattern(self, rule_pattern: str) -> re.Pattern:
-        return re.compile(fnmatch.translate(rule_pattern))
 
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]
