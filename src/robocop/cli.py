@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated, Optional
 
+from rich import print
 import typer
 
 from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterConfig
@@ -214,6 +215,18 @@ def list_formatters(
 ) -> None:
     """List available formatters."""
     # We will need ConfigManager later for listing based on configuration
+
+
+@app.command("rule")
+def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]):
+    """Describe a rule."""
+    # TODO load external from cli
+    config_manager = ConfigManager()
+    runner = RobocopLinter(config_manager)
+    if rule not in runner.rules:
+        print(f"Rule '{rule}' does not exist.")
+        raise typer.Exit(code=2)
+    print(runner.rules[rule].description_with_configurables)
 
 
 def main() -> None:

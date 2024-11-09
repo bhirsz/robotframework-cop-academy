@@ -401,14 +401,22 @@ class Rule:
         self.config["enabled"].value = value
 
     @property
-    def description(self):
-        desc = ""
-        if not (self.msg.startswith("{{") and self.msg.endswith("}}")):
-            desc += f"{self.msg}."
+    def description(self) -> str:
+        """Description of the rule with rule name, message and documentation."""
+        description = f"Rule: [bold]{self.name}[/bold] ({self.rule_id})\n"
+        description += f"Message: {self.msg}\n"
+        description += f"Severity: {self.severity}\n"
         if self.docs:
-            desc += "\n"
-            desc += self.docs
-        return desc
+            description += self.docs
+        return description
+
+    @property
+    def description_with_configurables(self):
+        description = self.description
+        count, configurables = self.available_configurables(include_severity=False)
+        if not count:
+            return description
+        return f"{description}\nConfigurables:\n    {configurables}\n"
 
     @property
     def deprecation_warning(self) -> str:

@@ -140,14 +140,15 @@ class TestListingRules:
             "    0 error rules,\n"
             "    1 warning rule,\n"
             "    0 info rules.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     def test_list_disabled_rule(self, empty_linter, msg_0101, msg_disabled_for_4, capsys):
         add_empty_checker(empty_linter, msg_0101, exclude=True)
         add_empty_checker(empty_linter, msg_disabled_for_4)
         if ROBOT_VERSION.major >= 4:
-            enabled_for = "disabled - supported only for RF version <4.0"
+            enabled_for = "disabled - supported only for \nRF version <4.0"
         else:
             enabled_for = "enabled"
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
@@ -160,7 +161,8 @@ class TestListingRules:
             "    0 error rules,\n"
             "    2 warning rules,\n"
             "    0 info rules.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     def test_list_filter_enabled(self, empty_linter, msg_0101, msg_0102_0204, capsys):
@@ -176,7 +178,8 @@ class TestListingRules:
             "    0 error rules,\n"
             "    1 warning rule,\n"
             "    0 info rules.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     def test_list_filter_disabled(self, empty_linter, msg_0101, msg_0102_0204, deprecated_rule, capsys):
@@ -193,7 +196,8 @@ class TestListingRules:
             "    1 error rule,\n"
             "    0 warning rules,\n"
             "    1 info rule.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     def test_list_filter_deprecated(self, empty_linter, msg_0101, msg_0102_0204, deprecated_rule, capsys):
@@ -205,12 +209,13 @@ class TestListingRules:
         out, _ = capsys.readouterr()
         assert (
             out == "Rule - 9991 [E]: deprecated-rule: Deprecated rule (deprecated)\n"
-            "Rule - 9992 [I]: deprecated-disabled-rule: Deprecated and disabled rule (deprecated)\n\n"
+            "Rule - 9992 [I]: deprecated-disabled-rule: Deprecated and disabled rule \n(deprecated)\n\n"
             "Altogether 2 rules with following severity:\n"
             "    1 error rule,\n"
             "    0 warning rules,\n"
             "    1 info rule.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     def test_multiple_checkers(self, empty_linter, msg_0101, msg_0102_0204, capsys):
@@ -255,7 +260,8 @@ class TestListingRules:
             "    0 error rules,\n"
             "    2 warning rules,\n"
             "    0 info rules.\n\n"
-            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
+            "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for \n"
+            "detailed documentation.\n"
         )
 
     # def test_list_configurables(self, empty_linter, msg_0101_config_meta, capsys):  # TODO
