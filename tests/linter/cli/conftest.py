@@ -11,3 +11,10 @@ def empty_linter() -> RobocopLinter:
     runner.checkers = []
     runner.rules = {}
     return runner
+
+
+@pytest.fixture(scope="session")
+def loaded_linter() -> RobocopLinter:
+    config_manager = ConfigManager()
+    runner = RobocopLinter(config_manager)
+    return runner

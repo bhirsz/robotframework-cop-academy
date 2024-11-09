@@ -134,7 +134,7 @@ def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
         is_enabled = report.name in configured_reports
         if only_enabled is not None and only_enabled != is_enabled:
             continue
-        status = "enabled" if is_enabled else "disabled"
+        status = "[green]enabled[/green]" if is_enabled else "[red]disabled[/red]"
         if not is_report_default(report):
             status += " - non-default"
         available_reports += f"\n{report.name:20} - {report.description} ({status})"

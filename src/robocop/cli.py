@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated, Optional
 
+from rich.console import Console
 import typer
 
 from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterConfig
@@ -153,6 +154,7 @@ def list_rules(
     """
     # TODO: support list-configurables (maybe as separate robocop rule <>)
     # TODO: rich support (colorized enabled, severity etc)
+    console = Console(soft_wrap=True)
     config_manager = ConfigManager()
     runner = RobocopLinter(config_manager)
     runner.check_for_disabled_rules()
@@ -163,11 +165,11 @@ def list_rules(
         rules = filter_rules_by_category(runner.rules, filter_category)
     severity_counter = {"E": 0, "W": 0, "I": 0}
     for rule in rules:
-        print(rule)
+        console.print(rule)
         severity_counter[rule.severity.value] += 1
     configurable_rules_sum = sum(severity_counter.values())
     plural = get_plural_form(configurable_rules_sum)
-    print(
+    console.print(
         f"\nAltogether {configurable_rules_sum} rule{plural} with following severity:\n"
         f"    {severity_counter['E']} error rule{get_plural_form(severity_counter['E'])},\n"
         f"    {severity_counter['W']} warning rule{get_plural_form(severity_counter['W'])},\n"
@@ -198,11 +200,12 @@ def list_reports(
     ] = None,
 ) -> None:
     """List available reports."""
+    console = Console(soft_wrap=True)
     linter_config = LinterConfig(reports=reports)
     config = Config(linter=linter_config)
     config_manager = ConfigManager(overwrite_config=config)
     runner = RobocopLinter(config_manager)
-    print(print_reports(runner.reports, enabled))  # TODO: color etc
+    console.print(print_reports(runner.reports, enabled))  # TODO: color etc
 
 
 @list_app.command(name="formatters")
@@ -214,6 +217,19 @@ def list_formatters(
 ) -> None:
     """List available formatters."""
     # We will need ConfigManager later for listing based on configuration
+
+
+@app.command("rule")
+def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]):
+    """Describe a rule."""
+    # TODO load external from cli
+    console = Console(soft_wrap=True)
+    config_manager = ConfigManager()
+    runner = RobocopLinter(config_manager)
+    if rule not in runner.rules:
+        console.print(f"Rule '{rule}' does not exist.")
+        raise typer.Exit(code=2)
+    console.print(runner.rules[rule].description_with_configurables)
 
 
 def main() -> None:
