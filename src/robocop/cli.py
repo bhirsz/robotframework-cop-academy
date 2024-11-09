@@ -7,6 +7,7 @@ from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterCo
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, get_plural_form  # TODO: move higher up
+from robocop.linter.reports import print_reports
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
@@ -173,6 +174,35 @@ def list_rules(
         f"    {severity_counter['I']} info rule{get_plural_form(severity_counter['I'])}.\n"
     )
     print(f"Visit {ROBOCOP_RULES_URL.format(version='stable')} page for detailed documentation.")
+
+
+@list_app.command(name="reports")
+def list_reports(
+    enabled: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--enabled/--disabled",
+            help="List enabled or disabled reports. Reports configuration will be loaded from the default "
+            "configuration file or `--reports`` option.",
+            show_default=False,
+        ),
+    ] = None,
+    reports: Annotated[
+        list[str],
+        typer.Option(
+            "--reports",
+            "-r",
+            show_default=False,
+            help="Enable selected reports.",
+        ),
+    ] = None,
+) -> None:
+    """List available reports."""
+    linter_config = LinterConfig(reports=reports)
+    config = Config(linter=linter_config)
+    config_manager = ConfigManager(overwrite_config=config)
+    runner = RobocopLinter(config_manager)
+    print(print_reports(runner.reports, enabled))  # TODO: color etc
 
 
 @list_app.command(name="formatters")

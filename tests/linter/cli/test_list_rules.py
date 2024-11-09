@@ -4,10 +4,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from robocop.cli import list_rules
-from robocop.config import Config, ConfigManager, LinterConfig
 from robocop.linter.rules import Rule, RuleFilter, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.runner import RobocopLinter
-from robocop.linter.utils import pattern_type
 from robocop.linter.utils.misc import ROBOT_VERSION
 
 TEST_DATA = Path(__file__).parent.parent / "test_data" / "ext_rules"
@@ -128,15 +126,6 @@ def add_empty_checker(runner: RobocopLinter, rules: dict, exclude: bool = False,
     runner.check_for_disabled_rules()
 
 
-@pytest.fixture
-def empty_linter() -> RobocopLinter:
-    config_manager = ConfigManager()
-    runner = RobocopLinter(config_manager)
-    runner.checkers = []
-    runner.rules = {}
-    return runner
-
-
 class TestListingRules:
     def test_list_rule(self, empty_linter, msg_0101, community_rule, deprecated_rule, capsys):
         """List rules with default options."""
@@ -223,15 +212,6 @@ class TestListingRules:
             "    1 info rule.\n\n"
             "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
         )
-
-    # def test_list_reports(self, empty_linter, msg_0101, capsys):  # TODO
-    #     empty_linter.config.list_reports = True
-    #     add_empty_checker(empty_linter, msg_0101)
-    #     with pytest.raises(SystemExit):
-    #         empty_linter.load_reports()
-    #     out, _ = capsys.readouterr()
-    #     first_line = out.split("\n")[0]
-    #     assert first_line == "Available reports:"
 
     def test_multiple_checkers(self, empty_linter, msg_0101, msg_0102_0204, capsys):
         add_empty_checker(empty_linter, msg_0102_0204, exclude=True)
