@@ -1,3 +1,4 @@
+from __future__ import annotations
 import inspect
 import json
 from collections import OrderedDict
@@ -114,24 +115,33 @@ def get_reports(configured_reports: list[str]):
     return enabled_reports
 
 
-def list_reports(reports, list_reports_with_status):
+def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
     """
     Return description of reports.
 
     The reports list is filtered and only public reports are provided. If the report is enabled in current
     configuration it will have (enabled) suffix (and (disabled) if it is disabled).
+
+    Args:
+        reports: Dictionary with loaded reports.
+        only_enabled: if set to True/False, it will filter reports by enabled/disabled status
     """
     all_public_reports = [report for report in load_reports().values() if not is_report_internal(report)]
     all_public_reports = sorted(all_public_reports, key=lambda x: x.name)
     configured_reports = {x.name for x in reports.values()}
-    available_reports = "Available reports:"
+    available_reports = ""
     for report in all_public_reports:
-        status = "enabled" if report.name in configured_reports else "disabled"
-        if list_reports_with_status != "default" and list_reports_with_status != status.upper():
+        is_enabled = report.name in configured_reports
+        if only_enabled is not None and only_enabled != is_enabled:
             continue
+        status = "enabled" if is_enabled else "disabled"
         if not is_report_default(report):
             status += " - non-default"
         available_reports += f"\n{report.name:20} - {report.description} ({status})"
+    if available_reports:
+        available_reports = "Available reports:" + available_reports
+    else:
+        available_reports = "No available reports that meet your search criteria."
     available_reports += (
         "\n\nEnable report by passing report name using --reports option. "
         "Use `all` to enable all default reports. "
