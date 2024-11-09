@@ -22,7 +22,7 @@ class RulesBySeverityReport(robocop.linter.reports.ComparableReport):
         self.severity_counter = defaultdict(int)
         super().__init__(compare_runs)
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.severity_counter[message.severity] += 1
 
     def persist_result(self):

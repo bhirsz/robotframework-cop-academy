@@ -26,7 +26,7 @@ class RulesByIdReport(robocop.linter.reports.ComparableReport):
         self.message_counter = defaultdict(int)
         super().__init__(compare_runs)
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.message_counter[message.get_fullname()] += 1
 
     def persist_result(self) -> dict:

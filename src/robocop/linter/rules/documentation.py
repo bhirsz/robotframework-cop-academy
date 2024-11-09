@@ -1,6 +1,8 @@
 """Documentation checkers"""
 
+from __future__ import annotations
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from robot.parsing.model.statements import Documentation
 
@@ -8,6 +10,9 @@ from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.utils.misc import str2bool
 
 RULE_CATEGORY_ID = "02"
+
+if TYPE_CHECKING:
+    from robot.parsing.model import Keyword, TestCase, SettingSection, File
 
 rules = {
     "0201": Rule(
@@ -102,24 +107,24 @@ class MissingDocumentationChecker(VisitorChecker):
         self.settings_section_exists = False
         super().__init__()
 
-    def visit_Keyword(self, node):  # noqa: N802
+    def visit_Keyword(self, node: Keyword) -> None:  # noqa: N802
         if node.name.lstrip().startswith("#"):
             return
         self.check_if_docs_are_present(node, "missing-doc-keyword", extend_disablers=True)
 
-    def visit_TestCase(self, node):  # noqa: N802
+    def visit_TestCase(self, node: TestCase) -> None:  # noqa: N802
         if self.param("missing-doc-test-case", "ignore_templated") and self.templated_suite:
             return
         self.check_if_docs_are_present(node, "missing-doc-test-case", extend_disablers=True)
 
-    def visit_SettingSection(self, node):  # noqa: N802
+    def visit_SettingSection(self, node: SettingSection) -> None:  # noqa: N802
         self.settings_section_exists = True
         if self.is_resource:
             self.check_if_docs_are_present(node, "missing-doc-resource-file", extend_disablers=False)
         else:
             self.check_if_docs_are_present(node, "missing-doc-suite", extend_disablers=False)
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         source = node.source if node.source else self.source
         self.is_resource = source and ".resource" in Path(source).suffix
         self.settings_section_exists = False
@@ -130,7 +135,9 @@ class MissingDocumentationChecker(VisitorChecker):
             else:
                 self.report("missing-doc-suite", node=node, lineno=1, col=1)
 
-    def check_if_docs_are_present(self, node, msg, extend_disablers):
+    def check_if_docs_are_present(
+        self, node: Keyword | TestCase | SettingSection, msg: str, extend_disablers: bool
+    ) -> None:
         for statement in node.body:
             if isinstance(statement, Documentation):
                 break

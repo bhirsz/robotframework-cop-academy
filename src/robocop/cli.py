@@ -220,7 +220,7 @@ def list_formatters(
 
 
 @app.command("rule")
-def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]):
+def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]) -> None:
     """Describe a rule."""
     # TODO load external from cli
     console = Console(soft_wrap=True)

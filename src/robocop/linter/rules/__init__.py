@@ -46,7 +46,7 @@ from functools import total_ordering
 from importlib import import_module
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, NoReturn
 
 from jinja2 import Template
 from robot.utils import FileReader
@@ -274,7 +274,7 @@ class SeverityThreshold:
             raise exceptions.InvalidArgumentError(f"Invalid severity value '{value}'. {hint}") from None
         return severity
 
-    def set_thresholds(self, value):
+    def set_thresholds(self, value) -> None:
         severity_pairs = value.split(":")
         thresholds = []
         for pair in severity_pairs:
@@ -454,7 +454,7 @@ class Rule:
     def __str__(self):
         return f"Rule - {self.rule_id} [{self.severity}]: {self.name}: {self.msg} ({self.get_enabled_status_desc()})"
 
-    def get_enabled_status_desc(self):
+    def get_enabled_status_desc(self) -> str:
         if self.deprecated:
             return "deprecated"
         if self.enabled:
@@ -463,7 +463,7 @@ class Rule:
             return f"disabled - supported only for RF version {self.supported_version}"
         return "disabled"
 
-    def configure(self, param, value):
+    def configure(self, param, value) -> None:
         if param not in self.config:
             count, configurables_text = self.available_configurables()
             raise exceptions.ConfigGeneralError(
@@ -615,7 +615,7 @@ class BaseChecker:
         severity=None,
         source: str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         rule_def = self.rules.get(rule, None)
         if rule_def is None:
             raise ValueError(f"Missing definition for message with name {rule}")
@@ -653,7 +653,7 @@ class VisitorChecker(BaseChecker, ModelVisitor):
         self.visit_File(ast_model)
         return self.issues
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         """Perform generic ast visit on file node."""
         self.generic_visit(node)
 
@@ -681,7 +681,7 @@ class RawFileChecker(BaseChecker):
         self.parse_file()
         return self.issues
 
-    def parse_file(self):
+    def parse_file(self) -> None:
         """Read file line by line and for each call check_line method."""
         if self.lines is not None:
             for lineno, line in enumerate(self.lines):
@@ -691,7 +691,7 @@ class RawFileChecker(BaseChecker):
                 for lineno, line in enumerate(file_reader.readlines()):
                     self.check_line(line, lineno + 1)
 
-    def check_line(self, line, lineno):
+    def check_line(self, line, lineno) -> NoReturn:
         raise NotImplementedError
 
 
@@ -738,7 +738,7 @@ class RobocopImporter:
             if not self.is_checker_already_imported(checker_instance):
                 yield checker_instance
 
-    def is_checker_already_imported(self, checker):
+    def is_checker_already_imported(self, checker) -> bool:
         """
         Check if checker was already imported.
 
@@ -828,7 +828,7 @@ class RobocopImporter:
             rules[rule.name] = rule
         return rules
 
-    def register_deprecated_rules(self, module_rules: dict[str, Rule]):
+    def register_deprecated_rules(self, module_rules: dict[str, Rule]) -> None:
         for rule_name, rule_def in module_rules.items():
             if rule_def.deprecated:
                 self.deprecated_rules[rule_name] = rule_def

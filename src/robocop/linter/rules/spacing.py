@@ -321,7 +321,7 @@ class InvalidSpacingChecker(RawFileChecker):
         self.raw_lines = []
         super().__init__()
 
-    def parse_file(self):
+    def parse_file(self) -> None:
         self.raw_lines = []
         super().parse_file()
         if self.raw_lines:
@@ -341,7 +341,7 @@ class InvalidSpacingChecker(RawFileChecker):
             if not empty_lines and not last_line.endswith(("\n", "\r")):
                 self.report("missing-trailing-blank-line", lineno=len(self.raw_lines), end_col=len(last_line) + 1)
 
-    def check_line(self, line, lineno):
+    def check_line(self, line, lineno) -> None:
         self.raw_lines.append(line)
 
         stripped_line = line.rstrip("\n\r")
@@ -417,7 +417,7 @@ class EmptyLinesChecker(VisitorChecker):
         self.verify_consecutive_empty_lines(reversed(node_lines))
         return self.verify_consecutive_empty_lines(reversed(trailing_lines))
 
-    def visit_Statement(self, node):  # noqa: N802
+    def visit_Statement(self, node) -> None:  # noqa: N802
         prev_token = None
         for token in node.tokens:
             if token.type == Token.EOL:
@@ -427,15 +427,15 @@ class EmptyLinesChecker(VisitorChecker):
             else:
                 prev_token = None
 
-    def visit_VariableSection(self, node):  # noqa: N802
+    def visit_VariableSection(self, node) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_leading=False)
         self.generic_visit(node)
 
-    def visit_SettingSection(self, node):  # noqa: N802
+    def visit_SettingSection(self, node) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_leading=False)
         self.generic_visit(node)
 
-    def verify_empty_lines_between_nodes(self, node, node_type, issue_name, allowed_empty_lines):
+    def verify_empty_lines_between_nodes(self, node, node_type, issue_name, allowed_empty_lines) -> None:
         last_index = len(node.body) - 1
         for index, child in enumerate(node.body):
             if not isinstance(child, node_type):
@@ -452,11 +452,11 @@ class EmptyLinesChecker(VisitorChecker):
                 )
         self.generic_visit(node)
 
-    def visit_TestCaseSection(self, node):  # noqa: N802
+    def visit_TestCaseSection(self, node) -> None:  # noqa: N802
         allowed_lines = -1 if self.templated_suite else self.param("empty-lines-between-test-cases", "empty_lines")
         self.verify_empty_lines_between_nodes(node, TestCase, "empty-lines-between-test-cases", allowed_lines)
 
-    def visit_KeywordSection(self, node):  # noqa: N802
+    def visit_KeywordSection(self, node) -> None:  # noqa: N802
         self.verify_empty_lines_between_nodes(
             node,
             Keyword,
@@ -464,13 +464,13 @@ class EmptyLinesChecker(VisitorChecker):
             self.param("empty-lines-between-keywords", "empty_lines"),
         )
 
-    def visit_For(self, node):  # noqa: N802
+    def visit_For(self, node) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_trailing=True)
         self.generic_visit(node)
 
     visit_ForLoop = visit_While = visit_Try = visit_If = visit_For  # noqa: N815
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         for section in node.sections:
             self.check_empty_lines_after_section(section)
         for section in node.sections[:-1]:
@@ -500,7 +500,7 @@ class EmptyLinesChecker(VisitorChecker):
                 )
         super().visit_File(node)
 
-    def check_empty_lines_after_section(self, section):
+    def check_empty_lines_after_section(self, section) -> None:
         empty_lines = []
         for child in section.body:
             if not isinstance(child, EmptyLine):
@@ -530,11 +530,11 @@ class InconsistentUseOfTabsAndSpacesChecker(VisitorChecker, ModelVisitor):
         self.found, self.tabs, self.spaces = False, False, False
         super().__init__()
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.found, self.tabs, self.spaces = False, False, False
         super().visit_File(node)
 
-    def visit_Statement(self, node):  # noqa: N802
+    def visit_Statement(self, node) -> None:  # noqa: N802
         if self.found:
             return
         for token in node.get_tokens(Token.SEPARATOR):
@@ -659,14 +659,14 @@ class UnevenIndentChecker(VisitorChecker):
         self.end_of_node = False
         super().__init__()
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.indents = []
         self.parent_indent = 0
         self.parent_line = 0
         self.end_of_node = False
         self.generic_visit(node)
 
-    def visit_TestCase(self, node):  # noqa: N802
+    def visit_TestCase(self, node) -> None:  # noqa: N802
         end_index = index_of_first_standalone_comment(node)
         with block_indent(self, node):
             for index, child in enumerate(node.body):
@@ -676,13 +676,13 @@ class UnevenIndentChecker(VisitorChecker):
 
     visit_Keyword = visit_TestCase  # noqa: N815
 
-    def visit_TestCaseSection(self, node):  # noqa: N802
+    def visit_TestCaseSection(self, node) -> None:  # noqa: N802
         self.check_standalone_comments_indent(node)
 
-    def visit_KeywordSection(self, node):  # noqa: N802
+    def visit_KeywordSection(self, node) -> None:  # noqa: N802
         self.check_standalone_comments_indent(node)
 
-    def check_standalone_comments_indent(self, node):
+    def check_standalone_comments_indent(self, node) -> None:
         # comments before first test case / keyword
         for child in node.body:
             if (
@@ -699,7 +699,7 @@ class UnevenIndentChecker(VisitorChecker):
                 )
         self.generic_visit(node)
 
-    def visit_For(self, node):  # noqa: N802
+    def visit_For(self, node) -> None:  # noqa: N802
         self.visit_Statement(node.header)
         with block_indent(self, node):
             for child in node.body:
@@ -708,7 +708,7 @@ class UnevenIndentChecker(VisitorChecker):
 
     visit_While = visit_ForLoop = visit_For  # noqa: N815
 
-    def get_common_if_indent(self, node):
+    def get_common_if_indent(self, node) -> None:
         indents = count_indents(node)
         head = node
         while head.orelse:
@@ -717,7 +717,7 @@ class UnevenIndentChecker(VisitorChecker):
         most_common = most_common_indent(indents)
         self.indents.append(most_common)
 
-    def get_common_try_indent(self, node):
+    def get_common_try_indent(self, node) -> None:
         indents = count_indents(node)
         head = node
         while head.next:
@@ -726,12 +726,12 @@ class UnevenIndentChecker(VisitorChecker):
         most_common = most_common_indent(indents)
         self.indents.append(most_common)
 
-    def visit_statements_in_branch(self, node):
+    def visit_statements_in_branch(self, node) -> None:
         with replace_parent_indent(self, node):
             for child in node.body:
                 self.visit(child)
 
-    def visit_If(self, node):  # noqa: N802
+    def visit_If(self, node) -> None:  # noqa: N802
         self.visit_Statement(node.header)
         if node.type == "INLINE IF":
             return
@@ -742,7 +742,7 @@ class UnevenIndentChecker(VisitorChecker):
         self.indents.pop()
         self.visit_Statement(node.end)
 
-    def visit_IfBranch(self, node):  # noqa: N802
+    def visit_IfBranch(self, node) -> None:  # noqa: N802
         indent = self.indents.pop()
         self.visit_Statement(node.header)
         self.indents.append(indent)
@@ -750,7 +750,7 @@ class UnevenIndentChecker(VisitorChecker):
         if node.orelse is not None:
             self.visit_IfBranch(node.orelse)
 
-    def visit_Try(self, node):  # noqa: N802
+    def visit_Try(self, node) -> None:  # noqa: N802
         self.visit_Statement(node.header)
         self.get_common_try_indent(node)
         self.visit_statements_in_branch(node)
@@ -759,7 +759,7 @@ class UnevenIndentChecker(VisitorChecker):
         self.indents.pop()
         self.visit_Statement(node.end)
 
-    def visit_TryBranch(self, node):  # noqa: N802
+    def visit_TryBranch(self, node) -> None:  # noqa: N802
         indent = self.indents.pop()
         self.visit_Statement(node.header)
         self.indents.append(indent)
@@ -774,7 +774,7 @@ class UnevenIndentChecker(VisitorChecker):
             return self.param("bad-indent", "indent") * len(self.indents)
         return self.indents[-1]
 
-    def visit_Statement(self, statement):  # noqa: N802
+    def visit_Statement(self, statement) -> None:  # noqa: N802
         if statement is None or isinstance(statement, EmptyLine) or not self.indents:
             return
         # Ignore indent if current line is on the same line as parent, i.e. test case header or inline IFs
@@ -815,7 +815,7 @@ class MisalignedContinuation(VisitorChecker, ModelVisitor):
     def is_inline_if(node):
         return isinstance(node.header, InlineIfHeader)
 
-    def visit_If(self, node):  # noqa: N802
+    def visit_If(self, node) -> None:  # noqa: N802
         # suppress the rules if the multiline-inline-if is already reported
         if ROBOT_VERSION.major >= 5 and self.is_inline_if(node):
             return
@@ -828,7 +828,7 @@ class MisalignedContinuation(VisitorChecker, ModelVisitor):
         )
         # TODO: test on different version, may lack .keyword
 
-    def visit_Statement(self, node):  # noqa: N802
+    def visit_Statement(self, node) -> None:  # noqa: N802
         if not node.data_tokens or self.is_ignorable_run_keyword(node):
             return
         starting_row = self.get_indent(node.tokens)
@@ -933,7 +933,7 @@ class LeftAlignedChecker(VisitorChecker):
         "variables": "Variables",
     }
 
-    def visit_VariableSection(self, node):  # noqa: N802
+    def visit_VariableSection(self, node) -> None:  # noqa: N802
         for child in node.body:
             if not child.data_tokens:
                 continue
@@ -945,13 +945,13 @@ class LeftAlignedChecker(VisitorChecker):
                     pos = child.get_token(Token.ARGUMENT).col_offset + 1
                 self.report("variable-should-be-left-aligned", lineno=token.lineno, col=1, end_col=pos)
 
-    def visit_SettingSection(self, node):  # noqa: N802
+    def visit_SettingSection(self, node) -> None:  # noqa: N802
         for child in node.body:
             for error in get_errors(child):
                 if "Non-existing setting" in error:
                     self.parse_error(child, error)
 
-    def parse_error(self, node, error):
+    def parse_error(self, node, error) -> None:
         setting_error = re.search("Non-existing setting '(.*)'.", error)
         if not setting_error:
             return
@@ -981,7 +981,7 @@ class LeftAlignedChecker(VisitorChecker):
 class ArgumentsChecker(VisitorChecker):
     reports = ("first-argument-in-new-line",)
 
-    def visit_Arguments(self, node):  # noqa: N802
+    def visit_Arguments(self, node) -> None:  # noqa: N802
         eol_already = None
         for t in node.tokens:
             if t.type == Token.EOL:

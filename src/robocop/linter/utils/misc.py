@@ -141,14 +141,14 @@ class AssignmentTypeDetector(ast.NodeVisitor):
         self.variables_sign_counter = Counter()
         self.variables_most_common = None
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.generic_visit(node)
         if len(self.keyword_sign_counter) >= 2:
             self.keyword_most_common = self.keyword_sign_counter.most_common(1)[0][0]
         if len(self.variables_sign_counter) >= 2:
             self.variables_most_common = self.variables_sign_counter.most_common(1)[0][0]
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node) -> None:  # noqa: N802
         if node.assign:  # if keyword returns any value
             sign = self.get_assignment_sign(node.assign[-1])
             self.keyword_sign_counter[sign] += 1
@@ -245,7 +245,7 @@ class TestTemplateFinder(ast.NodeVisitor):
     def __init__(self):
         self.templated = False
 
-    def visit_TestTemplate(self, node):  # noqa: N802
+    def visit_TestTemplate(self, node) -> None:  # noqa: N802
         self.templated = bool(node.value)
 
 
@@ -378,7 +378,7 @@ def get_string_diff(prev_count, count):
     return prefix + str(diff)
 
 
-def get_plural_form(container):
+def get_plural_form(container) -> str:
     return "" if container == 1 else "s"
 
 

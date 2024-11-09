@@ -8,6 +8,7 @@ from pathlib import Path
 import robocop.linter.exceptions
 from robocop.linter.rules import RobocopImporter
 from robocop.linter.utils.misc import get_robocop_cache_directory
+from typing import NoReturn
 
 ROBOCOP_CACHE_FILE = ".robocop_cache"
 
@@ -24,15 +25,15 @@ class Report:
     DEFAULT = True
     INTERNAL = False
 
-    def configure(self, name, value):
+    def configure(self, name: str, value: str) -> None:
         raise robocop.linter.exceptions.ConfigGeneralError(
             f"Provided param '{name}' for report '{getattr(self, 'name')}' does not exist"
         )
 
-    def add_message(self, *args):
+    def add_message(self, *args) -> None:
         pass
 
-    def get_report(self, *args):
+    def get_report(self, *args) -> None:
         return None
 
 
@@ -40,10 +41,10 @@ class ComparableReport(Report):
     def __init__(self, compare_runs):
         self.compare_runs = compare_runs
 
-    def get_report(self, prev_results):
+    def get_report(self, prev_results) -> NoReturn:
         raise NotImplementedError
 
-    def persist_result(self):
+    def persist_result(self) -> NoReturn:
         raise NotImplementedError
 
 
@@ -112,9 +113,7 @@ def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
         reports: Dictionary with loaded reports.
         only_enabled: if set to True/False, it will filter reports by enabled/disabled status
     """
-    all_public_reports = [
-        report for report in load_reports(compare_runs=False).values() if not report.INTERNAL
-    ]
+    all_public_reports = [report for report in load_reports(compare_runs=False).values() if not report.INTERNAL]
     all_public_reports = sorted(all_public_reports, key=lambda x: x.name)
     configured_reports = {x.name for x in reports.values()}
     available_reports = ""
@@ -150,7 +149,7 @@ def load_reports_result_from_cache():
             return None
 
 
-def save_reports_result_to_cache(working_dir: str, report_results: dict):
+def save_reports_result_to_cache(working_dir: str, report_results: dict) -> None:
     """
     Save results from Robocop reports to json file.
 

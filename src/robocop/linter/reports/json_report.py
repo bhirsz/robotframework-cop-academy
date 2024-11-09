@@ -58,10 +58,10 @@ class JsonReport(robocop.linter.reports.Report):
         self.report_filename = "robocop.json"
         self.issues = []
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.issues.append(message.to_json())
 
-    def get_report(self):
+    def get_report(self) -> str:
         if self.output_dir is not None:
             output_path = self.output_dir / self.report_filename
         else:
@@ -71,7 +71,7 @@ class JsonReport(robocop.linter.reports.Report):
             fp.write(json_string)
         return f"\nGenerated JSON report at {output_path}"
 
-    def configure(self, name, value):
+    def configure(self, name: str, value: str) -> None:
         if name == "output_dir":
             self.output_dir = Path(value)
             self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -96,5 +96,5 @@ class InternalJsonReport(robocop.linter.reports.Report):
         self.description = "Accumulates found issues in JSON format"
         self.issues = []
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.issues.append(message.to_json())

@@ -21,7 +21,7 @@ def get_resource_with_lang(get_resource_method, source, lang):
 
 
 @robocop.linter.exceptions.handle_robot_errors
-def check_model_type(file_type_checker, model):
+def check_model_type(file_type_checker, model) -> None:
     file_type_checker.visit(model)
 
 
@@ -52,7 +52,7 @@ class FileTypeChecker(ast.NodeVisitor):
         self.exec_dir = exec_dir
         self.source = None
 
-    def visit_ResourceImport(self, node):  # noqa: N802
+    def visit_ResourceImport(self, node) -> None:  # noqa: N802
         """
         Check all imports in scanned file. If one of our scanned file is imported somewhere else
         it means this file is resource type

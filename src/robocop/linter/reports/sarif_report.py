@@ -36,7 +36,7 @@ class SarifReport(robocop.linter.reports.Report):
         self.report_filename = ".sarif.json"
         self.issues = []
 
-    def configure(self, name, value):
+    def configure(self, name, value) -> None:
         if name == "output_dir":
             self.output_dir = Path(value)
             self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ class SarifReport(robocop.linter.reports.Report):
             "help": {"text": rule.docs, "markdown": rule.docs},
         }
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.issues.append(message)
 
     def generate_sarif_issues(self, root: Path):

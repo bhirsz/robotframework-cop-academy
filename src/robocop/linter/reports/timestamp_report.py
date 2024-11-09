@@ -59,7 +59,7 @@ class TimestampReport(robocop.linter.reports.Report):
         self.timezone = "local"
         self.format = "%Y-%m-%d %H:%M:%S %z"
 
-    def configure(self, name, value):
+    def configure(self, name, value) -> None:
         if name == "timezone":
             self.timezone = value
         elif name == "format":

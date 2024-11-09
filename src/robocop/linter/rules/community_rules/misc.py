@@ -56,7 +56,7 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
         self.resources = []
         super().__init__()
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.non_builtin_libraries = []
         self.resources = []
         self.generic_visit(node)
@@ -87,11 +87,11 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
                 )
             previous = resource
 
-    def visit_LibraryImport(self, node):  # noqa: N802
+    def visit_LibraryImport(self, node) -> None:  # noqa: N802
         if node.name and node.name not in STDLIBS:
             self.non_builtin_libraries.append(node)
 
-    def visit_ResourceImport(self, node):  # noqa: N802
+    def visit_ResourceImport(self, node) -> None:  # noqa: N802
         if not node.name:
             return
         self.resources.append(node)
