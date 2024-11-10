@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from robot.api import Token
 from robot.libraries import STDLIBS
 
 from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker
+
+if TYPE_CHECKING:
+    from robot.parsing import File
+    from robot.parsing.model import Statement
 
 RULE_CATEGORY_ID = "01"
 
@@ -56,7 +64,7 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
         self.resources = []
         super().__init__()
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.non_builtin_libraries = []
         self.resources = []
         self.generic_visit(node)
@@ -87,11 +95,11 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
                 )
             previous = resource
 
-    def visit_LibraryImport(self, node) -> None:  # noqa: N802
+    def visit_LibraryImport(self, node: type[Statement]) -> None:  # noqa: N802
         if node.name and node.name not in STDLIBS:
             self.non_builtin_libraries.append(node)
 
-    def visit_ResourceImport(self, node) -> None:  # noqa: N802
+    def visit_ResourceImport(self, node: type[Statement]) -> None:  # noqa: N802
         if not node.name:
             return
         self.resources.append(node)

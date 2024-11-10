@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import inspect
 import json
 from collections import OrderedDict
 from inspect import isclass
 from pathlib import Path
+from typing import NoReturn
 
 import robocop.linter.exceptions
 from robocop.linter.rules import RobocopImporter
 from robocop.linter.utils.misc import get_robocop_cache_directory
-from typing import NoReturn
 
 ROBOCOP_CACHE_FILE = ".robocop_cache"
 
@@ -27,7 +28,7 @@ class Report:
 
     def configure(self, name: str, value: str) -> None:
         raise robocop.linter.exceptions.ConfigGeneralError(
-            f"Provided param '{name}' for report '{getattr(self, 'name')}' does not exist"
+            f"Provided param '{name}' for report '{self.name}' does not exist"
         )
 
     def add_message(self, *args) -> None:
@@ -112,6 +113,7 @@ def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
     Args:
         reports: Dictionary with loaded reports.
         only_enabled: if set to True/False, it will filter reports by enabled/disabled status
+
     """
     all_public_reports = [report for report in load_reports(compare_runs=False).values() if not report.INTERNAL]
     all_public_reports = sorted(all_public_reports, key=lambda x: x.name)

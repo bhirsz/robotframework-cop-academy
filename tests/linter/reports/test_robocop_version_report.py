@@ -1,7 +1,7 @@
 import pytest
 
-from robocop.linter.reports.robocop_version_report import RobocopVersionReport
 from robocop import __version__
+from robocop.linter.reports.robocop_version_report import RobocopVersionReport
 
 
 class TestRobocopVersionReport:

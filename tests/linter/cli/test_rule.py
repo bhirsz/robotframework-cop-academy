@@ -3,8 +3,6 @@ from unittest.mock import MagicMock, patch
 
 from robocop.cli import describe_rule
 
-from tests.linter.cli.conftest import loaded_linter
-
 
 class TestDescribeRule:
     def test_describe_rule(self, loaded_linter, capsys):

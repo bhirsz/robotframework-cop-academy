@@ -6,14 +6,16 @@ import os
 import re
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from robocop.cli import check_files
-from robocop.linter.rules import RuleSeverity
-
 from robocop.linter.utils.misc import ROBOT_VERSION
 from robocop.linter.utils.version_matching import VersionSpecifier
+
+if TYPE_CHECKING:
+    from robocop.linter.rules import RuleSeverity
 
 
 @contextlib.contextmanager

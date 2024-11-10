@@ -82,7 +82,7 @@ class TimestampReport(robocop.linter.reports.Report):
             return datetime.now(timezone_code).strftime(self.format)
         except pytz.exceptions.UnknownTimeZoneError as err:
             raise robocop.linter.exceptions.ConfigGeneralError(
-                f"Provided timezone '{self.timezone}' for report '{getattr(self, 'name')}' is not valid. "
+                f"Provided timezone '{self.timezone}' for report '{self.name}' is not valid. "
                 "Use timezone names like `Europe\\Helsinki`."
                 "See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zone"
             ) from err

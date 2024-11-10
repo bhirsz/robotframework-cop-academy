@@ -1,11 +1,18 @@
 """Tags checkers"""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 from robot.api import Token
 
 from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker
 from robocop.linter.utils import variable_matcher
+
+if TYPE_CHECKING:
+    from robot.parsing import File
+    from robot.parsing.model.statements import Node
 
 RULE_CATEGORY_ID = "06"
 
@@ -240,12 +247,12 @@ class TagNameChecker(VisitorChecker):
         "robot:private",
     }
 
-    def visit_ForceTags(self, node) -> None:  # noqa: N802
+    def visit_ForceTags(self, node: type[Node]) -> None:  # noqa: N802
         self.check_tags(node)
 
     visit_DefaultTags = visit_Tags = visit_KeywordTags = visit_ForceTags  # noqa: N815
 
-    def visit_Documentation(self, node) -> None:  # noqa: N802
+    def visit_Documentation(self, node: type[Node]) -> None:  # noqa: N802
         """
         Parse tags from last line of documentation.
 
@@ -282,12 +289,12 @@ class TagNameChecker(VisitorChecker):
         subtoken.col_offset = col_offset
         return subtoken
 
-    def visit_Keyword(self, node) -> None:  # noqa: N802
+    def visit_Keyword(self, node: type[Node]) -> None:  # noqa: N802
         self.is_keyword = True
         super().generic_visit(node)
         self.is_keyword = False
 
-    def check_tags(self, node) -> None:
+    def check_tags(self, node: type[Node]) -> None:
         tags = defaultdict(list)
         for tag in node.data_tokens[1:]:
             normalized_tag = tag.value.lower().replace(" ", "")
@@ -295,7 +302,7 @@ class TagNameChecker(VisitorChecker):
             self.check_tag(tag, node)
         self.check_duplicates(tags)
 
-    def check_duplicates(self, tags) -> None:
+    def check_duplicates(self, tags: defaultdict[list]) -> None:
         for nodes in tags.values():
             for duplicate in nodes[1:]:
                 self.report(
@@ -308,7 +315,7 @@ class TagNameChecker(VisitorChecker):
                     end_col=duplicate.end_col_offset + 1,
                 )
 
-    def check_tag(self, tag_token, node) -> None:
+    def check_tag(self, tag_token: Token, node: type[Node]) -> None:
         var_found = False
         substrings = []
         after = tag_token.value
@@ -331,7 +338,7 @@ class TagNameChecker(VisitorChecker):
                 end_col=tag_token.end_col_offset,
             )
 
-    def check_tag_substring(self, substring, tag, node) -> bool:
+    def check_tag_substring(self, substring: str, tag: Token, node: type[Node]) -> bool:
         res = False
         if " " in substring:
             self.report(
@@ -369,7 +376,7 @@ class TagScopeChecker(VisitorChecker):
         self.in_keywords = False
         super().__init__()
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.tags = []
         self.test_tags = set()
         self.default_tags = set()
@@ -400,24 +407,24 @@ class TagScopeChecker(VisitorChecker):
                 node=report_node,
             )
 
-    def visit_KeywordSection(self, node) -> None:  # noqa: N802
+    def visit_KeywordSection(self, node: type[Node]) -> None:  # noqa: N802
         self.in_keywords = True
         self.generic_visit(node)
         self.in_keywords = False
 
-    def visit_TestCase(self, node) -> None:  # noqa: N802
+    def visit_TestCase(self, node: type[Node]) -> None:  # noqa: N802
         self.test_cases_count += 1
         self.generic_visit(node)
 
-    def visit_ForceTags(self, node) -> None:  # noqa: N802
+    def visit_ForceTags(self, node: type[Node]) -> None:  # noqa: N802
         self.test_tags = {token.value for token in node.data_tokens[1:]}
         self.test_tags_node = node
 
-    def visit_DefaultTags(self, node) -> None:  # noqa: N802
+    def visit_DefaultTags(self, node: type[Node]) -> None:  # noqa: N802
         self.default_tags = {token.value for token in node.data_tokens[1:]}
         self.default_tags_node = node
 
-    def visit_Tags(self, node) -> None:  # noqa: N802
+    def visit_Tags(self, node: type[Node]) -> None:  # noqa: N802
         if not node.values:
             suffix = "" if self.in_keywords else ". Consider using NONE if you want to overwrite the Default Tags"
             self.report(
@@ -459,7 +466,7 @@ class KeywordTagsChecker(VisitorChecker):
         self.in_keywords = False
         super().__init__()
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.tags_in_keywords = []
         self.keyword_tags = set()
         self.keyword_tags_node = None
@@ -481,20 +488,20 @@ class KeywordTagsChecker(VisitorChecker):
                 node=report_node,
             )
 
-    def visit_Keyword(self, node) -> None:  # noqa: N802
+    def visit_Keyword(self, node: type[Node]) -> None:  # noqa: N802
         self.keywords_count += 1
         self.generic_visit(node)
 
-    def visit_KeywordTags(self, node) -> None:  # noqa: N802
+    def visit_KeywordTags(self, node: type[Node]) -> None:  # noqa: N802
         self.keyword_tags = {token.value for token in node.data_tokens[1:]}
         self.keyword_tags_node = node
 
-    def visit_KeywordSection(self, node) -> None:  # noqa: N802
+    def visit_KeywordSection(self, node: type[Node]) -> None:  # noqa: N802
         self.in_keywords = True
         self.generic_visit(node)
         self.in_keywords = False
 
-    def visit_Tags(self, node) -> None:  # noqa: N802
+    def visit_Tags(self, node: type[Node]) -> None:  # noqa: N802
         if self.in_keywords:
             self.tags_in_keywords.append([tag.value for tag in node.data_tokens[1:]])
         for tag in node.data_tokens[1:]:

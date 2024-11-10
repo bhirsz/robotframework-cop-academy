@@ -1,8 +1,11 @@
 """Spacing checkers"""
 
+from __future__ import annotations
+
 import re
 from collections import Counter
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 from robot.api import Token
 from robot.parsing.model.blocks import Keyword, TestCase
@@ -19,6 +22,14 @@ except ImportError:
 from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker
 from robocop.linter.utils import get_errors, get_section_name, str2bool, token_col
 from robocop.linter.utils.run_keywords import is_run_keyword
+
+if TYPE_CHECKING:
+    from robot.parsing import File
+    from robot.parsing.model import Block, Section
+    from robot.parsing.model.statements import Node, Statement
+
+    from robocop.linter.rules import BaseChecker
+
 
 RULE_CATEGORY_ID = "10"
 
@@ -341,7 +352,7 @@ class InvalidSpacingChecker(RawFileChecker):
             if not empty_lines and not last_line.endswith(("\n", "\r")):
                 self.report("missing-trailing-blank-line", lineno=len(self.raw_lines), end_col=len(last_line) + 1)
 
-    def check_line(self, line, lineno) -> None:
+    def check_line(self, line: str, lineno: int) -> None:
         self.raw_lines.append(line)
 
         stripped_line = line.rstrip("\n\r")
@@ -361,7 +372,9 @@ class EmptyLinesChecker(VisitorChecker):
         "empty-lines-in-statement",
     )
 
-    def verify_consecutive_empty_lines(self, lines, check_leading=True, check_trailing=False):
+    def verify_consecutive_empty_lines(
+        self, lines: list[Statement], check_leading: bool = True, check_trailing: bool = False
+    ):
         allowed_consecutive = self.param("consecutive-empty-lines", "empty_lines")
         empty_lines = 0
         last_empty_line = None
@@ -400,7 +413,7 @@ class EmptyLinesChecker(VisitorChecker):
             )
         return empty_lines
 
-    def check_empty_lines_in_keyword_test(self, node):
+    def check_empty_lines_in_keyword_test(self, node: type[Node]):
         """
         Verify number of consecutive empty lines inside keyword or test.
         Return number of trailing empty lines.
@@ -417,7 +430,7 @@ class EmptyLinesChecker(VisitorChecker):
         self.verify_consecutive_empty_lines(reversed(node_lines))
         return self.verify_consecutive_empty_lines(reversed(trailing_lines))
 
-    def visit_Statement(self, node) -> None:  # noqa: N802
+    def visit_Statement(self, node: Statement) -> None:  # noqa: N802
         prev_token = None
         for token in node.tokens:
             if token.type == Token.EOL:
@@ -427,15 +440,17 @@ class EmptyLinesChecker(VisitorChecker):
             else:
                 prev_token = None
 
-    def visit_VariableSection(self, node) -> None:  # noqa: N802
+    def visit_VariableSection(self, node: type[Node]) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_leading=False)
         self.generic_visit(node)
 
-    def visit_SettingSection(self, node) -> None:  # noqa: N802
+    def visit_SettingSection(self, node: type[Node]) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_leading=False)
         self.generic_visit(node)
 
-    def verify_empty_lines_between_nodes(self, node, node_type, issue_name, allowed_empty_lines) -> None:
+    def verify_empty_lines_between_nodes(
+        self, node: type[Node], node_type: type, issue_name: str, allowed_empty_lines: int
+    ) -> None:
         last_index = len(node.body) - 1
         for index, child in enumerate(node.body):
             if not isinstance(child, node_type):
@@ -452,11 +467,11 @@ class EmptyLinesChecker(VisitorChecker):
                 )
         self.generic_visit(node)
 
-    def visit_TestCaseSection(self, node) -> None:  # noqa: N802
+    def visit_TestCaseSection(self, node: type[Node]) -> None:  # noqa: N802
         allowed_lines = -1 if self.templated_suite else self.param("empty-lines-between-test-cases", "empty_lines")
         self.verify_empty_lines_between_nodes(node, TestCase, "empty-lines-between-test-cases", allowed_lines)
 
-    def visit_KeywordSection(self, node) -> None:  # noqa: N802
+    def visit_KeywordSection(self, node: type[Node]) -> None:  # noqa: N802
         self.verify_empty_lines_between_nodes(
             node,
             Keyword,
@@ -464,13 +479,13 @@ class EmptyLinesChecker(VisitorChecker):
             self.param("empty-lines-between-keywords", "empty_lines"),
         )
 
-    def visit_For(self, node) -> None:  # noqa: N802
+    def visit_For(self, node: type[Node]) -> None:  # noqa: N802
         self.verify_consecutive_empty_lines(node.body, check_trailing=True)
         self.generic_visit(node)
 
     visit_ForLoop = visit_While = visit_Try = visit_If = visit_For  # noqa: N815
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         for section in node.sections:
             self.check_empty_lines_after_section(section)
         for section in node.sections[:-1]:
@@ -500,7 +515,7 @@ class EmptyLinesChecker(VisitorChecker):
                 )
         super().visit_File(node)
 
-    def check_empty_lines_after_section(self, section) -> None:
+    def check_empty_lines_after_section(self, section: Section) -> None:
         empty_lines = []
         for child in section.body:
             if not isinstance(child, EmptyLine):
@@ -530,11 +545,11 @@ class InconsistentUseOfTabsAndSpacesChecker(VisitorChecker, ModelVisitor):
         self.found, self.tabs, self.spaces = False, False, False
         super().__init__()
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.found, self.tabs, self.spaces = False, False, False
         super().visit_File(node)
 
-    def visit_Statement(self, node) -> None:  # noqa: N802
+    def visit_Statement(self, node: Statement) -> None:  # noqa: N802
         if self.found:
             return
         for token in node.get_tokens(Token.SEPARATOR):
@@ -547,7 +562,7 @@ class InconsistentUseOfTabsAndSpacesChecker(VisitorChecker, ModelVisitor):
                 break
 
 
-def get_indent(node):
+def get_indent(node: type[Node]) -> int:
     """
     Calculate the indentation length for given node
 
@@ -564,7 +579,7 @@ def get_indent(node):
     return indent_len
 
 
-def count_indents(node):
+def count_indents(node: type[Node]) -> Counter:
     """
     Count number of occurrences for unique indent values
 
@@ -586,7 +601,7 @@ def count_indents(node):
     return indents
 
 
-def most_common_indent(indents):
+def most_common_indent(indents: Counter) -> int:
     """
     Return most commonly occurred indent
 
@@ -605,7 +620,7 @@ def most_common_indent(indents):
 
 
 @contextmanager
-def replace_parent_indent(checker, node):
+def replace_parent_indent(checker: type[BaseChecker], node: type[Node]):
     """Temporarily replace parent indent with current node indent."""
     parent_line = checker.parent_line
     parent_indent = checker.parent_indent
@@ -617,7 +632,7 @@ def replace_parent_indent(checker, node):
 
 
 @contextmanager
-def block_indent(checker, node):
+def block_indent(checker: type[BaseChecker], node: type[Node]):
     """
     Temporarily replace parent indent and store
     current node indents in the stack.
@@ -631,7 +646,7 @@ def block_indent(checker, node):
         checker.end_of_node = False
 
 
-def index_of_first_standalone_comment(node):
+def index_of_first_standalone_comment(node: type[Node]) -> int:
     """
     Get index of first standalone comment.
     Comment can be standalone only if there are not other data statements in the node.
@@ -659,14 +674,14 @@ class UnevenIndentChecker(VisitorChecker):
         self.end_of_node = False
         super().__init__()
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.indents = []
         self.parent_indent = 0
         self.parent_line = 0
         self.end_of_node = False
         self.generic_visit(node)
 
-    def visit_TestCase(self, node) -> None:  # noqa: N802
+    def visit_TestCase(self, node: type[Block]) -> None:  # noqa: N802
         end_index = index_of_first_standalone_comment(node)
         with block_indent(self, node):
             for index, child in enumerate(node.body):

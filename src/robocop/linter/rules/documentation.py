@@ -1,6 +1,7 @@
 """Documentation checkers"""
 
 from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,7 +13,7 @@ from robocop.linter.utils.misc import str2bool
 RULE_CATEGORY_ID = "02"
 
 if TYPE_CHECKING:
-    from robot.parsing.model import Keyword, TestCase, SettingSection, File
+    from robot.parsing.model import File, Keyword, SettingSection, TestCase
 
 rules = {
     "0201": Rule(

@@ -1,6 +1,7 @@
 """Comments checkers"""
 
 from __future__ import annotations
+
 import re
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from typing import TYPE_CHECKING
@@ -11,10 +12,9 @@ from robot.utils import FileReader
 from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.utils import ROBOT_VERSION
 
-
 if TYPE_CHECKING:
     from robot.api import Token
-    from robot.parsing.model import Statement, TestCase, Keyword
+    from robot.parsing.model import Keyword, Statement, TestCase
     from robot.parsing.model.statements import Comment
 
 

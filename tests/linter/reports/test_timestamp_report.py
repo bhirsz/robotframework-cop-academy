@@ -9,8 +9,7 @@ from robocop.linter.rules import Message
 
 class TestTimestampReport:
     @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
-    @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_timestamp_report(self, rule, compare_runs, previous_results):
+    def test_timestamp_report(self, rule, previous_results):
         report = TimestampReport()
         issue = Message(
             rule=rule,

@@ -46,7 +46,7 @@ from functools import total_ordering
 from importlib import import_module
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Optional, NoReturn
+from typing import TYPE_CHECKING, Any, Callable, NoReturn, Optional
 
 from jinja2 import Template
 from robot.utils import FileReader
@@ -69,6 +69,8 @@ except ImportError:
 
 if TYPE_CHECKING:
     from re import Pattern
+
+    from robot.parsing import File
 
     from robocop.linter.runner import RobocopLinter
 
@@ -642,7 +644,9 @@ class BaseChecker:
 
 
 class VisitorChecker(BaseChecker, ModelVisitor):
-    def scan_file(self, ast_model, filename, in_memory_content, templated=False) -> list[Message]:
+    def scan_file(
+        self, ast_model: File, filename: str, in_memory_content: str | None, templated: bool = False
+    ) -> list[Message]:
         self.issues: list[Message] = []
         self.source = filename
         self.templated_suite = templated
@@ -653,7 +657,7 @@ class VisitorChecker(BaseChecker, ModelVisitor):
         self.visit_File(ast_model)
         return self.issues
 
-    def visit_File(self, node) -> None:  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         """Perform generic ast visit on file node."""
         self.generic_visit(node)
 

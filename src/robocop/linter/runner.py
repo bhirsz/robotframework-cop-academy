@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from robot.api import get_init_model, get_model, get_resource_model
 
@@ -10,7 +12,9 @@ from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
 if TYPE_CHECKING:
-    from robocop.linter.rules import Message, Rule  # TODO: Check if circular import will not happen
+    from robot.parsing import File
+
+    from robocop.linter.rules import BaseChecker, Message, Rule  # TODO: Check if circular import will not happen
 
 
 class RobocopLinter:
@@ -46,7 +50,7 @@ class RobocopLinter:
         #     print(available_reports)
         #     sys.exit()
 
-    def register_checker(self, checker) -> None:  # [type[BaseChecker]]
+    def register_checker(self, checker: type[BaseChecker]) -> None:  # [type[BaseChecker]]
         for rule_name, rule in checker.rules.items():
             self.rules[rule_name] = rule
             self.rules[rule.rule_id] = rule
@@ -59,13 +63,13 @@ class RobocopLinter:
             if not self.any_rule_enabled(checker, rule_matcher):
                 checker.disabled = True
 
-    def any_rule_enabled(self, checker, rule_matcher: RuleMatcher) -> bool:
+    def any_rule_enabled(self, checker: type[BaseChecker], rule_matcher: RuleMatcher) -> bool:
         for name, rule in checker.rules.items():
             rule.enabled = rule_matcher.is_rule_enabled(rule)
             checker.rules[name] = rule
         return any(msg.enabled for msg in checker.rules.values())
 
-    def get_model_for_file_type(self, source: Path):
+    def get_model_for_file_type(self, source: Path) -> File:
         """Recognize model type of the file and load the model."""
         # TODO: decide to migrate file type recognition based on imports from robocop
         # TODO: language
@@ -95,7 +99,7 @@ class RobocopLinter:
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
 
-    def run_check(self, ast_model, filename: str, source=None) -> list["Message"]:
+    def run_check(self, ast_model: File, filename: str, source: str | None = None) -> list[Message]:
         disablers = DisablersFinder(ast_model)
         if disablers.file_disabled:
             return []
@@ -111,7 +115,7 @@ class RobocopLinter:
             ]
         return found_issues
 
-    def report(self, rule_msg: "Message") -> None:
+    def report(self, rule_msg: Message) -> None:
         for report in self.reports.values():
             report.add_message(rule_msg)
         try:

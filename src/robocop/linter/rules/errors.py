@@ -577,7 +577,8 @@ class ParsingErrorChecker(VisitorChecker):
 
     def handle_positional_after_named(self, node, error_index) -> None:
         """
-        Robot Framework reports all errors on parent node. That's why we need to find which token is invalid - and in
+        Robot Framework reports all errors on parent node.
+        That's why we need to find which token is invalid - and in
         case there are several invalid tokens we need to skip tokens that were already reported for particular node.
         """
         named_found = False
