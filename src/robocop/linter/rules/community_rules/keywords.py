@@ -148,7 +148,7 @@ class SleepKeywordUsedChecker(VisitorChecker):
 
     reports = ("sleep-keyword-used",)
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node) -> None:  # noqa: N802
         if not node.keyword:  # Keyword name can be empty if the syntax is invalid
             return
         # Robot Framework ignores case, underscores and whitespace when searching for keywords
@@ -184,11 +184,11 @@ class SleepKeywordUsedChecker(VisitorChecker):
 class NotAllowedKeyword(VisitorChecker):
     reports = ("not-allowed-keyword",)
 
-    def check_keyword_naming_with_subkeywords(self, node, name_token_type):
+    def check_keyword_naming_with_subkeywords(self, node, name_token_type) -> None:
         for keyword in iterate_keyword_names(node, name_token_type):
             self.check_keyword_naming(keyword.value, keyword)
 
-    def check_keyword_naming(self, name: str, keyword):
+    def check_keyword_naming(self, name: str, keyword) -> None:
         if not name:
             return
         not_allowed = self.param("not-allowed-keyword", "keywords")
@@ -208,12 +208,12 @@ class NotAllowedKeyword(VisitorChecker):
             end_col=keyword.end_col_offset + 1,
         )
 
-    def visit_Setup(self, node):  # noqa: N802
+    def visit_Setup(self, node) -> None:  # noqa: N802
         self.check_keyword_naming_with_subkeywords(node, Token.NAME)
 
     visit_TestTeardown = visit_SuiteTeardown = visit_Teardown = visit_TestSetup = visit_SuiteSetup = visit_Setup  # noqa: N815
 
-    def visit_Template(self, node):  # noqa: N802
+    def visit_Template(self, node) -> None:  # noqa: N802
         # allow / disallow param
         if node.value:
             name_token = node.get_token(Token.NAME)
@@ -222,14 +222,14 @@ class NotAllowedKeyword(VisitorChecker):
 
     visit_TestTemplate = visit_Template  # noqa: N815
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node) -> None:  # noqa: N802
         self.check_keyword_naming_with_subkeywords(node, Token.KEYWORD)
 
 
 class NoEmbeddedKeywordArgumentsChecker(VisitorChecker):
     reports = ("no-embedded-keyword-arguments",)
 
-    def visit_Keyword(self, node: Keyword):  # noqa: N802
+    def visit_Keyword(self, node: Keyword) -> None:  # noqa: N802
         name_token: Token = node.header.get_token(Token.KEYWORD_NAME)
         variable_tokens = [t for t in name_token.tokenize_variables() if t.type == Token.VARIABLE]
 

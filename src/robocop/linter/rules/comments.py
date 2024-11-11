@@ -1,13 +1,21 @@
 """Comments checkers"""
 
+from __future__ import annotations
+
 import re
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
+from typing import TYPE_CHECKING
 
 from robot.api import Token
 from robot.utils import FileReader
 
 from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.utils import ROBOT_VERSION
+
+if TYPE_CHECKING:
+    from robot.api import Token
+    from robot.parsing.model import Keyword, Statement, TestCase
+    from robot.parsing.model.statements import Comment
 
 
 def regex(value):
@@ -174,19 +182,19 @@ class CommentChecker(VisitorChecker):
             self._block = self.param("missing-space-after-comment", "block")
         return self._block
 
-    def visit_Comment(self, node):  # noqa: N802
+    def visit_Comment(self, node: Comment) -> None:  # noqa: N802
         self.find_comments(node)
 
-    def visit_TestCase(self, node):  # noqa: N802
+    def visit_TestCase(self, node: TestCase) -> None:  # noqa: N802
         self.check_invalid_comments(node.name, node)
         self.generic_visit(node)
 
     visit_Keyword = visit_TestCase  # noqa: N815
 
-    def visit_Statement(self, node):  # noqa: N802
+    def visit_Statement(self, node: Statement) -> None:  # noqa: N802
         self.find_comments(node)
 
-    def find_comments(self, node):
+    def find_comments(self, node: Comment | Keyword | TestCase) -> None:
         """
         Find comments in node and check them for validity.
         Line can have only one comment, but the comment can contain separators.
@@ -209,14 +217,14 @@ class CommentChecker(VisitorChecker):
             if first_comment:
                 self.check_comment_content(first_comment, merged_comment)
 
-    def check_invalid_comments(self, name, node):
+    def check_invalid_comments(self, name: str, node: TestCase) -> None:
         if ROBOT_VERSION.major != 3:
             return
         if name and name.lstrip().startswith("#"):
             hash_pos = name.find("#")
             self.report("invalid-comment", node=node, col=node.col_offset + hash_pos + 1, end_col=len(name))
 
-    def check_comment_content(self, token, content):
+    def check_comment_content(self, token: Token, content: str) -> None:
         low_content = content.lower()
         for violation in [marker for marker in self.markers if marker in low_content]:
             index = low_content.find(violation)
@@ -234,7 +242,7 @@ class CommentChecker(VisitorChecker):
                 end_col=token.col_offset + len(content) + 1,
             )
 
-    def is_block_comment(self, comment):
+    def is_block_comment(self, comment: str) -> bool:
         return comment == "#" or self.block.match(comment) is not None
 
 
@@ -256,7 +264,7 @@ class IgnoredDataChecker(RawFileChecker):
         self.ignore_empty_lines = False  # ignore empty lines if language header or robocop disabler is present
         super().__init__()
 
-    def parse_file(self):
+    def parse_file(self) -> None:
         self.is_bom = False
         self.ignore_empty_lines = False
         if self.lines is not None:
@@ -270,7 +278,7 @@ class IgnoredDataChecker(RawFileChecker):
                     if self.check_line(line, lineno):
                         break
 
-    def check_line(self, line, lineno):
+    def check_line(self, line: str, lineno: int) -> bool:
         if line.startswith(self.SECTION_HEADER):
             return True
         if line.startswith((self.ROBOCOP_HEADER, self.ROBOTIDY_HEADER)):
@@ -288,7 +296,7 @@ class IgnoredDataChecker(RawFileChecker):
         self.report("ignored-data", lineno=lineno, col=1, end_col=len(line))
         return True
 
-    def detect_bom(self, source):
+    def detect_bom(self, source: str) -> bool:
         with open(source, "rb") as raw_file:
             first_four = raw_file.read(4)
             self.is_bom = any(first_four.startswith(bom_marker) for bom_marker in IgnoredDataChecker.BOM)

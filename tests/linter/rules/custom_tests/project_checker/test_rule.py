@@ -8,7 +8,7 @@ CUR_DIR = Path(__file__).parent
 
 
 class TestRuleAcceptance(RuleAcceptance):
-    @pytest.mark.xfail(reason="Custom test needs to be reimplemented")  # FIXME
+    @pytest.mark.xfail(reason="Custom test needs to be reimplemented")  # FIXME: reimplement custom test
     def test_rule(self):
         self.check_rule(
             src_files=["."],

@@ -1,7 +1,7 @@
 import pytest
 
-from robocop.linter.runner import RobocopLinter
 from robocop.config import ConfigManager
+from robocop.linter.runner import RobocopLinter
 
 
 @pytest.fixture

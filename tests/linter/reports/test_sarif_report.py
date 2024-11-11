@@ -3,10 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from robocop.config import Config
+from robocop import __version__
 from robocop.linter.reports.sarif_report import SarifReport
 from robocop.linter.rules import Message
-from robocop import __version__
 
 
 class TestSarifReport:
@@ -24,7 +23,7 @@ class TestSarifReport:
 
     @pytest.mark.parametrize("compare_runs", [True, False])
     def test_sarif_report(self, rule, rule2, compare_runs, tmp_path):
-        root = Path(".").resolve()
+        root = Path().resolve()
         rules = {m.rule_id: m for m in (rule, rule2)}
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"

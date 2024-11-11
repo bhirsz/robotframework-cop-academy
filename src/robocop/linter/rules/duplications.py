@@ -294,7 +294,7 @@ class DuplicationsChecker(VisitorChecker):
         self.variable_imports = defaultdict(list)
         super().__init__()
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.test_cases = defaultdict(list)
         self.keywords = defaultdict(list)
         self.variables = defaultdict(list)
@@ -311,7 +311,7 @@ class DuplicationsChecker(VisitorChecker):
         self.check_duplicates(self.variable_imports, "duplicated-variables-import", True)
         self.check_library_duplicates(self.libraries, "duplicated-library")
 
-    def check_duplicates(self, container, rule, underline_whole_line=False):
+    def check_duplicates(self, container, rule, underline_whole_line=False) -> None:
         for nodes in container.values():
             for duplicate in nodes[1:]:
                 if underline_whole_line:
@@ -322,7 +322,7 @@ class DuplicationsChecker(VisitorChecker):
                     rule, name=duplicate.name, first_occurrence_line=nodes[0].lineno, node=duplicate, end_col=end_col
                 )
 
-    def check_library_duplicates(self, container, rule):
+    def check_library_duplicates(self, container, rule) -> None:
         for nodes in container.values():
             for duplicate in nodes[1:]:
                 lib_token = duplicate.get_token(Token.NAME)
@@ -335,17 +335,17 @@ class DuplicationsChecker(VisitorChecker):
                     end_col=lib_token.end_col_offset + 1,
                 )
 
-    def visit_TestCase(self, node):  # noqa: N802
+    def visit_TestCase(self, node) -> None:  # noqa: N802
         testcase_name = normalize_robot_name(node.name)
         self.test_cases[testcase_name].append(node)
         self.generic_visit(node)
 
-    def visit_Keyword(self, node):  # noqa: N802
+    def visit_Keyword(self, node) -> None:  # noqa: N802
         keyword_name = normalize_robot_name(node.name)
         self.keywords[keyword_name].append(node)
         self.generic_visit(node)
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node) -> None:  # noqa: N802
         assign = node.get_tokens(Token.ASSIGN)
         seen = set()
         for var in assign:
@@ -365,10 +365,10 @@ class DuplicationsChecker(VisitorChecker):
             else:
                 seen.add(name)
 
-    def visit_VariableSection(self, node):  # noqa: N802
+    def visit_VariableSection(self, node) -> None:  # noqa: N802
         self.generic_visit(node)
 
-    def visit_Variable(self, node):  # noqa: N802
+    def visit_Variable(self, node) -> None:  # noqa: N802
         if not node.name or get_errors(node):
             return
         var_name = normalize_robot_name(self.replace_chars(node.name, "${}@&"))
@@ -378,22 +378,22 @@ class DuplicationsChecker(VisitorChecker):
     def replace_chars(name, chars):
         return "".join(c for c in name if c not in chars)
 
-    def visit_ResourceImport(self, node):  # noqa: N802
+    def visit_ResourceImport(self, node) -> None:  # noqa: N802
         if node.name:
             self.resources[node.name].append(node)
 
-    def visit_LibraryImport(self, node):  # noqa: N802
+    def visit_LibraryImport(self, node) -> None:  # noqa: N802
         if not node.name:
             return
         lib_name = node.alias if node.alias else node.name
         name_with_args = lib_name + "".join(token.value for token in node.get_tokens(Token.ARGUMENT))
         self.libraries[name_with_args].append(node)
 
-    def visit_Metadata(self, node):  # noqa: N802
+    def visit_Metadata(self, node) -> None:  # noqa: N802
         if node.name is not None:
             self.metadata[node.name + node.value].append(node)
 
-    def visit_VariablesImport(self, node):  # noqa: N802
+    def visit_VariablesImport(self, node) -> None:  # noqa: N802
         if not node.name:
             return
         # only YAML files can't have arguments - covered in E0404 variables-import-with-args
@@ -402,7 +402,7 @@ class DuplicationsChecker(VisitorChecker):
         name_with_args = node.name + "".join(token.value for token in node.data_tokens[2:])
         self.variable_imports[name_with_args].append(node)
 
-    def visit_Arguments(self, node):  # noqa: N802
+    def visit_Arguments(self, node) -> None:  # noqa: N802
         args = set()
         for arg in node.get_tokens(Token.ARGUMENT):
             orig, *_ = arg.value.split("=", maxsplit=1)
@@ -419,7 +419,7 @@ class DuplicationsChecker(VisitorChecker):
             else:
                 args.add(name)
 
-    def visit_Error(self, node):  # noqa: N802
+    def visit_Error(self, node) -> None:  # noqa: N802
         for error in get_errors(node):
             if "is allowed only once" in error:
                 self.report(
@@ -458,12 +458,12 @@ class SectionHeadersChecker(VisitorChecker):
                 order_str.append(mapped_name)
         return " > ".join(order_str)
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node) -> None:  # noqa: N802
         self.sections_by_order = []
         self.sections_by_existence = {}
         super().visit_File(node)
 
-    def visit_SectionHeader(self, node):  # noqa: N802
+    def visit_SectionHeader(self, node) -> None:  # noqa: N802
         section_name = node.type
         if section_name not in self.param("section-out-of-order", "sections_order"):
             return

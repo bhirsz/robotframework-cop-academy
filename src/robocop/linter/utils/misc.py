@@ -10,6 +10,7 @@ from collections import Counter, defaultdict, namedtuple
 from io import StringIO
 from pathlib import Path
 from tokenize import generate_tokens
+from typing import TYPE_CHECKING
 
 import platformdirs
 from robot.api import Token
@@ -25,6 +26,10 @@ from robot.version import VERSION as RF_VERSION
 from robocop import __version__
 from robocop.linter.utils.variable_matcher import VariableMatches
 from robocop.linter.utils.version_matching import Version
+
+if TYPE_CHECKING:
+    from robot.parsing.model import File, Keyword, Section, VariableSection
+    from robot.parsing.model.statements import KeywordCall, Node, TestTemplate, Var
 
 ROBOT_VERSION = Version(RF_VERSION)
 ROBOT_WITH_LANG = Version("6.0")
@@ -60,7 +65,7 @@ def get_return_classes() -> ReturnClasses:
 RETURN_CLASSES = get_return_classes()
 
 
-def rf_supports_lang():
+def rf_supports_lang() -> bool:
     return ROBOT_VERSION >= ROBOT_WITH_LANG
 
 
@@ -75,7 +80,7 @@ def normalize_robot_var_name(name: str) -> str:
     return normalize_robot_name(name)[2:-1] if name else ""
 
 
-def remove_nested_variables(var_name):
+def remove_nested_variables(var_name: str) -> str:
     for match in VariableMatches(var_name, ignore_errors=True):
         # take what surrounds it and run the check again
         var_name = remove_nested_variables(match.before + match.after)
@@ -83,11 +88,11 @@ def remove_nested_variables(var_name):
     return var_name.strip()
 
 
-def keyword_col(node) -> int:
+def keyword_col(node: Keyword) -> int:
     return token_col(node, Token.KEYWORD)
 
 
-def token_col(node, *token_type) -> int:
+def token_col(node: type[Node], *token_type) -> int:
     if ROBOT_VERSION.major == 3:
         for tok_type in token_type:
             token = node.get_token(tok_type)
@@ -103,7 +108,7 @@ def token_col(node, *token_type) -> int:
     return token.col_offset + 1
 
 
-def issues_to_lsp_diagnostic(issues) -> list[dict]:
+def issues_to_lsp_diagnostic(issues: list[Message]) -> list[dict]:
     return [
         {
             "range": {
@@ -126,7 +131,7 @@ def issues_to_lsp_diagnostic(issues) -> list[dict]:
     ]
 
 
-def str2bool(v):
+def str2bool(v: bool | str) -> str:
     if isinstance(v, bool):
         return v
     return v.lower() in ("yes", "true", "1")
@@ -141,19 +146,19 @@ class AssignmentTypeDetector(ast.NodeVisitor):
         self.variables_sign_counter = Counter()
         self.variables_most_common = None
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.generic_visit(node)
         if len(self.keyword_sign_counter) >= 2:
             self.keyword_most_common = self.keyword_sign_counter.most_common(1)[0][0]
         if len(self.variables_sign_counter) >= 2:
             self.variables_most_common = self.variables_sign_counter.most_common(1)[0][0]
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node: KeywordCall) -> None:  # noqa: N802
         if node.assign:  # if keyword returns any value
             sign = self.get_assignment_sign(node.assign[-1])
             self.keyword_sign_counter[sign] += 1
 
-    def visit_VariableSection(self, node):  # noqa: N802
+    def visit_VariableSection(self, node: VariableSection) -> VariableSection:  # noqa: N802
         for child in node.body:
             if not isinstance(child, Variable):
                 continue
@@ -163,7 +168,7 @@ class AssignmentTypeDetector(ast.NodeVisitor):
         return node
 
     @staticmethod
-    def get_assignment_sign(token_value):
+    def get_assignment_sign(token_value: str) -> str:
         variable = search_variable(token_value, ignore_errors=True)
         return variable.after
 
@@ -183,7 +188,7 @@ def parse_assignment_sign_type(value: str) -> str:
 
 
 class RecommendationFinder:
-    def find_similar(self, name, candidates):
+    def find_similar(self, name: str, candidates: list[str] | dict) -> str:
         norm_name = self.normalize(name)
         norm_cand = self.get_normalized_candidates(candidates)
         matches = []
@@ -196,7 +201,7 @@ class RecommendationFinder:
         suggestion += "\n".join(f"    {match}" for match in matches)
         return suggestion
 
-    def find(self, name, candidates, max_matches=5):
+    def find(self, name: str, candidates: list[str] | dict, max_matches: int = 5) -> list[str]:
         """Return a list of close matches to `name` from `candidates`."""
         if not name or not candidates:
             return []
@@ -204,7 +209,7 @@ class RecommendationFinder:
         return difflib.get_close_matches(name, candidates, n=max_matches, cutoff=cutoff)
 
     @staticmethod
-    def _calculate_cutoff(string, min_cutoff=0.5, max_cutoff=0.85, step=0.03):
+    def _calculate_cutoff(string: str, min_cutoff: float = 0.5, max_cutoff: float = 0.85, step: float = 0.03) -> float:
         """
         Calculate cutoff for difflib string matching.
         The longer the string the bigger required cutoff.
@@ -213,7 +218,7 @@ class RecommendationFinder:
         return min(cutoff, max_cutoff)
 
     @staticmethod
-    def normalize(name):
+    def normalize(name: str) -> str:
         """
         Return tuple where first element is string created from sorted words in name,
         and second element is name without `-` and `_`.
@@ -222,11 +227,11 @@ class RecommendationFinder:
         return " ".join(sorted(norm)), name.replace("-", "").replace("_", "")
 
     @staticmethod
-    def get_original_candidates(candidates, norm_candidates):
+    def get_original_candidates(candidates: list[str] | dict, norm_candidates: defaultdict[str, list]) -> list[str]:
         """Map found normalized candidates to unique original candidates."""
         return sorted({c for cand in candidates for c in norm_candidates[cand]})
 
-    def get_normalized_candidates(self, candidates):
+    def get_normalized_candidates(self, candidates: list[str] | dict) -> defaultdict[str, list]:
         """
         Thanks for normalizing and sorting we can find cases like this-is, thisis, this-is1 instead of is-this.
         Normalized names form dictionary that point to original names - we're using list because several names can
@@ -245,11 +250,11 @@ class TestTemplateFinder(ast.NodeVisitor):
     def __init__(self):
         self.templated = False
 
-    def visit_TestTemplate(self, node):  # noqa: N802
+    def visit_TestTemplate(self, node: TestTemplate) -> None:  # noqa: N802
         self.templated = bool(node.value)
 
 
-def is_suite_templated(model):
+def is_suite_templated(model: File) -> bool:
     finder = TestTemplateFinder()
     finder.visit(model)
     return finder.templated
@@ -326,7 +331,7 @@ def compile_rule_pattern(rule_pattern: str) -> re.Pattern:
     return re.compile(fnmatch.translate(rule_pattern))
 
 
-def get_section_name(node):
+def get_section_name(node: Section) -> str:
     if not node.header:
         #  Lines before first section are considered to be in `*** Comments ***` section even if header name is missing
         return "*** Comments ***"
@@ -339,13 +344,13 @@ def get_section_name(node):
     return ""
 
 
-def get_errors(node):
+def get_errors(node: type[Node]) -> tuple[str, ...] | list[str]:
     if ROBOT_VERSION.major == 3:
         return [node.error] if node.error else []
     return node.errors
 
 
-def find_escaped_variables(string):
+def find_escaped_variables(string: str) -> list[str]:
     r"""
     Return list of $escaped or \${escaped} variables from the string.
 
@@ -367,22 +372,22 @@ def find_escaped_variables(string):
     return variables
 
 
-def get_robocop_cache_directory(ensure_exists):
+def get_robocop_cache_directory(ensure_exists: bool) -> Path:
     return Path(platformdirs.user_cache_dir("robocop", ensure_exists=ensure_exists))
 
 
-def get_string_diff(prev_count, count):
+def get_string_diff(prev_count: int, count: int) -> str:
     """Get +0, -10 string."""
     diff = count - prev_count
     prefix = "+" if diff >= 0 else ""
     return prefix + str(diff)
 
 
-def get_plural_form(container):
+def get_plural_form(container: int) -> str:
     return "" if container == 1 else "s"
 
 
-def _is_var_scope_local(node) -> bool:
+def _is_var_scope_local(node: Var) -> bool:
     is_local = True
     for option in node.get_tokens(Token.OPTION):
         if "scope=" in option.value:

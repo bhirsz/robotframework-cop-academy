@@ -21,7 +21,7 @@ class ReturnStatusReport(robocop.linter.reports.Report):
         self.counter = RulesBySeverityReport(compare_runs=False)
         self.quality_gate = {"E": 0, "W": 0, "I": -1}
 
-    def configure(self, name, value):
+    def configure(self, name: str, value: str) -> None:
         if name not in ["quality_gate", "quality_gates"]:
             super().configure(name, value)
         for val in value.split(":"):
@@ -32,10 +32,10 @@ class ReturnStatusReport(robocop.linter.reports.Report):
             except ValueError:
                 continue
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         self.counter.add_message(message)
 
-    def get_report(self):
+    def get_report(self) -> None:
         for severity, count in self.counter.severity_counter.items():
             threshold = self.quality_gate.get(severity.value, 0)
             if -1 < threshold < count:

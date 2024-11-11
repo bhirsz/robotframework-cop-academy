@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Annotated, Optional
 
-from rich.console import Console
 import typer
+from rich.console import Console
 
 from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterConfig
+from robocop.linter.reports import print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, get_plural_form  # TODO: move higher up
-from robocop.linter.reports import print_reports
 
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
@@ -220,7 +220,7 @@ def list_formatters(
 
 
 @app.command("rule")
-def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]):
+def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]) -> None:
     """Describe a rule."""
     # TODO load external from cli
     console = Console(soft_wrap=True)

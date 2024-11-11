@@ -6,8 +6,9 @@ from typing import Optional, Union
 
 from robot.api import Token
 from robot.errors import DataError
-from robot.parsing.model.blocks import Keyword
-from robot.parsing.model.statements import Tags
+from robot.parsing.model import Block
+from robot.parsing.model.blocks import File, Keyword, Section
+from robot.parsing.model.statements import Node, Tags
 from robot.running.arguments import EmbeddedArguments
 
 from robocop.linter.rules import Message, ProjectChecker, Rule, RuleSeverity
@@ -57,7 +58,7 @@ class KeywordUsage:
     used: int = 0
     names: set[str] = field(default_factory=set)
 
-    def update(self, name: str):
+    def update(self, name: str) -> None:
         self.used += 1
         self.names.add(name)
 
@@ -70,7 +71,7 @@ class KeywordDefinition:
     used_names: set[str] = field(default_factory=set)
     is_private: bool = False
 
-    def update(self, used_as: KeywordUsage):
+    def update(self, used_as: KeywordUsage) -> None:
         used_as.found_def = True
         self.used += used_as.used
         self.used_names.update(used_as.names)
@@ -105,7 +106,7 @@ class RobotFile:
             not_used.append(keyword)
         return not_used
 
-    def search_usage(self):
+    def search_usage(self) -> None:
         # TODO: search in other files (imports) for non suites
         # TODO: option to also report keyword only used in not used keywords ('Nested Not Used Keyword' from tests)
         # TODO: below could be done inside robotfile? unless the access to others is required
@@ -148,20 +149,20 @@ class UnusedKeywords(ProjectChecker):
                 )
         return self.issues
 
-    def visit_File(self, node):  # noqa: N802
+    def visit_File(self, node: File) -> None:  # noqa: N802
         self.current_file = RobotFile(node.source)  # TODO: handle "-"
         self.generic_visit(node)
         self.files[self.current_file.path] = self.current_file
 
-    def visit_TestCaseSection(self, node):  # noqa: N802
+    def visit_TestCaseSection(self, node: type[Section]) -> None:  # noqa: N802
         self.current_file.is_suite = True
         self.generic_visit(node)
 
-    def mark_used_keywords(self, node, name_token_type):
+    def mark_used_keywords(self, node: type[Node], name_token_type: str) -> None:
         for keyword in iterate_keyword_names(node, name_token_type):
             self.mark_used_keyword(keyword.value, keyword)
 
-    def mark_used_keyword(self, name: str, keyword):
+    def mark_used_keyword(self, name: str, keyword: Token) -> None:
         if not name:
             return
         normalized_name = normalize_robot_name(name)
@@ -170,12 +171,12 @@ class UnusedKeywords(ProjectChecker):
         self.current_file.used_keywords[normalized_name].update(name)
         # what about possible library names? searching removes, but for sake of collecting
 
-    def visit_Setup(self, node):  # noqa: N802
+    def visit_Setup(self, node: type[Node]) -> None:  # noqa: N802
         self.mark_used_keywords(node, Token.NAME)
 
     visit_TestTeardown = visit_SuiteTeardown = visit_Teardown = visit_TestSetup = visit_SuiteSetup = visit_Setup  # noqa: N815
 
-    def visit_Template(self, node):  # noqa: N802
+    def visit_Template(self, node: type[Node]) -> None:  # noqa: N802
         # allow / disallow param
         if node.value:
             name_token = node.get_token(Token.NAME)
@@ -184,10 +185,10 @@ class UnusedKeywords(ProjectChecker):
 
     visit_TestTemplate = visit_Template  # noqa: N815
 
-    def visit_KeywordCall(self, node):  # noqa: N802
+    def visit_KeywordCall(self, node: type[Block]) -> None:  # noqa: N802
         self.mark_used_keywords(node, Token.KEYWORD)
 
-    def visit_Keyword(self, node):  # noqa: N802
+    def visit_Keyword(self, node: type[Block]) -> None:  # noqa: N802
         try:
             embedded = KeywordEmbedded(node.name)
             if embedded and embedded.args:
@@ -204,7 +205,7 @@ class UnusedKeywords(ProjectChecker):
         self.generic_visit(node)
 
     @staticmethod
-    def is_keyword_private(node):
+    def is_keyword_private(node: type[Block]) -> bool:
         for statement in node.body:
             if isinstance(statement, Tags):
                 for tag in statement.get_tokens(Token.ARGUMENT):
