@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from robot.api import get_init_model, get_model, get_resource_model
+from robot.errors import DataError
+import typer
 
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports, rules
@@ -88,7 +90,13 @@ class RobocopLinter:
             self.check_for_disabled_rules()
             #             if self.config.verbose:
             #                 print(f"Scanning file: {file}")
-            model = self.get_model_for_file_type(source)
+            try:
+                model = self.get_model_for_file_type(source)
+            except DataError:
+                print(
+                    f"Failed to decode {source}. Default supported encoding by Robot Framework is UTF-8. Skipping file"
+                )
+                continue
             found_issues = self.run_check(model, str(source))
             found_issues.sort()
             issues_no += len(found_issues)
@@ -96,6 +104,9 @@ class RobocopLinter:
                 self.report(issue)
         self.make_reports()
         # print(f"\n\n{issues_no} issues found.")
+        if not self.config_manager.default_config.exit_zero:
+            exit_code = 1 if issues_no else 0
+            raise typer.Exit(code=exit_code)
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
 
@@ -177,7 +188,7 @@ class RobocopLinter:
         for report in self.reports.values():
             if report.name == "sarif":
                 output = report.get_report(self.config_manager.root, self.rules)
-            elif reports.is_report_comparable(report):  # TODO:
+            elif isinstance(report, reports.ComparableReport):  # TODO:
                 prev_result = prev_results.get(report.name) if prev_results is not None else None
                 output = report.get_report(prev_result)
             else:

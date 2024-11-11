@@ -1,0 +1,19 @@
+Breaking changes
+=================
+
+Deprecate return_status report with quality gates
+--------------------------------------------------
+
+Internal report ``return_status`` is now deprecated. Together with it ``quality_gates`` parameters is no
+longer available.
+
+While this feature offered great flexibility on deciding on return status of Robocop, it was rarely used and
+often misunderstood. There is no need to artificially set limits on number of issues that are acceptable before
+failing pipeline after all - we either get an issue we need to fix or not. If the issue is not relevant, it
+can be disabled.
+
+Instead, Robocop will return following exit codes:
+
+- 0, if no rule violations were found
+- 1, if violations were found
+- 2, if Robocop terminated abnormally

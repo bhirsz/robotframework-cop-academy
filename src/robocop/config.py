@@ -113,6 +113,7 @@ class Config:
     sources: list[str] = field(default_factory=lambda: ["."])
     linter: LinterConfig = field(default_factory=LinterConfig)
     language: list[str] = field(default_factory=list)
+    exit_zero: bool | None = False
 
     @classmethod
     def from_toml(cls, config_path: Path) -> Config:
@@ -165,6 +166,8 @@ class ConfigManager:
             root: Root of the project. Can be supplied if it's known beforehand (for example by IDE plugin)
             Otherwise it will be automatically found.
             ignore_git_dir: Flag for project root discovery to decide if directories with `.git` should be ignored.
+            skip_gitignore: Do not load .gitignore files when looking for the files to parse
+            overwrite_config: Overwrite existing configuration file with the Config class
 
         """
         self.cached_configs: dict[Path, Config] = {}
@@ -195,7 +198,7 @@ class ConfigManager:
         else:
             config_path = files.get_config_path(self.root)
         if not config_path:
-            config = Config(self.overwrite_config)
+            config = Config()
             config.overwrite_from_config(self.overwrite_config)
             return config
         return self.get_and_cache_config_from_toml(config_path)
