@@ -4,18 +4,16 @@ import pytest
 
 from robocop.linter.exceptions import ConfigGeneralError
 from robocop.linter.reports.timestamp_report import TimestampReport
-from robocop.linter.rules import Message
+from robocop.linter.rules import Diagnostic
 
 
 class TestTimestampReport:
     @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
     def test_timestamp_report(self, rule, previous_results):
         report = TimestampReport()
-        issue = Message(
+        issue = Diagnostic(
             rule=rule,
-            msg=rule.get_message(),
             source="some/path/file.robot",
-            node=None,
             lineno=50,
             col=10,
             end_lineno=None,

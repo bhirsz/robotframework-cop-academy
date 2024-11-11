@@ -4,15 +4,14 @@ from pathlib import Path
 import pytest
 
 from robocop.linter.reports.json_report import JsonReport
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class TestJSONReport:
     def test_json_report(self, rule):
         report = JsonReport()
-        issue = Message(
+        issue = Diagnostic(
             rule=rule,
-            msg=rule.get_message(),
             source="some/path/file.robot",
             node=None,
             lineno=50,
@@ -58,9 +57,8 @@ class TestJSONReport:
         report.configure("output_dir", tmp_path)
 
         issues = [
-            Message(
+            Diagnostic(
                 rule=r,
-                msg=r.get_message(),
                 source=source,
                 node=None,
                 lineno=line,

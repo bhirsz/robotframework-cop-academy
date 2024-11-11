@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import robocop.linter.reports
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class JsonReport(robocop.linter.reports.Report):
@@ -58,7 +58,7 @@ class JsonReport(robocop.linter.reports.Report):
         self.report_filename = "robocop.json"
         self.issues = []
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Diagnostic) -> None:
         self.issues.append(self.message_to_json(message))
 
     def get_report(self) -> str:
@@ -81,15 +81,15 @@ class JsonReport(robocop.linter.reports.Report):
             super().configure(name, value)
 
     @staticmethod
-    def message_to_json(message: Message) -> dict:
+    def message_to_json(message: Diagnostic) -> dict:
         return {
             "source": message.source,
-            "line": message.line,
-            "end_line": message.end_line,
-            "column": message.col,
-            "end_column": message.end_col,
+            "line": message.range.start.line,
+            "end_line": message.range.end.line,
+            "column": message.range.start.character,
+            "end_column": message.range.end.character,
             "severity": message.severity.value,
-            "rule_id": message.rule_id,
-            "description": message.desc,
-            "rule_name": message.name,
+            "rule_id": message.rule.rule_id,
+            "description": message.message,
+            "rule_name": message.rule.name,
         }

@@ -10,6 +10,7 @@ import typer
 
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports, rules
+from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
@@ -97,32 +98,32 @@ class RobocopLinter:
                     f"Failed to decode {source}. Default supported encoding by Robot Framework is UTF-8. Skipping file"
                 )
                 continue
-            found_issues = self.run_check(model, str(source))
-            found_issues.sort()
-            issues_no += len(found_issues)
-            for issue in found_issues:
-                self.report(issue)
+            diagnostics = self.run_check(model, str(source))
+            diagnostics.sort()
+            issues_no += len(diagnostics)
+            for diagnostic in diagnostics:
+                self.report(diagnostic)
         self.make_reports()
         self.return_with_exit_code(issues_no)
         # print(f"\n\n{issues_no} issues found.")
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
 
-    def run_check(self, ast_model: File, filename: str, source: str | None = None) -> list[Message]:
+    def run_check(self, ast_model: File, filename: str, source: str | None = None) -> list[Diagnostic]:
         disablers = DisablersFinder(ast_model)
         if disablers.file_disabled:
             return []
-        found_issues = []
+        found_diagnostics = []
         templated = is_suite_templated(ast_model)
         for checker in self.checkers:
             if checker.disabled:
                 continue
-            found_issues += [
-                issue
-                for issue in checker.scan_file(ast_model, filename, source, templated)
-                if not disablers.is_rule_disabled(issue) and not issue.severity < self.config.linter.threshold
+            found_diagnostics += [
+                diagnostic
+                for diagnostic in checker.scan_file(ast_model, filename, source, templated)
+                if not disablers.is_rule_disabled(diagnostic) and not diagnostic.severity < self.config.linter.threshold
             ]
-        return found_issues
+        return found_diagnostics
 
     def return_with_exit_code(self, issues_count: int) -> None:
         """Exit the Robocop with exit code.
@@ -144,31 +145,28 @@ class RobocopLinter:
                 exit_code = 1 if issues_count else 0
         raise typer.Exit(code=exit_code)
 
-    def report(self, rule_msg: Message) -> None:
+    def report(self, diagnostic: Diagnostic) -> None:
         for report in self.reports.values():
-            report.add_message(rule_msg)
-        try:
-            # TODO: reimplement with Path
-            # TODO: lazy evaluation in case source_rel is not used
-            source_rel = os.path.relpath(os.path.expanduser(rule_msg.source), self.config_manager.root)
-        except ValueError:
-            source_rel = rule_msg.source
-        self.log_message(
-            source=rule_msg.source,
-            source_rel=source_rel,
-            line=rule_msg.line,
-            col=rule_msg.col,
-            end_line=rule_msg.end_line,
-            end_col=rule_msg.end_col,
-            severity=rule_msg.severity.value,
-            rule_id=rule_msg.rule_id,
-            desc=rule_msg.desc,
-            name=rule_msg.name,
+            report.add_message(diagnostic)
+        # try:
+        #     # TODO: reimplement with Path
+        #     # TODO: lazy evaluation in case source_rel is not used
+        #     source_rel = os.path.relpath(os.path.expanduser(rule_msg.source), self.config_manager.root)
+        # except ValueError:
+        #     source_rel = rule_msg.source
+        print(
+            self.config.linter.issue_format.format(
+                source=diagnostic.source,
+                line=diagnostic.range.start.line,
+                col=diagnostic.range.start.character,
+                end_line=diagnostic.range.end.line,
+                end_col=diagnostic.range.end.character,
+                severity=diagnostic.severity.value,
+                rule_id=diagnostic.rule.rule_id,
+                desc=diagnostic.message,
+                name=diagnostic.rule.name,
+            )
         )
-
-    def log_message(self, **kwargs) -> None:
-        print(self.config.linter.issue_format.format(**kwargs))
-        # self.write_line(self.config.format.format(**kwargs))
 
     def configure_checkers_or_reports(self) -> None:
         """

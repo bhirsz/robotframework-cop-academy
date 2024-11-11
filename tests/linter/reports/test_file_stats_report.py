@@ -1,7 +1,7 @@
 import pytest
 
 from robocop.linter.reports.file_stats_report import FileStatsReport
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class TestFileStatReport:
@@ -115,9 +115,8 @@ class TestFileStatReport:
         report.files_count = files
         report.files_with_issues = files_with_issues
         if files_with_issues:
-            issue = Message(
+            issue = Diagnostic(
                 rule=rule,
-                msg=rule.get_message(),
                 source="some/path/file.robot",
                 node=None,
                 lineno=50,
@@ -133,9 +132,8 @@ class TestFileStatReport:
         report = FileStatsReport(compare_runs)
         report.files_count += 1
         for source in ("a.robot", "b.robot"):
-            issue = Message(
+            issue = Diagnostic(
                 rule=rule,
-                msg=rule.get_message(),
                 source=source,
                 node=None,
                 lineno=50,

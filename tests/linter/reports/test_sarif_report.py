@@ -5,7 +5,7 @@ import pytest
 
 from robocop import __version__
 from robocop.linter.reports.sarif_report import SarifReport
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class TestSarifReport:
@@ -33,9 +33,8 @@ class TestSarifReport:
         report.configure("output_dir", tmp_path)
 
         issues = [
-            Message(
+            Diagnostic(
                 rule=r,
-                msg=r.get_message(),
                 source=source,
                 node=None,
                 lineno=line,
@@ -51,20 +50,20 @@ class TestSarifReport:
             ]
         ]
 
-        def get_expected_result(message, level, source):
+        def get_expected_result(diagnostic: Diagnostic, level, source):
             return {
-                "ruleId": message.rule_id,
+                "ruleId": diagnostic.rule.rule_id,
                 "level": level,
-                "message": {"text": message.desc},
+                "message": {"text": diagnostic.message},
                 "locations": [
                     {
                         "physicalLocation": {
                             "artifactLocation": {"uri": source, "uriBaseId": "%SRCROOT%"},
                             "region": {
-                                "startLine": message.line,
-                                "endLine": message.end_line,
-                                "startColumn": message.col,
-                                "endColumn": message.end_col,
+                                "startLine": diagnostic.range.start.line,
+                                "endLine": diagnostic.range.end.line,
+                                "startColumn": diagnostic.range.start.character,
+                                "endColumn": diagnostic.range.end.character,
                             },
                         }
                     }

@@ -1,6 +1,6 @@
 import robocop.linter.reports
 from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class ReturnStatusReport(robocop.linter.reports.Report):
@@ -31,7 +31,7 @@ class ReturnStatusReport(robocop.linter.reports.Report):
             except ValueError:
                 continue
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Diagnostic) -> None:
         self.counter.add_message(message)
 
     def get_report(self) -> None:
