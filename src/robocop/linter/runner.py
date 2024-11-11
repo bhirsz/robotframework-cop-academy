@@ -103,10 +103,8 @@ class RobocopLinter:
             for issue in found_issues:
                 self.report(issue)
         self.make_reports()
+        self.return_with_exit_code(issues_no)
         # print(f"\n\n{issues_no} issues found.")
-        if not self.config_manager.default_config.exit_zero:
-            exit_code = 1 if issues_no else 0
-            raise typer.Exit(code=exit_code)
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
 
@@ -125,6 +123,26 @@ class RobocopLinter:
                 if not disablers.is_rule_disabled(issue) and not issue.severity < self.config.linter.threshold
             ]
         return found_issues
+
+    def return_with_exit_code(self, issues_count: int) -> None:
+        """Exit the Robocop with exit code.
+
+        Exit code is always 0 if --exit-zero is set. Otherwise, it can be calculated by optional `return_status`
+        report. If it is not enabled, exit code will be:
+
+        - 0 if no issues found
+        - 1 if any issue found
+        - 2 if Robocop terminated abnormally
+
+        """
+        if self.config_manager.default_config.exit_zero:
+            exit_code = 0
+        else:
+            if "return_status" in self.reports:
+                exit_code = self.reports["return_status"].exit_code
+            else:
+                exit_code = 1 if issues_count else 0
+        raise typer.Exit(code=exit_code)
 
     def report(self, rule_msg: Message) -> None:
         for report in self.reports.values():
