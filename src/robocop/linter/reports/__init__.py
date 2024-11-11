@@ -72,22 +72,13 @@ def load_reports(compare_runs) -> dict[str, type[Report]]:
     return reports
 
 
-def disable_external_reports_if_none(configured_reports: list[str]) -> list[str]:
-    """If any reports is 'None', disable other reports other than internal reports."""
-    if "None" in configured_reports:
-        if "internal_json_report" in configured_reports:
-            # TODO: Improve how internal reports are handled
-            return ["return_status", "internal_json_report"]
-        return ["return_status"]
-    return configured_reports
-
-
 def get_reports(configured_reports: list[str]):
     """
     Return dictionary with list of valid, enabled reports (listed in `configured_reports` set of str).
     If `configured_reports` contains `all` then all default reports are enabled.
     """
-    configured_reports = disable_external_reports_if_none(configured_reports)
+    if "None" in configured_reports:
+        configured_reports = []
     compare_runs = "compare_runs" in configured_reports
     reports = load_reports(compare_runs)
     enabled_reports = OrderedDict()

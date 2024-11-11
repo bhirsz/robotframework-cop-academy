@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from robot.api import get_init_model, get_model, get_resource_model
+from robot.errors import DataError
+import typer
 
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports, rules
@@ -88,13 +90,20 @@ class RobocopLinter:
             self.check_for_disabled_rules()
             #             if self.config.verbose:
             #                 print(f"Scanning file: {file}")
-            model = self.get_model_for_file_type(source)
+            try:
+                model = self.get_model_for_file_type(source)
+            except DataError:
+                print(
+                    f"Failed to decode {source}. Default supported encoding by Robot Framework is UTF-8. Skipping file"
+                )
+                continue
             found_issues = self.run_check(model, str(source))
             found_issues.sort()
             issues_no += len(found_issues)
             for issue in found_issues:
                 self.report(issue)
         self.make_reports()
+        self.return_with_exit_code(issues_no)
         # print(f"\n\n{issues_no} issues found.")
         # if "file_stats" in self.reports:  # TODO:
         #     self.reports["file_stats"].files_count = len(self.files)
@@ -114,6 +123,26 @@ class RobocopLinter:
                 if not disablers.is_rule_disabled(issue) and not issue.severity < self.config.linter.threshold
             ]
         return found_issues
+
+    def return_with_exit_code(self, issues_count: int) -> None:
+        """Exit the Robocop with exit code.
+
+        Exit code is always 0 if --exit-zero is set. Otherwise, it can be calculated by optional `return_status`
+        report. If it is not enabled, exit code will be:
+
+        - 0 if no issues found
+        - 1 if any issue found
+        - 2 if Robocop terminated abnormally
+
+        """
+        if self.config_manager.default_config.exit_zero:
+            exit_code = 0
+        else:
+            if "return_status" in self.reports:
+                exit_code = self.reports["return_status"].exit_code
+            else:
+                exit_code = 1 if issues_count else 0
+        raise typer.Exit(code=exit_code)
 
     def report(self, rule_msg: Message) -> None:
         for report in self.reports.values():
@@ -177,7 +206,7 @@ class RobocopLinter:
         for report in self.reports.values():
             if report.name == "sarif":
                 output = report.get_report(self.config_manager.root, self.rules)
-            elif reports.is_report_comparable(report):  # TODO:
+            elif isinstance(report, reports.ComparableReport):  # TODO:
                 prev_result = prev_results.get(report.name) if prev_results is not None else None
                 output = report.get_report(prev_result)
             else:

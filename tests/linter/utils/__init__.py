@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import click.exceptions
 import pytest
 
 from robocop.cli import check_files
@@ -89,9 +90,8 @@ class RuleAcceptance:
             paths = [test_data]
         else:
             paths = [test_data / src_file for src_file in src_files]
-        with isolated_output() as output:
+        with isolated_output() as output, pytest.raises(click.exceptions.Exit):
             try:
-                # with pytest.raises(SystemExit):
                 check_files(
                     sources=paths,
                     include=include,

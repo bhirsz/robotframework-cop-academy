@@ -94,6 +94,10 @@ def check_files(
     ext_rules: Annotated[list[str], typer.Option("--ext-rules", show_default=False)] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
+    exit_zero: Annotated[
+        bool,
+        typer.Option(help="Always exit with 0 unless Robocop terminates abnormally.", show_default="--no-exit-zero"),
+    ] = None,
     root: project_root_option = None,
 ) -> None:
     """Lint files."""
@@ -105,7 +109,7 @@ def check_files(
         ext_rules=ext_rules,
         reports=reports,
     )
-    overwrite_config = Config(linter=linter_config, language=language)
+    overwrite_config = Config(linter=linter_config, language=language, exit_zero=exit_zero)
     config_manager = ConfigManager(
         sources=sources,
         config=config,
@@ -123,6 +127,10 @@ def format_files(
     config: config_option = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
+    exit_zero: Annotated[
+        bool,
+        typer.Option(help="Always exit with 0 unless Robocop terminates abnormally.", show_default="--no-exit-zero"),
+    ] = None,
     root: project_root_option = None,
 ) -> None:
     """Format files."""
