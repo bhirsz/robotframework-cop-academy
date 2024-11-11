@@ -528,7 +528,6 @@ class BaseChecker:
         node = None,
         extended_disablers: tuple[int, int] | None = None,
         sev_threshold_value: int | None = None,
-        severity=None,  # do we need it?
         source: str | None = None,
         **kwargs,
     ) -> None:
@@ -555,7 +554,6 @@ class BaseChecker:
             source=source or self.source,
             extended_disablers=extended_disablers,
             sev_threshold_value=sev_threshold_value,
-            overwrite_severity=severity,
             **kwargs,
         )
         self.issues.append(diagnostic)

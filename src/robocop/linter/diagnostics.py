@@ -32,7 +32,6 @@ class Diagnostic:
         node = None,
         extended_disablers: tuple[int, int] | None = None,
         sev_threshold_value: int | None = None,
-        overwrite_severity=None,
         **kwargs,
     ) -> None:
         self.rule = rule
@@ -41,7 +40,7 @@ class Diagnostic:
         self.range = self.get_range(lineno, col, end_lineno, end_col, node)
         self.extended_disablers = extended_disablers if extended_disablers else []
         self.reported_arguments = kwargs
-        self.severity = self.get_severity(overwrite_severity, rule, sev_threshold_value)
+        self.severity = rule.get_severity_with_threshold(sev_threshold_value)
         self._message = None
 
     @property
@@ -73,12 +72,6 @@ class Diagnostic:
         end_col = col if end_col is None else end_col
         end = Position(line=end_lineno, character=end_col)
         return Range(start=start, end=end)
-
-    @staticmethod
-    def get_severity(overwrite_severity, rule, sev_threshold_value):
-        if overwrite_severity is not None:
-            return overwrite_severity
-        return rule.get_severity_with_threshold(sev_threshold_value)
 
     def __lt__(self, other: Diagnostic) -> bool:
         """Used to sort diagnostics for displaying purposes."""
