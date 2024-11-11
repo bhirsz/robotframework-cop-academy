@@ -51,6 +51,7 @@ from typing import TYPE_CHECKING, Any, Callable, NoReturn, Optional
 from jinja2 import Template
 from robot.utils import FileReader
 
+from robocop.linter.diagnostics import Diagnostic
 from robocop.linter import exceptions
 from robocop.linter.exceptions import (
     InvalidExternalCheckerError,
@@ -71,6 +72,8 @@ if TYPE_CHECKING:
     from re import Pattern
 
     from robot.parsing import File
+    from robot.parsing.model import Block, Statement
+    from robot.parsing.model.statements import Node
 
     from robocop.linter.runner import RobocopLinter
 
@@ -291,14 +294,14 @@ class SeverityThreshold:
             thresholds.append((severity, int(param_value)))  # TODO: support non-int params
         self.thresholds = sorted(thresholds, key=lambda x: x[0], reverse=True)
 
-    def check_condition(self, value, threshold):
+    def check_condition(self, value: int, threshold: int) -> bool:
         if self.compare_method == "greater":
             return value >= threshold
         if self.compare_method == "less":
             return value <= threshold
         return False
 
-    def get_severity(self, value):
+    def get_severity(self, value: int):
         if self.thresholds is None:
             return None
         for severity, threshold in self.thresholds:
@@ -306,7 +309,7 @@ class SeverityThreshold:
                 return severity
         return None
 
-    def get_matching_threshold(self, value):
+    def get_matching_threshold(self, value: int | None) -> int | None:
         """
         Find first threshold that passes the condition with passed value.
 
@@ -487,87 +490,11 @@ class Rule:
         text = "\n    ".join(params)
         return count, text
 
-    def prepare_message(  # TODO: maybe rendering should not be in Rule class, but in Message?
-        self,
-        source,
-        node,
-        lineno,
-        col,
-        end_lineno,
-        end_col,
-        extended_disablers,
-        sev_threshold_value,
-        severity,
-        **kwargs,
-    ):
-        msg = self.get_message(**kwargs)
-        return Message(
-            rule=self,
-            msg=msg,
-            source=source,
-            node=node,
-            lineno=lineno,
-            col=col,
-            end_col=end_col,
-            end_lineno=end_lineno,
-            extended_disablers=extended_disablers,
-            sev_threshold_value=sev_threshold_value,
-            overwrite_severity=severity,
-        )
-
     def matches_pattern(self, pattern: str | Pattern):  # TODO: move outside, used by one place
         """Check if this rule matches given pattern"""
         if isinstance(pattern, str):
             return pattern in (self.name, self.rule_id)
         return pattern.match(self.name) or pattern.match(self.rule_id)
-
-
-class Message:
-    def __init__(
-        self,
-        rule: Rule,
-        msg,
-        source,
-        node,
-        lineno,
-        col,
-        end_lineno,
-        end_col,
-        extended_disablers: Optional | None = None,
-        sev_threshold_value: Optional | None = None,
-        overwrite_severity: Optional | None = None,
-    ):
-        self.enabled = rule.enabled
-        self.rule_id = rule.rule_id
-        self.name = rule.name
-        self.severity = self.get_severity(overwrite_severity, rule, sev_threshold_value)
-        self.desc = msg
-        self.source = source
-        self.line = 1
-        if node is not None and node.lineno > -1:
-            self.line = node.lineno
-        if lineno is not None:
-            self.line = lineno
-        self.col = 1 if col is None else col
-        self.end_line = self.line if end_lineno is None else end_lineno
-        self.end_col = self.col if end_col is None else end_col
-        self.extended_disablers = extended_disablers if extended_disablers else []
-
-    def __lt__(self, other):
-        return (self.line, self.col, self.rule_id) < (
-            other.line,
-            other.col,
-            other.rule_id,
-        )
-
-    @staticmethod
-    def get_severity(overwrite_severity, rule, sev_threshold_value):
-        if overwrite_severity is not None:
-            return overwrite_severity
-        return rule.get_severity_with_threshold(sev_threshold_value)
-
-    def get_fullname(self) -> str:
-        return f"{self.severity.value}{self.rule_id} ({self.name})"
 
 
 class BaseChecker:
@@ -593,48 +520,52 @@ class BaseChecker:
 
     def report(
         self,
-        rule,
-        node=None,
-        lineno=None,
-        col=None,
-        end_lineno=None,
-        end_col=None,
-        extended_disablers=None,
-        sev_threshold_value=None,
-        severity=None,
+        rule: str,
+        lineno: int | None = None,
+        col: int | None = None,
+        end_lineno: int | None = None,
+        end_col: int | None = None,
+        node = None,
+        extended_disablers: tuple[int, int] | None = None,
+        sev_threshold_value: int | None = None,
+        severity=None,  # do we need it?
         source: str | None = None,
         **kwargs,
     ) -> None:
         rule_def = self.rules.get(rule, None)
         if rule_def is None:
             raise ValueError(f"Missing definition for message with name {rule}")
+        if not rule_def.enabled:
+            return
+        # following code is used to dynamically update maximum allowed number if rule has dynamic threshold
+        # for example if you set line too long to warn on 120 and fail on 200, it will update the x / 120 to 200
         rule_threshold = rule_def.config.get("severity_threshold", None)
         if rule_threshold and rule_threshold.substitute_value and rule_threshold.thresholds:
             threshold_trigger = rule_threshold.get_matching_threshold(sev_threshold_value)
             if threshold_trigger is None:
                 return
             kwargs[rule_threshold.substitute_value] = threshold_trigger
-        message = rule_def.prepare_message(
-            source=source or self.source,
+        diagnostic = Diagnostic(
+            rule=rule_def,
             node=node,
             lineno=lineno,
             col=col,
             end_lineno=end_lineno,
             end_col=end_col,
+            source=source or self.source,
             extended_disablers=extended_disablers,
             sev_threshold_value=sev_threshold_value,
-            severity=severity,
+            overwrite_severity=severity,
             **kwargs,
         )
-        if message.enabled:
-            self.issues.append(message)
+        self.issues.append(diagnostic)
 
 
 class VisitorChecker(BaseChecker, ModelVisitor):
     def scan_file(
         self, ast_model: File, filename: str, in_memory_content: str | None, templated: bool = False
-    ) -> list[Message]:
-        self.issues: list[Message] = []
+    ) -> list[Diagnostic]:
+        self.issues: list[Diagnostic] = []
         self.source = filename
         self.templated_suite = templated
         if in_memory_content is not None:
@@ -650,7 +581,7 @@ class VisitorChecker(BaseChecker, ModelVisitor):
 
 
 class ProjectChecker(VisitorChecker):
-    def scan_project(self) -> list[Message]:
+    def scan_project(self) -> list[Diagnostic]:
         """
         Perform checks on the whole project.
 
@@ -661,8 +592,8 @@ class ProjectChecker(VisitorChecker):
 
 
 class RawFileChecker(BaseChecker):
-    def scan_file(self, ast_model, filename, in_memory_content, templated=False) -> list[Message]:
-        self.issues: list[Message] = []
+    def scan_file(self, ast_model, filename, in_memory_content, templated=False) -> list[Diagnostic]:
+        self.issues: list[Diagnostic] = []
         self.source = filename
         self.templated_suite = templated
         if in_memory_content is not None:

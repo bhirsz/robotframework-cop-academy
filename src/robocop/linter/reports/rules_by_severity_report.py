@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 import robocop.linter.reports
-from robocop.linter.rules import Message, RuleSeverity
+from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.rules import RuleSeverity
 from robocop.linter.utils.misc import get_plural_form, get_string_diff
 
 
@@ -22,7 +23,7 @@ class RulesBySeverityReport(robocop.linter.reports.ComparableReport):
         self.severity_counter = defaultdict(int)
         super().__init__(compare_runs)
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Diagnostic) -> None:
         self.severity_counter[message.severity] += 1
 
     def persist_result(self):

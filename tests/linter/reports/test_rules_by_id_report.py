@@ -3,7 +3,7 @@ import copy
 import pytest
 
 from robocop.linter.reports.rules_by_id_report import RulesByIdReport
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 NO_ISSUES = []
 FOUR_ISSUES = ["error-message", "warning-message", "info-message", "warning-message"]
@@ -66,9 +66,8 @@ class TestRulesByIdReport:
         report = RulesByIdReport(compare_results)
         for issue in issues_names:
             issue_def = issues_map[issue]
-            msg = Message(
+            msg = Diagnostic(
                 rule=issue_def,
-                msg=issue_def.get_message(),
                 source="some/path/file.robot",
                 node=None,
                 lineno=50,
@@ -84,9 +83,8 @@ class TestRulesByIdReport:
     def test_persistent_save(self, compare_runs, error_msg, warning_msg, info_msg):
         report = RulesByIdReport(compare_runs)
         for issue in (error_msg, warning_msg, info_msg, info_msg):
-            msg = Message(
+            msg = Diagnostic(
                 rule=issue,
-                msg=issue.get_message(),
                 source="test.robot",
                 node=None,
                 lineno=50,

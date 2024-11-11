@@ -2,7 +2,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 import robocop.linter.reports
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 
 
 class RulesByIdReport(robocop.linter.reports.ComparableReport):
@@ -26,7 +26,7 @@ class RulesByIdReport(robocop.linter.reports.ComparableReport):
         self.message_counter = defaultdict(int)
         super().__init__(compare_runs)
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Diagnostic) -> None:
         self.message_counter[message.get_fullname()] += 1
 
     def persist_result(self) -> dict:

@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 from robot.api import Token
 from robot.parsing.model.blocks import CommentSection
 
+from robocop.linter.diagnostics import Diagnostic
+
 try:
     from robot.api.parsing import ModelVisitor
 except ImportError:
@@ -17,7 +19,7 @@ except ImportError:
 
 
 if TYPE_CHECKING:
-    from robot.parsing import File, Token
+    from robot.parsing import File
     from robot.parsing.model import KeywordSection, Statement, TestCaseSection
     from robot.parsing.model.statements import Comment, KeywordName, Node, TestCaseName
 
@@ -175,7 +177,7 @@ class DisablersFinder(ModelVisitor):
     def file_disabled(self) -> bool:
         return self.disabled.file_disabled
 
-    def is_rule_disabled(self, rule_msg: Message) -> bool:
+    def is_rule_disabled(self, diagnostic: Diagnostic) -> bool:
         """
         Check if given `rule_msg` is disabled. All takes precedence, then line disablers, then block disablers.
         We're checking for both message id and name.
@@ -184,11 +186,11 @@ class DisablersFinder(ModelVisitor):
             return False
         return any(
             self.is_line_disabled(line, rule)
-            for line in (rule_msg.line, *rule_msg.extended_disablers)
-            for rule in ("all", rule_msg.rule_id, rule_msg.name)
+            for line in (diagnostic.range.start.line, *diagnostic.extended_disablers)
+            for rule in ("all", diagnostic.rule.rule_id, diagnostic.rule.name)
         )
 
-    def is_line_disabled(self, line: int, rule: Message) -> bool:
+    def is_line_disabled(self, line: int, rule: str) -> bool:
         """Check if given line is in range of any disabled block"""
         if rule not in self.disabled.rules:
             return False

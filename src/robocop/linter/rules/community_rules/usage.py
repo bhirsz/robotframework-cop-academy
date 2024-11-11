@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import chain
 from re import Pattern
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 
 from robot.api import Token
 from robot.errors import DataError
@@ -11,9 +11,12 @@ from robot.parsing.model.blocks import File, Keyword, Section
 from robot.parsing.model.statements import Node, Tags
 from robot.running.arguments import EmbeddedArguments
 
-from robocop.linter.rules import Message, ProjectChecker, Rule, RuleSeverity
+from robocop.linter.rules import ProjectChecker, Rule, RuleSeverity
 from robocop.linter.utils.misc import ROBOT_VERSION, normalize_robot_name
 from robocop.linter.utils.run_keywords import iterate_keyword_names
+
+if TYPE_CHECKING:
+    from robocop.linter.diagnostics import Diagnostic
 
 RULE_CATEGORY_ID = "01"
 
@@ -132,7 +135,7 @@ class UnusedKeywords(ProjectChecker):
         self.current_file: Optional[RobotFile] = None
         super().__init__()
 
-    def scan_project(self) -> list["Message"]:
+    def scan_project(self) -> list["Diagnostic"]:
         self.issues = []
         for robot_file in self.files.values():
             if not (robot_file.is_suite or robot_file.any_private):

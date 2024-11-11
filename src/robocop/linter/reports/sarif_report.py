@@ -3,7 +3,7 @@ from pathlib import Path
 
 import robocop.linter.reports
 from robocop import __version__
-from robocop.linter.rules import Message
+from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL
 
 
@@ -34,7 +34,7 @@ class SarifReport(robocop.linter.reports.Report):
         self.description = "Generate SARIF output file"
         self.output_dir = None
         self.report_filename = ".sarif.json"
-        self.issues = []
+        self.issues: list[Diagnostic] = []
 
     def configure(self, name, value) -> None:
         if name == "output_dir":
@@ -60,26 +60,26 @@ class SarifReport(robocop.linter.reports.Report):
             "help": {"text": rule.docs, "markdown": rule.docs},
         }
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Diagnostic) -> None:
         self.issues.append(message)
 
     def generate_sarif_issues(self, root: Path):
         sarif_issues = []
-        for issue in self.issues:
-            relative_uri = Path(issue.source).relative_to(root)
+        for diagnostic in self.issues:
+            relative_uri = Path(diagnostic.source).relative_to(root)
             sarif_issue = {
-                "ruleId": issue.rule_id,
-                "level": self.map_severity_to_level(issue.severity),
-                "message": {"text": issue.desc},
+                "ruleId": diagnostic.rule.rule_id,
+                "level": self.map_severity_to_level(diagnostic.severity),
+                "message": {"text": diagnostic.message},
                 "locations": [
                     {
                         "physicalLocation": {
                             "artifactLocation": {"uri": relative_uri.as_posix(), "uriBaseId": "%SRCROOT%"},
                             "region": {
-                                "startLine": issue.line,
-                                "endLine": issue.end_line,
-                                "startColumn": issue.col,
-                                "endColumn": issue.end_col,
+                                "startLine": diagnostic.range.start.line,
+                                "endLine": diagnostic.range.end.line,
+                                "startColumn": diagnostic.range.start.character,
+                                "endColumn": diagnostic.range.end.character,
                             },
                         }
                     }
