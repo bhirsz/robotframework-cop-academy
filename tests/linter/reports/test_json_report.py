@@ -3,14 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from robocop.linter.reports.json_report import InternalJsonReport, JsonReport
+from robocop.linter.reports.json_report import JsonReport
 from robocop.linter.rules import Message
 
 
 class TestJSONReport:
-    @pytest.mark.parametrize("json_class", [JsonReport, InternalJsonReport])
-    def test_json_report(self, rule, json_class):
-        report = json_class()
+    def test_json_report(self, rule):
+        report = JsonReport()
         issue = Message(
             rule=rule,
             msg=rule.get_message(),
@@ -77,7 +76,7 @@ class TestJSONReport:
             ]
         ]
 
-        expected_report = [issue.to_json() for issue in issues]
+        expected_report = [JsonReport.message_to_json(issue) for issue in issues]
         for issue in issues:
             report.add_message(issue)
         report.get_report()

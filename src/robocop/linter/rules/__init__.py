@@ -569,19 +569,6 @@ class Message:
     def get_fullname(self) -> str:
         return f"{self.severity.value}{self.rule_id} ({self.name})"
 
-    def to_json(self) -> dict:
-        return {
-            "source": self.source,
-            "line": self.line,
-            "end_line": self.end_line,
-            "column": self.col,
-            "end_column": self.end_col,
-            "severity": self.severity.value,
-            "rule_id": self.rule_id,
-            "description": self.desc,
-            "rule_name": self.name,
-        }
-
 
 class BaseChecker:
     rules = None

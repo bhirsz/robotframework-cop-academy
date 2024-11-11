@@ -59,7 +59,7 @@ class JsonReport(robocop.linter.reports.Report):
         self.issues = []
 
     def add_message(self, message: Message) -> None:
-        self.issues.append(message.to_json())
+        self.issues.append(self.message_to_json(message))
 
     def get_report(self) -> str:
         if self.output_dir is not None:
@@ -80,21 +80,16 @@ class JsonReport(robocop.linter.reports.Report):
         else:
             super().configure(name, value)
 
-
-class InternalJsonReport(robocop.linter.reports.Report):
-    """
-    Report name: ``internal_json_report``
-
-    Report that returns list of found issues in JSON format.
-    """
-
-    DEFAULT = False
-    INTERNAL = True
-
-    def __init__(self):
-        self.name = "internal_json_report"
-        self.description = "Accumulates found issues in JSON format"
-        self.issues = []
-
-    def add_message(self, message: Message) -> None:
-        self.issues.append(message.to_json())
+    @staticmethod
+    def message_to_json(message: Message) -> dict:
+        return {
+            "source": message.source,
+            "line": message.line,
+            "end_line": message.end_line,
+            "column": message.col,
+            "end_column": message.end_col,
+            "severity": message.severity.value,
+            "rule_id": message.rule_id,
+            "description": message.desc,
+            "rule_name": message.name,
+        }
