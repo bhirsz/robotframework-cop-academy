@@ -28,3 +28,18 @@ It is possible to always return 0, ignoring any violations, with new ``--exit-ze
 can be reproduced by simply enabling ``return_status`` report again::
 
     robocop checks --reports return_status
+
+compare_runs report is replaced with --compare
+-----------------------------------------------
+
+``compare_runs`` was special report that had to be enabled in order to compare reports results from current run
+with previous runs. It was bit of a workaround, that's why it was removed.
+
+To compare results, use ``--compare`` flag::
+
+    robocop check --compare
+
+Remember that you still need results from previous run (saved with ``--persistent``) and comparison is done on results
+from the reports. Full example::
+
+    robocop check --persistent --compare --reports all

@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from robot.parsing.model import Block
     from robot.parsing.model.statements import Statement
+
     from robocop.linter.rules import Rule
 
 
@@ -29,7 +31,7 @@ class Diagnostic:
         col: int,
         end_lineno: int | None,
         end_col: int | None,
-        node = None,
+        node=None,
         extended_disablers: tuple[int, int] | None = None,
         sev_threshold_value: int | None = None,
         **kwargs,
@@ -50,7 +52,9 @@ class Diagnostic:
         return self._message
 
     @staticmethod
-    def get_range(lineno: int, col: int, end_lineno: int | None, end_col: int | None, node: type[Statement] | type[Block] | None) -> Range:
+    def get_range(
+        lineno: int, col: int, end_lineno: int | None, end_col: int | None, node: type[Statement | Block] | None
+    ) -> Range:
         """
         Return Range describing position of the issue.
 
@@ -63,7 +67,7 @@ class Diagnostic:
 
         """
         if not lineno:
-           lineno = node.lineno if node and node.lineno > -1 else 1
+            lineno = node.lineno if node and node.lineno > -1 else 1
         if not col:
             col = node.col_offset + 1 if node else 1
 

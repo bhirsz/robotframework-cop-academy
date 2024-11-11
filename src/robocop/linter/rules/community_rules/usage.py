@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import chain
 from re import Pattern
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 from robot.api import Token
 from robot.errors import DataError

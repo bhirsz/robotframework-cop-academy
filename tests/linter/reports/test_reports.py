@@ -22,26 +22,26 @@ from robocop.linter.reports import (
     ],
 )
 def test_get_reports(configured, expected):
-    reports = get_reports(configured)
+    reports = get_reports(configured, compare_runs=False)
     assert list(reports.keys()) == expected
 
 
 def test_get_reports_all():
-    reports = get_reports(["all"])
+    reports = get_reports(["all"], compare_runs=False)
     assert "timestamp" in reports
     assert "sarif" not in reports
-    reports = get_reports(["all", "sarif"])
+    reports = get_reports(["all", "sarif"], compare_runs=False)
     assert "timestamp" in reports
     assert "sarif" in reports
     # Check order with all
-    reports = get_reports(["version", "all", "sarif"])
+    reports = get_reports(["version", "all", "sarif"], compare_runs=False)
     reports_list = list(reports.keys())
     assert reports_list.index("version") < reports_list.index("timestamp") < reports_list.index("sarif")
 
 
 def test_get_unknown_report():
     with pytest.raises(robocop.linter.exceptions.InvalidReportName, match="Provided report 'unknown' does not exist."):
-        get_reports(["all", "unknown"])
+        get_reports(["all", "unknown"], compare_runs=False)
 
 
 def clear_cache():

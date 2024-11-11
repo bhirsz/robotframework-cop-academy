@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from robot.parsing.model import KeywordSection, Statement, TestCaseSection
     from robot.parsing.model.statements import Comment, KeywordName, Node, TestCaseName
 
-    from robocop.linter.rules import Message
-
 
 class DisablersInFile:  # pylint: disable=too-few-public-methods
     """Container for file disablers"""

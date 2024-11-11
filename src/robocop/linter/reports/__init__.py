@@ -49,7 +49,7 @@ class ComparableReport(Report):
         raise NotImplementedError
 
 
-def load_reports(compare_runs) -> dict[str, type[Report]]:
+def load_reports(compare_runs: bool) -> dict[str, type[Report]]:
     """
     Load all valid reports.
     Report is considered valid if it inherits from `Report` class
@@ -72,14 +72,13 @@ def load_reports(compare_runs) -> dict[str, type[Report]]:
     return reports
 
 
-def get_reports(configured_reports: list[str]):
+def get_reports(configured_reports: list[str], compare_runs: bool):
     """
     Return dictionary with list of valid, enabled reports (listed in `configured_reports` set of str).
     If `configured_reports` contains `all` then all default reports are enabled.
     """
     if "None" in configured_reports:
         configured_reports = []
-    compare_runs = "compare_runs" in configured_reports
     reports = load_reports(compare_runs)
     enabled_reports = OrderedDict()
     for report in configured_reports:

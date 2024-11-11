@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from robocop.linter.reports.json_report import JsonReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.json_report import JsonReport
 
 
 class TestJSONReport:

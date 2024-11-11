@@ -2,8 +2,8 @@ import copy
 
 import pytest
 
-from robocop.linter.reports.rules_by_id_report import RulesByIdReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.rules_by_id_report import RulesByIdReport
 
 NO_ISSUES = []
 FOUR_ISSUES = ["error-message", "warning-message", "info-message", "warning-message"]
