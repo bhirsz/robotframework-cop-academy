@@ -1,6 +1,6 @@
 import robocop.linter.reports
-from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
 
 
 class ReturnStatusReport(robocop.linter.reports.Report):

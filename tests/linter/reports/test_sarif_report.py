@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from robocop import __version__
-from robocop.linter.reports.sarif_report import SarifReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.sarif_report import SarifReport
 
 
 class TestSarifReport:

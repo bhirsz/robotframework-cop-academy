@@ -52,7 +52,8 @@ def parse_rule_severity(value: str):
 @app.command(name="check")
 def check_files(
     sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
-    include: Annotated[list[str], typer.Option(show_default=False)] = None,
+    include: Annotated[list[str], typer.Option("--include", "-i", show_default=False)] = None,
+    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=False)] = None,
     threshold: Annotated[
         RuleSeverity,
         typer.Option(
@@ -94,6 +95,12 @@ def check_files(
     ext_rules: Annotated[list[str], typer.Option("--ext-rules", show_default=False)] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
+    persistent: Annotated[
+        bool, typer.Option(help="Use this flag to save Robocop reports in cache directory for later comparison.")
+    ] = None,
+    compare: Annotated[
+        bool, typer.Option(help="Compare reports results with previous results (saved with --persistent)")
+    ] = None,
     exit_zero: Annotated[
         bool,
         typer.Option(help="Always exit with 0 unless Robocop terminates abnormally.", show_default="--no-exit-zero"),
@@ -104,10 +111,13 @@ def check_files(
     linter_config = LinterConfig(
         configure=configure,
         include=include,
+        exclude=exclude,
         issue_format=issue_format,
         threshold=threshold,
         ext_rules=ext_rules,
         reports=reports,
+        persistent=persistent,
+        compare=compare,
     )
     overwrite_config = Config(linter=linter_config, language=language, exit_zero=exit_zero)
     config_manager = ConfigManager(

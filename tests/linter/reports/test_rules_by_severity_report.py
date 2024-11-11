@@ -1,7 +1,7 @@
 import pytest
 
-from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
 
 FOUR_ISSUES = ["error-message", "warning-message", "info-message", "warning-message"]
 PREV_SAME_ISSUES = {"all_issues": 4, "error": 1, "info": 1, "warning": 2}

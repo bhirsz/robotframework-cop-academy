@@ -1,5 +1,5 @@
-from robocop.linter.diagnostics import Diagnostic
 import robocop.linter.reports
+from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.utils.misc import get_plural_form, get_string_diff
 
 

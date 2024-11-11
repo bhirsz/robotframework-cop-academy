@@ -62,6 +62,8 @@ class LinterConfig:
     include_rules_patterns: set[re.Pattern] = field(default_factory=set)
     exclude_rules_patterns: set[re.Pattern] = field(default_factory=set)
     reports: list[str] = field(default_factory=list)
+    persistent: bool | None = False
+    compare: bool | None = False
 
     def __post_init__(self):
         """

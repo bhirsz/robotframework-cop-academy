@@ -51,8 +51,8 @@ from typing import TYPE_CHECKING, Any, Callable, NoReturn, Optional
 from jinja2 import Template
 from robot.utils import FileReader
 
-from robocop.linter.diagnostics import Diagnostic
 from robocop.linter import exceptions
+from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.exceptions import (
     InvalidExternalCheckerError,
     RuleNotFoundError,
@@ -525,7 +525,7 @@ class BaseChecker:
         col: int | None = None,
         end_lineno: int | None = None,
         end_col: int | None = None,
-        node = None,
+        node=None,
         extended_disablers: tuple[int, int] | None = None,
         sev_threshold_value: int | None = None,
         source: str | None = None,

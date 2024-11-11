@@ -1,7 +1,7 @@
 import pytest
 
-from robocop.linter.reports.file_stats_report import FileStatsReport
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports.file_stats_report import FileStatsReport
 
 
 class TestFileStatReport:
