@@ -17,9 +17,9 @@ except ImportError:
 
 import click
 from click.core import ParameterSource
-from robotidy import exceptions, files, skip
-from robotidy.transformers import TransformConfig, TransformConfigMap, convert_transform_config, load_transformers
-from robotidy.utils import misc
+from robocop.formatter import exceptions, files, skip
+from robocop.formatter.ormatters import FormatConfig, FormatConfigMap, convert_format_config, load_formatters
+from robocop.formatter.tils import misc
 
 
 class FormattingConfig:
@@ -88,15 +88,15 @@ def csv_list_type(value: str | None) -> list[str]:
     return value.split(",")
 
 
-def convert_transformers_config(
+def convert_formatters_config(
     param_name: str,
     config: dict,
     force_included: bool = False,
-    custom_transformer: bool = False,
+    custom_formatter: bool = False,
     is_config: bool = False,
-) -> list[TransformConfig]:
+) -> list[FormatConfig]:
     return [
-        TransformConfig(tr, force_include=force_included, custom_transformer=custom_transformer, is_config=is_config)
+        FormatConfig(tr, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config)
         for tr in config.get(param_name, ())
     ]
 
@@ -120,9 +120,9 @@ SourceAndConfig = namedtuple("SourceAndConfig", "source config")
 class RawConfig:
     """Configuration read directly from cli or configuration file."""
 
-    transform: list[TransformConfig] = field(default_factory=list)
-    custom_transformers: list[TransformConfig] = field(default_factory=list)
-    configure: list[TransformConfig] = field(default_factory=list)
+    format: list[FormatConfig] = field(default_factory=list)
+    custom_formatters: list[FormatConfig] = field(default_factory=list)
+    configure: list[FormatConfig] = field(default_factory=list)
     src: tuple[str, ...] = None
     exclude: Pattern = re.compile(files.DEFAULT_EXCLUDES)
     extend_exclude: Pattern = None
@@ -142,7 +142,7 @@ class RawConfig:
     startline: int = None
     endline: int = None
     line_length: int = 120
-    list_transformers: str = ""
+    list_formatters: str = ""
     generate_config: str = ""
     desc: str = None
     output: Path = None
@@ -188,8 +188,8 @@ class RawConfig:
         parsed_config = {"defined_in_config": {"defined_in_config", "config_path"}, "config_path": config_path}
         for key, value in config.items():
             # workaround to be able to use two option names for same action - backward compatibility change
-            if key == "load_transformers":
-                key = "custom_transformers"
+            if key == "load_formatters":
+                key = "custom_formatters"
             if key not in options_map:
                 raise exceptions.NoSuchOptionError(key, list(options_map.keys())) from None
             value_type = options_map[key]
@@ -201,8 +201,8 @@ class RawConfig:
                 parsed_config[key] = csv_list_type(value)
             elif value_type == "int":
                 parsed_config[key] = int(value)
-            elif value_type == "list[TransformConfig]":
-                parsed_config[key] = [convert_transform_config(val, key) for val in value]
+            elif value_type == "list[FormatConfig]":
+                parsed_config[key] = [convert_format_config(val, key) for val in value]
             elif key == "src":
                 parsed_config[key] = tuple(value)
             elif value_type in ("Pattern", Pattern):  # future typing for 3.8 provides type as str
@@ -238,7 +238,7 @@ class MainConfig:
         self.sources = self.get_sources(self.default.src)
 
     def validate_src_is_required(self):
-        if self.sources or self.default.list_transformers or self.default.desc or self.default.generate_config:
+        if self.sources or self.default.list_formatters or self.default.desc or self.default.generate_config:
             return
         print("No source path provided. Run robotidy --help to see how to use robotidy")
         sys.exit(1)
@@ -254,7 +254,7 @@ class MainConfig:
 
     def get_sources(self, sources: tuple[str, ...]) -> tuple[str, ...] | None:
         """
-        Get list of sources to be transformed by Robotidy.
+        Get list of sources to be formated by Robotidy.
 
         If the sources tuple is empty, look for most common configuration file and load sources from there.
         """
@@ -298,13 +298,13 @@ class MainConfig:
 
 
 class Config:
-    """Configuration after loading dynamic attributes like transformer list."""
+    """Configuration after loading dynamic attributes like formatter list."""
 
     def __init__(
         self,
         formatting: FormattingConfig,
         skip,
-        transformers_config: TransformConfigMap,
+        formatters_config: FormatConfigMap,
         overwrite: bool,
         show_diff: bool,
         verbose: bool,
@@ -327,10 +327,10 @@ class Config:
         self.reruns = reruns
         self.config_directory = config_path.parent if config_path else None
         self.language = self.get_languages(language)
-        self.transformers = []
-        self.transformers_lookup = dict()
-        self.transformers_config = transformers_config
-        self.load_transformers(transformers_config, force_order, target_version, skip)
+        self.formatters = []
+        self.formatters_lookup = dict()
+        self.formatters_config = formatters_config
+        self.load_formatters(formatters_config, force_order, target_version, skip)
 
     @staticmethod
     def get_languages(lang):
@@ -381,8 +381,8 @@ class Config:
             line_length=raw_config.line_length,
         )
 
-        transformers_config = TransformConfigMap(
-            raw_config.transform, raw_config.custom_transformers, raw_config.configure
+        formatters_config = FormatConfigMap(
+            raw_config.format, raw_config.custom_formatters, raw_config.configure
         )
 
         if raw_config.verbose and raw_config.config_path:
@@ -391,7 +391,7 @@ class Config:
         return cls(
             formatting=formatting,
             skip=skip_config,
-            transformers_config=transformers_config,
+            formatters_config=formatters_config,
             overwrite=raw_config.overwrite,
             show_diff=raw_config.diff,
             verbose=raw_config.verbose,
@@ -405,20 +405,20 @@ class Config:
             config_path=raw_config.config_path,
         )
 
-    def load_transformers(self, transformers_config: TransformConfigMap, force_order, target_version, skip):
-        # Workaround to pass configuration to transformer before the instance is created
-        if "GenerateDocumentation" in transformers_config.transformers:
-            transformers_config.transformers["GenerateDocumentation"].args["template_directory"] = self.config_directory
-        transformers = load_transformers(
-            transformers_config,
+    def load_formatters(self, formaters_config: FormatConfigMap, force_order, target_version, skip):
+        # Workaround to pass configuration to formater before the instance is created
+        if "GenerateDocumentation" in formaters_config.formatters:
+            formatters_config.formatters["GenerateDocumentation"].args["template_directory"] = self.config_directory
+        formatters = load_formatters(
+            formatters_config,
             force_order=force_order,
             target_version=target_version,
             skip=skip,
         )
-        for transformer in transformers:
+        for formatter in formatters:
             # inject global settings TODO: handle it better
-            transformer.instance.formatting_config = self.formatting
-            transformer.instance.transformers = self.transformers_lookup
-            transformer.instance.languages = self.language
-            self.transformers.append(transformer.instance)
-            self.transformers_lookup[transformer.name] = transformer.instance
+            formatter.instance.formatting_config = self.formatting
+            formatter.instance.formatters = self.formatters_lookup
+            formatter.instance.languages = self.language
+            self.formatters.append(formatter.instance)
+            self.formatters_lookup[formatter.name] = formatter.instance

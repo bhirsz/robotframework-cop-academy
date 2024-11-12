@@ -13,21 +13,21 @@ except ImportError:  # Fails on vendored-in LSP plugin
 
     RICH_PRESENT = False
 
-from robotidy import app, decorators, exceptions, files, skip, version
-from robotidy import config as config_module
-from robotidy.config import RawConfig, csv_list_type, validate_target_version
-from robotidy.rich_console import console
-from robotidy.transformers import TransformConfigMap, TransformConfigParameter, load_transformers
-from robotidy.utils import misc
+from robocop.formatter import app, decorators, exceptions, files, skip, version
+from robocop.formatter import config as config_module
+from robocop.formatter.onfig import RawConfig, csv_list_type, validate_target_version
+from robocop.formatter.ich_console import console
+from robocop.formatter.ormatters import FormatConfigMap, FormatConfigParameter, load_formatters
+from robocop.formatter.tils import misc
 
 CLI_OPTIONS_LIST = [
     {
-        "name": "Run only selected transformers",
-        "options": ["--transform"],
+        "name": "Run only selected formatters",
+        "options": ["--format"],
     },
     {
-        "name": "Load custom transformers",
-        "options": ["--load-transformers"],
+        "name": "Load custom formatters",
+        "options": ["--load-formatters"],
     },
     {
         "name": "Work modes",
@@ -113,75 +113,75 @@ def csv_list_type_callback(ctx: click.Context, param: click.Option | click.Param
     return csv_list_type(value)
 
 
-def print_transformer_docs(transformer):
+def print_formatter_docs(formatter):
     from rich.markdown import Markdown
 
-    md = Markdown(str(transformer), code_theme="native", inline_code_lexer="robotframework")
+    md = Markdown(str(formatter), code_theme="native", inline_code_lexer="robotframework")
     console.print(md)
 
 
 @decorators.optional_rich
 def print_description(name: str, target_version: int):
-    # TODO: --desc works only for default transformers, it should also print custom transformer desc
-    transformers = load_transformers(TransformConfigMap([], [], []), allow_disabled=True, target_version=target_version)
-    transformer_by_names = {transformer.name: transformer for transformer in transformers}
+    # TODO: --desc works only for default formatters, it should also print custom formatter desc
+    formatters = load_formatters(FormatConfigMap([], [], []), allow_disabled=True, target_version=target_version)
+    formatter_by_names = {formatter.name: formatter for formatter in formatters}
     if name == "all":
-        for transformer in transformers:
-            print_transformer_docs(transformer)
-    elif name in transformer_by_names:
-        print_transformer_docs(transformer_by_names[name])
+        for formatter in formatters:
+            print_formatter_docs(formatter)
+    elif name in formatter_by_names:
+        print_formatter_docs(formatter_by_names[name])
     else:
         rec_finder = misc.RecommendationFinder()
-        similar = rec_finder.find_similar(name, transformer_by_names.keys())
-        click.echo(f"Transformer with the name '{name}' does not exist.{similar}", err=True)
+        similar = rec_finder.find_similar(name, formatter_by_names.keys())
+        click.echo(f"Formatter with the name '{name}' does not exist.{similar}", err=True)
         return 1
     return 0
 
 
-def _load_external_transformers(transformers: list, transformers_config: TransformConfigMap, target_version: int):
+def _load_external_formatters(formatters: list, formatters_config: FormatConfigMap, target_version: int):
     external = []
-    transformers_names = {transformer.name for transformer in transformers}
-    transformers_from_conf = load_transformers(transformers_config, target_version=target_version)
-    for transformer in transformers_from_conf:
-        if transformer.name not in transformers_names:
-            external.append(transformer)
+    formatters_names = {formatter.name for formatter in formatters}
+    formatters_from_conf = load_formatters(formatters_config, target_version=target_version)
+    for formatter in formatters_from_conf:
+        if formatter.name not in formatters_names:
+            external.append(formatter)
     return external
 
 
 @decorators.optional_rich
-def print_transformers_list(global_config: config_module.MainConfig):
+def print_formatters_list(global_config: config_module.MainConfig):
     from rich.table import Table
 
     target_version = global_config.default.target_version
-    list_transformers = global_config.default.list_transformers
+    list_formatters = global_config.default.list_formatters
     config = global_config.get_config_for_source(Path.cwd())
-    table = Table(title="Transformers", header_style="bold red")
+    table = Table(title="Formatters", header_style="bold red")
     table.add_column("Name", justify="left", no_wrap=True)
     table.add_column("Enabled")
-    transformers = load_transformers(TransformConfigMap([], [], []), allow_disabled=True, target_version=target_version)
-    transformers.extend(_load_external_transformers(transformers, config.transformers_config, target_version))
+    formatters = load_formatters(FormatConfigMap([], [], []), allow_disabled=True, target_version=target_version)
+    formatters.extend(_load_external_formatters(formatters, config.formaters_config, target_version))
 
-    for transformer in transformers:
-        enabled = transformer.name in config.transformers_lookup
-        if list_transformers != "all":
-            filter_by = list_transformers == "enabled"
+    for formater in formaters:
+        enabled = formater.name in config.formaters_lookup
+        if list_formaters != "all":
+            filter_by = list_formaters == "enabled"
             if enabled != filter_by:
                 continue
         decorated_enable = "Yes" if enabled else "No"
-        if enabled != transformer.enabled_by_default:
+        if enabled != formater.enabled_by_default:
             decorated_enable = f"[bold magenta]{decorated_enable}*"
-        table.add_row(transformer.name, decorated_enable)
+        table.add_row(formater.name, decorated_enable)
     console.print(table)
     console.print(
-        "Transformers are listed in the order they are run by default. If the transformer was enabled/disabled by the "
+        "Formatters are listed in the order they are run by default. If the formater was enabled/disabled by the "
         "configuration the status will be displayed with extra asterisk (*) and in the [magenta]different[/] color."
     )
     console.print(
         "To see detailed docs run:\n"
-        "    [bold]robotidy --desc [blue]transformer_name[/][/]\n"
+        "    [bold]robotidy --desc [blue]formater_name[/][/]\n"
         "or\n"
         "    [bold]robotidy --desc [blue]all[/][/]\n\n"
-        "Non-default transformers needs to be selected explicitly with [bold cyan]--transform[/] or "
+        "Non-default formaters needs to be selected explicitly with [bold cyan]--format[/] or "
         "configured with param `enabled=True`.\n"
     )
 
@@ -193,8 +193,8 @@ def generate_config(global_config: config_module.MainConfig):
         raise exceptions.MissingOptionalTomliWDependencyError()
     target_version = global_config.default.target_version
     config = global_config.default_loaded
-    transformers = load_transformers(TransformConfigMap([], [], []), allow_disabled=True, target_version=target_version)
-    transformers.extend(_load_external_transformers(transformers, config.transformers_config, target_version))
+    formaters = load_formatters(FormatConfigMap([], [], []), allow_disabled=True, target_version=target_version)
+    formatters.extend(_load_external_formatters(formatters, config.formatters_config, target_version))
 
     toml_config = {
         "tool": {
@@ -211,10 +211,10 @@ def generate_config(global_config: config_module.MainConfig):
             }
         }
     }
-    configure_transformers = [
-        f"{transformer.name}:enabled={transformer.name in config.transformers_lookup}" for transformer in transformers
+    configure_formatters = [
+        f"{formatter.name}:enabled={formatter.name in config.formatters_lookup}" for formatter in formatters
     ]
-    toml_config["tool"]["robotidy"]["configure"] = configure_transformers
+    toml_config["tool"]["robotidy"]["configure"] = configure_formatters
 
     with open(global_config.default.generate_config, "w") as fp:
         fp.write(tomli_w.dumps(toml_config))
@@ -224,16 +224,16 @@ def generate_config(global_config: config_module.MainConfig):
 @click.option(
     "--transform",
     "-t",
-    type=TransformConfigParameter(),
+    type=FormatConfigParameter(),
     multiple=True,
     metavar="TRANSFORMER_NAME",
-    help="Transform files from [PATH(S)] with given transformer",
+    help="Format files from [PATH(S)] with given transformer",
 )
 @click.option(
-    "--load-transformers",
-    "--custom-transformers",
-    "custom_transformers",
-    type=TransformConfigParameter(),
+    "--load-formatters",
+    "--custom-formatters",
+    "custom_formatters",
+    type=FormatConfigParameter(),
     multiple=True,
     metavar="TRANSFORMER_NAME",
     help="Load custom transformer from the path and run them after default ones.",
@@ -241,10 +241,10 @@ def generate_config(global_config: config_module.MainConfig):
 @click.option(
     "--configure",
     "-c",
-    type=TransformConfigParameter(),
+    type=FormatConfigParameter(),
     multiple=True,
     metavar="TRANSFORMER_NAME:PARAM=VALUE",
-    help="Configure transformers",
+    help="Configure formatters",
 )
 @click.argument(
     "src",
@@ -394,12 +394,12 @@ def generate_config(global_config: config_module.MainConfig):
 @click.option(
     "--list",
     "-l",
-    "list_transformers",
+    "list_formatters",
     callback=validate_list_optional_value,
     is_flag=False,
     default="",
     flag_value="all",
-    help="List available transformers and exit. "
+    help="List available formatters and exit. "
     "Pass optional value **enabled** or **disabled** to filter out list by transformer status.",
 )
 @click.option(
@@ -429,14 +429,14 @@ def generate_config(global_config: config_module.MainConfig):
 @click.option(
     "--force-order",
     is_flag=True,
-    help="Transform files using transformers in order provided in cli",
+    help="Format files using formatters in order provided in cli",
 )
 @click.option(
     "--target-version",
     "-tv",
     type=click.Choice([v.name.lower() for v in misc.TargetVersion], case_sensitive=False),
     callback=validate_target_version_callback,
-    help="Only enable transformers supported in set target version",
+    help="Only enable formatters supported in set target version",
     show_default="installed Robot Framework version",
 )
 @click.option(
@@ -479,8 +479,8 @@ def cli(ctx: click.Context, **kwargs):
     cli_config = RawConfig.from_cli(ctx=ctx, **kwargs)
     global_config = config_module.MainConfig(cli_config)
     global_config.validate_src_is_required()
-    if global_config.default.list_transformers:
-        print_transformers_list(global_config)
+    if global_config.default.list_formatters:
+        print_formatters_list(global_config)
         sys.exit(0)
     if global_config.default.desc is not None:
         return_code = print_description(global_config.default.desc, global_config.default.target_version)

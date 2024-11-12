@@ -5,7 +5,7 @@ from re import Pattern
 
 import click
 from robot.api import Token
-from robotidy.utils.misc import normalize_name
+from robocop.formatter.utils.misc import normalize_name
 
 
 def parse_csv(value):
@@ -26,9 +26,9 @@ def validate_regex(value: str) -> Pattern | None:
 
 
 class SkipConfig:
-    """Skip configuration (global and for each transformer)."""
+    """Skip configuration (global and for each formatter)."""
 
-    # Following names will be taken from transformer config and provided to Skip class instead
+    # Following names will be taken from formatter config and provided to Skip class instead
     HANDLES = frozenset(
         {
             "skip_documentation",
@@ -98,7 +98,7 @@ class SkipConfig:
 
 
 class Skip:
-    """Defines global skip conditions for each transformer."""
+    """Defines global skip conditions for each formatter."""
 
     def __init__(self, skip_config: SkipConfig):
         self.return_values = skip_config.return_values
