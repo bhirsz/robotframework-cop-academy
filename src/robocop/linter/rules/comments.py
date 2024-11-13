@@ -256,7 +256,7 @@ class IgnoredDataChecker(RawFileChecker):
     BOM = [BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF8, BOM_UTF16_LE, BOM_UTF16_BE]
     SECTION_HEADER = "***"
     ROBOCOP_HEADER = "# robocop:"
-    ROBOTIDY_HEADER = "# robotidy:"
+    ROBOTIDY_HEADER = "# robotidy:"  # TODO
     LANGUAGE_HEADER = "language:"
 
     def __init__(self):

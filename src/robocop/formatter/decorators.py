@@ -5,7 +5,7 @@ try:
 except ImportError:
     import click
 
-from robotidy import exceptions
+from robocop.formatter import exceptions
 
 
 def catch_exceptions(func):

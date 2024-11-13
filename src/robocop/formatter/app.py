@@ -9,10 +9,10 @@ except ImportError:  # Fails on vendored-in LSP plugin
 
 from robot.api import get_model
 from robot.errors import DataError
-from robotidy import disablers
-from robotidy.config import MainConfig
-from robotidy.rich_console import console
-from robotidy.utils import misc
+from robocop.formatter import disablers
+from robocop.formatter.onfig import MainConfig
+from robocop.formatter.ich_console import console
+from robocop.formatter.tils import misc
 
 
 class Robotidy:
@@ -25,7 +25,7 @@ class Robotidy:
             return get_model(source, lang=self.config.language)
         return get_model(source)
 
-    def transform_files(self):
+    def format_files(self):
         changed_files = 0
         skipped_files = 0
         all_files = 0
@@ -51,7 +51,7 @@ class Robotidy:
                 disabler_finder.visit(model)
                 if disabler_finder.is_disabled_in_file(disablers.ALL_TRANSFORMERS):
                     continue
-                diff, old_model, new_model, model = self.transform_until_stable(model, disabler_finder)
+                diff, old_model, new_model, model = self.format_until_stable(model, disabler_finder)
                 if stdin:
                     self.print_to_stdout(new_model)
                 elif diff:
@@ -93,25 +93,25 @@ class Robotidy:
         else:
             click.echo(f"Reformatted {source}")
 
-    def transform_until_stable(self, model, disabler_finder):
-        diff, old_model, new_model = self.transform(model, disabler_finder.disablers)
+    def format_until_stable(self, model, disabler_finder):
+        diff, old_model, new_model = self.format(model, disabler_finder.disablers)
         reruns = self.config.reruns
         while diff and reruns:
             model = get_model(new_model.text)
             disabler_finder.visit(model)
-            new_diff, _, new_model = self.transform(model, disabler_finder.disablers)
+            new_diff, _, new_model = self.format(model, disabler_finder.disablers)
             if not new_diff:
                 break
             reruns -= 1
         return diff, old_model, new_model, model
 
-    def transform(self, model, disablers):
+    def format(self, model, disablers):
         old_model = misc.StatementLinesCollector(model)
-        for transformer in self.config.transformers:
-            transformer.disablers = disablers  # set dynamically to allow using external transformers
-            if disablers.is_disabled_in_file(transformer.__class__.__name__):
+        for formatter in self.config.formatters:
+            formatter.disablers = disablers  # set dynamically to allow using external formatters
+            if disablers.is_disabled_in_file(formatter.__class__.__name__):
                 continue
-            transformer.visit(model)
+            formatter.visit(model)
         new_model = misc.StatementLinesCollector(model)
         return new_model != old_model, old_model, new_model
 

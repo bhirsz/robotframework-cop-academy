@@ -83,38 +83,38 @@ class DisablersInFile:
         for disabled_lines in self.disablers.values():
             disabled_lines.sort_disablers()
 
-    def add_disabler(self, transformer: str, start_line: int, end_line: int, file_level: bool = False):
-        if transformer not in self.disablers:
-            self.disablers[transformer] = DisabledLines(self.start_line, self.end_line, self.file_end)
-        self.disablers[transformer].add_disabler(start_line, end_line)
+    def add_disabler(self, formatter: str, start_line: int, end_line: int, file_level: bool = False):
+        if formatter not in self.disablers:
+            self.disablers[formatter] = DisabledLines(self.start_line, self.end_line, self.file_end)
+        self.disablers[formatter].add_disabler(start_line, end_line)
         if file_level:
-            self.disablers[transformer].disabled_whole = file_level
+            self.disablers[formatter].disabled_whole = file_level
 
-    def add_disabled_header(self, transformer: str, lineno):
-        if transformer not in self.disablers:
-            self.disablers[transformer] = DisabledLines(self.start_line, self.end_line, self.file_end)
-        self.disablers[transformer].add_disabled_header(lineno)
+    def add_disabled_header(self, formatter: str, lineno):
+        if formatter not in self.disablers:
+            self.disablers[formatter] = DisabledLines(self.start_line, self.end_line, self.file_end)
+        self.disablers[formatter].add_disabled_header(lineno)
 
-    def is_disabled_in_file(self, transformer_name: str) -> bool:
+    def is_disabled_in_file(self, formatter_name: str) -> bool:
         if self.disablers[ALL_TRANSFORMERS].disabled_whole:
             return True
-        if transformer_name not in self.disablers:
+        if formatter_name not in self.disablers:
             return False
-        return self.disablers[transformer_name].disabled_whole
+        return self.disablers[formatter_name].disabled_whole
 
-    def is_header_disabled(self, transformer_name: str, line) -> bool:
+    def is_header_disabled(self, formatter_name: str, line) -> bool:
         if self.disablers[ALL_TRANSFORMERS].is_header_disabled(line):
             return True
-        if transformer_name not in self.disablers:
+        if formatter_name not in self.disablers:
             return False
-        return self.disablers[transformer_name].is_header_disabled(line)
+        return self.disablers[formatter_name].is_header_disabled(line)
 
-    def is_node_disabled(self, transformer_name: str, node, full_match=True) -> bool:
+    def is_node_disabled(self, formatter_name: str, node, full_match=True) -> bool:
         if self.disablers[ALL_TRANSFORMERS].is_node_disabled(node, full_match):
             return True
-        if transformer_name not in self.disablers:
+        if formatter_name not in self.disablers:
             return False
-        return self.disablers[transformer_name].is_node_disabled(node, full_match)
+        return self.disablers[formatter_name].is_node_disabled(node, full_match)
 
 
 class DisabledLines:
@@ -150,7 +150,7 @@ class DisabledLines:
     def is_node_disabled(self, node, full_match=True):
         if not node or not self.lines:
             return False
-        end_lineno = max(node.lineno, node.end_lineno)  # workaround for transformers setting -1 as end_lineno
+        end_lineno = max(node.lineno, node.end_lineno)  # workaround for formatters setting -1 as end_lineno
         if full_match:
             for start_line, end_line in self.lines:
                 # lines are sorted on start_line, so we can return on first match
@@ -168,12 +168,12 @@ class RegisterDisablers(ModelVisitor):
         self.start_line = start_line
         self.end_line = end_line
         self.disablers = DisablersInFile(start_line, end_line)
-        self.disabler_pattern = re.compile(r"\s*#\s?robotidy:\s?(?P<disabler>on|off) ?=?(?P<transformers>[\w,\s]*)")
+        self.disabler_pattern = re.compile(r"\s*#\s?robotidy:\s?(?P<disabler>on|off) ?=?(?P<formatters>[\w,\s]*)")
         self.disablers_in_scope: List[Dict[str, int]] = []
         self.file_level_disablers = False
 
-    def is_disabled_in_file(self, transformer_name: str = ALL_TRANSFORMERS):
-        return self.disablers.is_disabled_in_file(transformer_name)
+    def is_disabled_in_file(self, formatter_name: str = ALL_TRANSFORMERS):
+        return self.disablers.is_disabled_in_file(formatter_name)
 
     def get_disabler(self, comment):
         if not comment.value:
@@ -182,10 +182,10 @@ class RegisterDisablers(ModelVisitor):
 
     def close_disabler(self, end_line):
         disabler = self.disablers_in_scope.pop()
-        for transformer_name, start_line in disabler.items():
+        for formatter_name, start_line in disabler.items():
             if not start_line:
                 continue
-            self.disablers.add_disabler(transformer_name, start_line, end_line, self.file_level_disablers)
+            self.disablers.add_disabler(formatter_name, start_line, end_line, self.file_level_disablers)
 
     def visit_File(self, node):  # noqa
         self.file_level_disablers = False
@@ -198,20 +198,20 @@ class RegisterDisablers(ModelVisitor):
         self.disablers.sort_disablers()
 
     @staticmethod
-    def get_disabler_transformers(match) -> List[str]:
-        if not match.group("transformers") or "=" not in match.group(0):  # robotidy: off or robotidy: off comment
+    def get_disabler_formatters(match) -> List[str]:
+        if not match.group("formatters") or "=" not in match.group(0):  # robotidy: off or robotidy: off comment
             return [ALL_TRANSFORMERS]
-        # robotidy: off=Transformer1, Transformer2
-        return [transformer.strip() for transformer in match.group("transformers").split(",") if transformer.strip()]
+        # robotidy: off=Formatter1, Formatter2
+        return [formatter.strip() for formatter in match.group("formatters").split(",") if formatter.strip()]
 
     def visit_SectionHeader(self, node):  # noqa
         for comment in node.get_tokens(Token.COMMENT):
             disabler = self.get_disabler(comment)
             if not disabler or disabler.group("disabler") != "off":
                 continue
-            transformers = self.get_disabler_transformers(disabler)
-            for transformer in transformers:
-                self.disablers.add_disabled_header(transformer, node.lineno)
+            formatters = self.get_disabler_formatters(disabler)
+            for formatter in formatters:
+                self.disablers.add_disabled_header(formatter, node.lineno)
             break
         return self.generic_visit(node)
 
@@ -244,25 +244,25 @@ class RegisterDisablers(ModelVisitor):
             disabler = self.get_disabler(comment)
             if not disabler:
                 return
-            transformers = self.get_disabler_transformers(disabler)
+            formatters = self.get_disabler_formatters(disabler)
             index = 0 if is_line_start(node) else -1
             disabler_start = disabler.group("disabler") == "on"
-            for transformer in transformers:
+            for formatter in formatters:
                 if disabler_start:
-                    start_line = self.disablers_in_scope[index].get(transformer)
+                    start_line = self.disablers_in_scope[index].get(formatter)
                     if not start_line:  # no disabler open
                         continue
-                    self.disablers.add_disabler(transformer, start_line, node.lineno)
-                    self.disablers_in_scope[index][transformer] = 0
-                elif not self.disablers_in_scope[index].get(transformer):
-                    self.disablers_in_scope[index][transformer] = node.lineno
+                    self.disablers.add_disabler(formatter, start_line, node.lineno)
+                    self.disablers_in_scope[index][formatter] = 0
+                elif not self.disablers_in_scope[index].get(formatter):
+                    self.disablers_in_scope[index][formatter] = node.lineno
         else:
             # inline disabler
             for comment in node.get_tokens(Token.COMMENT):
                 disabler = self.get_disabler(comment)
                 if not disabler:
                     continue
-                transformers = self.get_disabler_transformers(disabler)
+                formatters = self.get_disabler_formatters(disabler)
                 if disabler.group("disabler") == "off":
-                    for transformer in transformers:
-                        self.disablers.add_disabler(transformer, node.lineno, node.end_lineno)
+                    for formatter in formatters:
+                        self.disablers.add_disabler(formatter, node.lineno, node.end_lineno)
