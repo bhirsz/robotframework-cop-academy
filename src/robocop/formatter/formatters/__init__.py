@@ -182,24 +182,6 @@ class FormatConfigMap:
                 temp_formatters[name] = formatter
         self.formatters = temp_formatters
 
-    def validate_config_names(self):
-        """
-        Assert that all --configure NAME are either defaults or from --transform/--load-formatter.
-        Otherwise, raise an error with similar names.
-        """
-        # TODO: Currently not used. It enforces that every --config NAME is valid one which may not be desired
-        # if the NAME is external formatter which may not be imported.
-        # Maybe we can add special flag like --validate-config that would run this method if needed.
-        for transf_name, formatter in self.formatters.items():
-            if not formatter.is_config_only:
-                continue
-            similar_finder = misc.RecommendationFinder()
-            formatter_names = [name for name, transf in self.formatters.items() if not transf.is_config_only]
-            similar = similar_finder.find_similar(transf_name, formatter_names)
-            raise ImportFormatterError(
-                f"Configuring formatter '{transf_name}' failed. " f"Verify if correct name was provided.{similar}"
-            ) from None
-
 
 def convert_transform_config(value: str, param_name: str) -> FormatConfig:
     force_included = param_name == "transform"
