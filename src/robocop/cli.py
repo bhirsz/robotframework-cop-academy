@@ -236,9 +236,9 @@ def list_reports(
 ) -> None:
     """List available reports."""
     console = Console(soft_wrap=True)
-    linter_config = LinterConfig(reports=reports)
-    config = config.Config(linter=linter_config)
-    config_manager = config.ConfigManager(overwrite_config=config)
+    linter_config = config.LinterConfig(reports=reports)
+    overwrite_config = config.Config(linter=linter_config)
+    config_manager = config.ConfigManager(overwrite_config=overwrite_config)
     runner = RobocopLinter(config_manager)
     console.print(print_reports(runner.reports, enabled))  # TODO: color etc
 
