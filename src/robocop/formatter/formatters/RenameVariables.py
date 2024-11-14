@@ -7,10 +7,11 @@ from re import Pattern
 from robot.api.parsing import Arguments, Token
 from robot.errors import VariableError
 from robot.variables.search import search_variable
+
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
 from robocop.formatter.exceptions import InvalidParameterValueError
-from robocop.formatter.skip import Skip
 from robocop.formatter.formatters import Formatter
+from robocop.formatter.skip import Skip
 from robocop.formatter.utils import misc, variable_matcher
 
 SET_GLOBAL_VARIABLES = {"settestvariable", "settaskvariable", "setsuitevariable", "setglobalvariable"}
@@ -100,7 +101,7 @@ class VariablesScope:
         self._global = set()
 
     @staticmethod
-    def _get_var_name(variable: str) -> str|None:
+    def _get_var_name(variable: str) -> str | None:
         if len(variable) > 1 and variable[0] in "$@&" and variable[1] != "{":
             variable = f"{variable[0]}{{{variable[1:]}}}"
         match = search_variable(variable, ignore_errors=True)

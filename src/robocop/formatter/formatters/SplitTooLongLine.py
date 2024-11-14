@@ -9,9 +9,9 @@ try:
 except ImportError:
     InlineIfHeader = None
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
-from robocop.formatter.skip import Skip
 from robocop.formatter.formatters import Formatter
 from robocop.formatter.formatters.run_keywords import get_run_keywords
+from robocop.formatter.skip import Skip
 from robocop.formatter.utils.misc import ROBOT_VERSION, normalize_name
 
 EOL = Token(Token.EOL)

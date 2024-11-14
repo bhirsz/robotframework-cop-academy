@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from robot.api.parsing import Comment, CommentSection, ModelVisitor, Token
 
-ALL_TRANSFORMERS = "all"
+ALL_FORMATTERS = "all"
 
 
 def skip_if_disabled(func):
@@ -70,14 +70,14 @@ class DisablersInFile:
         self.start_line = start_line
         self.end_line = end_line
         self.file_end = file_end
-        self.disablers = {ALL_TRANSFORMERS: DisabledLines(start_line, end_line, file_end)}
+        self.disablers = {ALL_FORMATTERS: DisabledLines(start_line, end_line, file_end)}
 
     @property
     def file_disabled(self):
-        return self.is_disabled_in_file(ALL_TRANSFORMERS)
+        return self.is_disabled_in_file(ALL_FORMATTERS)
 
     def parse_global_disablers(self):
-        self.disablers[ALL_TRANSFORMERS].parse_global_disablers()
+        self.disablers[ALL_FORMATTERS].parse_global_disablers()
 
     def sort_disablers(self):
         for disabled_lines in self.disablers.values():
@@ -96,21 +96,21 @@ class DisablersInFile:
         self.disablers[formatter].add_disabled_header(lineno)
 
     def is_disabled_in_file(self, formatter_name: str) -> bool:
-        if self.disablers[ALL_TRANSFORMERS].disabled_whole:
+        if self.disablers[ALL_FORMATTERS].disabled_whole:
             return True
         if formatter_name not in self.disablers:
             return False
         return self.disablers[formatter_name].disabled_whole
 
     def is_header_disabled(self, formatter_name: str, line) -> bool:
-        if self.disablers[ALL_TRANSFORMERS].is_header_disabled(line):
+        if self.disablers[ALL_FORMATTERS].is_header_disabled(line):
             return True
         if formatter_name not in self.disablers:
             return False
         return self.disablers[formatter_name].is_header_disabled(line)
 
     def is_node_disabled(self, formatter_name: str, node, full_match=True) -> bool:
-        if self.disablers[ALL_TRANSFORMERS].is_node_disabled(node, full_match):
+        if self.disablers[ALL_FORMATTERS].is_node_disabled(node, full_match):
             return True
         if formatter_name not in self.disablers:
             return False
@@ -172,7 +172,7 @@ class RegisterDisablers(ModelVisitor):
         self.disablers_in_scope: List[Dict[str, int]] = []
         self.file_level_disablers = False
 
-    def is_disabled_in_file(self, formatter_name: str = ALL_TRANSFORMERS):
+    def is_disabled_in_file(self, formatter_name: str = ALL_FORMATTERS):
         return self.disablers.is_disabled_in_file(formatter_name)
 
     def get_disabler(self, comment):
@@ -200,7 +200,7 @@ class RegisterDisablers(ModelVisitor):
     @staticmethod
     def get_disabler_formatters(match) -> List[str]:
         if not match.group("formatters") or "=" not in match.group(0):  # robotidy: off or robotidy: off comment
-            return [ALL_TRANSFORMERS]
+            return [ALL_FORMATTERS]
         # robotidy: off=Formatter1, Formatter2
         return [formatter.strip() for formatter in match.group("formatters").split(",") if formatter.strip()]
 
@@ -216,20 +216,20 @@ class RegisterDisablers(ModelVisitor):
         return self.generic_visit(node)
 
     def visit_TestCase(self, node):  # noqa
-        self.disablers_in_scope.append({ALL_TRANSFORMERS: 0})
+        self.disablers_in_scope.append({ALL_FORMATTERS: 0})
         self.generic_visit(node)
         self.close_disabler(node.end_lineno)
 
     def visit_Try(self, node):  # noqa
         self.generic_visit(node.header)
-        self.disablers_in_scope.append({ALL_TRANSFORMERS: 0})
+        self.disablers_in_scope.append({ALL_FORMATTERS: 0})
         for statement in node.body:
             self.visit(statement)
         self.close_disabler(node.end_lineno)
         tail = node
         while tail.next:
             self.generic_visit(tail.header)
-            self.disablers_in_scope.append({ALL_TRANSFORMERS: 0})
+            self.disablers_in_scope.append({ALL_FORMATTERS: 0})
             for statement in tail.body:
                 self.visit(statement)
             end_line = tail.next.lineno - 1 if tail.next else tail.end_lineno

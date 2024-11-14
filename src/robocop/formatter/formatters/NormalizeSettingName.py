@@ -1,5 +1,6 @@
 from robot.api.parsing import Token
 from robot.utils.normalizing import normalize_whitespace
+
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
 from robocop.formatter.formatters import Formatter
 

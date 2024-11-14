@@ -5,9 +5,9 @@ try:
 except ImportError:
     InlineIfHeader = None
 
+from robocop.formatter.formatters import Formatter
 from robocop.formatter.isablers import skip_if_disabled, skip_section_if_disabled
 from robocop.formatter.kip import Skip
-from robocop.formatter.formatters import Formatter
 
 
 class AddMissingEnd(Formatter):

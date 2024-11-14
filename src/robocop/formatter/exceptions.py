@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 
 from click import NoSuchOption
+
 from robocop.formatter.tils import misc
 
 

@@ -15,7 +15,7 @@ except ImportError:  # Fails on vendored-in LSP plugin
 
 from robocop.formatter import app, decorators, exceptions, files, skip, version
 from robocop.formatter import config as config_module
-from robocop.formatter.onfig import RawConfig, csv_list_type, validate_target_version
+from robocop.formatter.config import RawConfig, csv_list_type, validate_target_version
 from robocop.formatter.ich_console import console
 from robocop.formatter.ormatters import FormatConfigMap, FormatConfigParameter, load_formatters
 from robocop.formatter.tils import misc

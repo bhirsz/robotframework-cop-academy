@@ -26,6 +26,7 @@ except ImportError:
 from robot.api.parsing import ModelFormatter
 from robot.errors import DataError
 from robot.utils.importer import Importer
+
 from robocop.formatter.exceptions import ImportFormatterError, InvalidParameterError, InvalidParameterFormatError
 from robocop.formatter.skip import Skip, SkipConfig
 from robocop.formatter.utils import misc
@@ -204,9 +205,7 @@ def convert_transform_config(value: str, param_name: str) -> FormatConfig:
     force_included = param_name == "transform"
     custom_formatter = param_name == "custom_formatters"
     is_config = param_name == "configure"
-    return FormatConfig(
-        value, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config
-    )
+    return FormatConfig(value, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config)
 
 
 class FormatConfigParameter(click.ParamType):
@@ -257,7 +256,9 @@ class FormatterContainer:
         s = f"## Formatter {self.name}\n" + textwrap.dedent(self.instance.__doc__)
         if self.parameters:
             s += "\nSupported parameters:\n  - " + "\n - ".join(str(param) for param in self.parameters) + "\n"
-        s += f"\nSee <https://robotidy.readthedocs.io/en/latest/formatters/{self.name}.html> for more examples."  # FIXME
+        s += (
+            f"\nSee <https://robotidy.readthedocs.io/en/latest/formatters/{self.name}.html> for more examples."  # FIXME
+        )
         return s
 
 
@@ -324,9 +325,7 @@ def import_formatter(name, config: FormatConfigMap, skip) -> Iterable[FormatterC
     try:
         imported = IMPORTER.import_class_or_module(name)
         if inspect.isclass(imported):
-            yield create_formatter_instance(
-                imported, short_name, config.get_args(name, short_name, import_path), skip
-            )
+            yield create_formatter_instance(imported, short_name, config.get_args(name, short_name, import_path), skip)
         else:
             formatters = load_formatters_from_module(imported)
             formatters = order_formatters(formatters, imported)

@@ -4,7 +4,8 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
-from robocop.config import DEFAULT_ISSUE_FORMAT, Config, ConfigManager, LinterConfig
+from robocop import config
+from robocop.formatter.runner import RobocopFormatter
 from robocop.linter.reports import print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
@@ -22,6 +23,7 @@ app.add_typer(list_app, name="list")
 config_option = Annotated[
     Path,
     typer.Option(
+        "--config",
         help="Path to configuration file. It will overridden any configuration file found in the project.",
         exists=True,
         file_okay=True,
@@ -60,7 +62,7 @@ def check_files(
             "--threshold", "-t", show_default=RuleSeverity.INFO.value, parser=parse_rule_severity, metavar="I/W/E"
         ),
     ] = None,
-    config: config_option = None,
+    configuration_file: config_option = None,
     configure: Annotated[
         list[str],
         typer.Option(
@@ -81,7 +83,7 @@ def check_files(
             "Use `all` to enable all reports.",
         ),
     ] = None,
-    issue_format: Annotated[str, typer.Option("--issue-format", show_default=DEFAULT_ISSUE_FORMAT)] = None,
+    issue_format: Annotated[str, typer.Option("--issue-format", show_default=config.DEFAULT_ISSUE_FORMAT)] = None,
     language: Annotated[
         list[str],
         typer.Option(
@@ -108,7 +110,7 @@ def check_files(
     root: project_root_option = None,
 ) -> None:
     """Lint files."""
-    linter_config = LinterConfig(
+    linter_config = config.LinterConfig(
         configure=configure,
         include=include,
         exclude=exclude,
@@ -119,10 +121,10 @@ def check_files(
         persistent=persistent,
         compare=compare,
     )
-    overwrite_config = Config(linter=linter_config, language=language, exit_zero=exit_zero)
-    config_manager = ConfigManager(
+    overwrite_config = config.Config(linter=linter_config, formatter=None, language=language, exit_zero=exit_zero)
+    config_manager = config.ConfigManager(
         sources=sources,
-        config=config,
+        config=configuration_file,
         root=root,
         ignore_git_dir=ignore_git_dir,
         skip_gitignore=skip_gitignore,
@@ -134,19 +136,34 @@ def check_files(
 
 @app.command(name="format")
 def format_files(
-    config: config_option = None,
+    sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
+    configuration_file: config_option = None,
+    language: Annotated[
+        list[str],
+        typer.Option(
+            "--language",
+            "-l",
+            show_default="en",
+            metavar="LANG",
+            help="Parse Robot Framework files using additional languages.",
+        ),
+    ] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
-    exit_zero: Annotated[
-        bool,
-        typer.Option(help="Always exit with 0 unless Robocop terminates abnormally.", show_default="--no-exit-zero"),
-    ] = None,
     root: project_root_option = None,
 ) -> None:
     """Format files."""
-    config_manager = ConfigManager(
-        config=config, root=root, ignore_git_dir=ignore_git_dir, skip_gitignore=skip_gitignore
+    formatter_config = config.FormatterConfig()
+    overwrite_config = config.Config(formatter=formatter_config, linter=None, language=language)
+    config_manager = config.ConfigManager(
+        sources=sources,
+        config=configuration_file,
+        root=root,
+        ignore_git_dir=ignore_git_dir,
+        skip_gitignore=skip_gitignore,
     )
+    runner = RobocopFormatter(config_manager)
+    runner.run()
 
 
 @list_app.command(name="rules")
@@ -173,7 +190,7 @@ def list_rules(
     # TODO: support list-configurables (maybe as separate robocop rule <>)
     # TODO: rich support (colorized enabled, severity etc)
     console = Console(soft_wrap=True)
-    config_manager = ConfigManager()
+    config_manager = config.ConfigManager()
     runner = RobocopLinter(config_manager)
     runner.check_for_disabled_rules()
     if filter_pattern:
@@ -220,8 +237,8 @@ def list_reports(
     """List available reports."""
     console = Console(soft_wrap=True)
     linter_config = LinterConfig(reports=reports)
-    config = Config(linter=linter_config)
-    config_manager = ConfigManager(overwrite_config=config)
+    config = config.Config(linter=linter_config)
+    config_manager = config.ConfigManager(overwrite_config=config)
     runner = RobocopLinter(config_manager)
     console.print(print_reports(runner.reports, enabled))  # TODO: color etc
 
@@ -242,7 +259,7 @@ def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]) -> Non
     """Describe a rule."""
     # TODO load external from cli
     console = Console(soft_wrap=True)
-    config_manager = ConfigManager()
+    config_manager = config.ConfigManager()
     runner = RobocopLinter(config_manager)
     if rule not in runner.rules:
         console.print(f"Rule '{rule}' does not exist.")

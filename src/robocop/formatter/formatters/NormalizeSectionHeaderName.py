@@ -1,8 +1,8 @@
 import string
 
 from robocop.formatter.disablers import skip_section_if_disabled
-from robocop.formatter.skip import Skip
 from robocop.formatter.formatters import Formatter
+from robocop.formatter.skip import Skip
 
 
 class NormalizeSectionHeaderName(Formatter):

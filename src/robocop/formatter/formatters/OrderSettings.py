@@ -1,4 +1,5 @@
 from robot.api.parsing import Comment, EmptyLine, Token
+
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
 from robocop.formatter.exceptions import InvalidParameterValueError, RobotidyConfigError
 from robocop.formatter.formatters import Formatter
