@@ -1,5 +1,81 @@
+:orphan:
+
+==============
+Robocop2 6.0
+==============
+
+Robocop 6.0 is major release of both Robocop and Robotidy (!) tools.
+
+Although this is the 6th major version of Robocop, the scope of changes is larger than ever before.
+Nearly all core functionality has been rewritten, refactored, or replaced. Please make sure to review all the breaking
+changes, as most of the previous commands or configuration files will be compatible with this release.
+
+Merging the tools
+==================
+
+We have decided to merge both Robocop and Robotidy tools. This challenging decision was made for the following reasons:
+
+* It's more efficient to maintain a single tool rather than two, as there was some code overlap between them
+* Robotidy was developed after Robocop and used entirely different libraries and architecture for CLI and
+  configuration management. Implementing the same feature in both tools resulted in duplicate effort
+* This migration requires us to rewrite much of the code, providing a opportunity to redefine some of our core
+  architecture
+* We believe the merged tool will offer a significantly better user experience
+
+Merging the tools means that:
+
+* Robotidy is no longer developed and will now exist as 'Formatter' part of the Robocop
+* Robocop is now split into two modes, 'Formatter' and 'Linter'
+
+The basic usage is::
+
+    robocop check
+    robocop format
+
+See detailed description for command changes.
+
 Breaking changes
 =================
+
+Robocop --list is deprecated
+-----------------------------
+
+``--list`` option used to list available rules is now deprecated and replaced with ``list rules`` command::
+
+    robocop list rules
+
+Use it with ``--help`` for more information.
+
+Robotidy --list is deprecated
+-----------------------------
+
+``--list`` option used to list available rules is now deprecated and replaced with ``list formatters`` command::
+
+    robocop list formatters
+
+Use it with ``--help`` for more information.
+
+Linter configuration syntax change
+-----------------------------------
+
+Configuration syntax for ``--configure`` changed from::
+
+    robocop --configure rule_or_report:param:value
+
+to::
+
+    robocop check --configure rule_or_report.param=value
+
+Formatter configuration syntax change
+-------------------------------------
+
+Configuration syntax for ``--configure`` changed from::
+
+    robotidy --configure formatter:param=value
+
+to::
+
+    robocop format --configure formatter.param=value
 
 return_status report is now optional
 -------------------------------------
@@ -43,3 +119,18 @@ Remember that you still need results from previous run (saved with ``--persisten
 from the reports. Full example::
 
     robocop check --persistent --compare --reports all
+
+(Robotidy) Formatter deprecated --transform option
+---------------------------------------------------
+
+``--transform`` option use to select formatters is now deprecated. It is replaced by ``--select`` which works similarly
+but have one distinction - it does not support configuration.
+
+Previous command::
+
+    robotidy --transform YourTransformer:parameter=value --configure DefaultTransformer:other_parameter=value
+
+Can be now achieved by::
+
+    robocop format --select YourTransformer --configure YourTransformer.parameter=value --configure DefaultTransformer.other_parameter=value
+
