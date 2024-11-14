@@ -1,6 +1,7 @@
 from robot.api.parsing import Token
-from robocop.formatter.skip import Skip
+
 from robocop.formatter.formatters import Formatter
+from robocop.formatter.skip import Skip
 
 
 class NormalizeComments(Formatter):

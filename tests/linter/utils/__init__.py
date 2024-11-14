@@ -90,17 +90,18 @@ class RuleAcceptance:
             paths = [test_data]
         else:
             paths = [test_data / src_file for src_file in src_files]
-        with isolated_output() as output, pytest.raises(click.exceptions.Exit):
+        with isolated_output() as output:
             try:
-                check_files(
-                    sources=paths,
-                    include=include,
-                    configure=configure,
-                    issue_format=issue_format,
-                    threshold=threshold,
-                    language=language,
-                    **kwargs,
-                )
+                with pytest.raises(click.exceptions.Exit):
+                    check_files(
+                        sources=paths,
+                        include=include,
+                        configure=configure,
+                        issue_format=issue_format,
+                        threshold=threshold,
+                        language=language,
+                        **kwargs,
+                    )
             finally:
                 sys.stdout.flush()
                 result = get_result(output)

@@ -6,6 +6,7 @@ from pathlib import Path
 from jinja2 import Template
 from jinja2.exceptions import TemplateError
 from robot.api.parsing import Documentation, ModelVisitor, Token
+
 from robocop.formatter.exceptions import InvalidParameterValueError
 from robocop.formatter.formatters import Formatter
 

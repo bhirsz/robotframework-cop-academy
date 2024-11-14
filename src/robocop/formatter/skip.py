@@ -5,6 +5,7 @@ from re import Pattern
 
 import click
 from robot.api import Token
+
 from robocop.formatter.utils.misc import normalize_name
 
 

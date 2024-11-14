@@ -17,6 +17,7 @@ except ImportError:
 
 import click
 from click.core import ParameterSource
+
 from robocop.formatter import exceptions, files, skip
 from robocop.formatter.ormatters import FormatConfig, FormatConfigMap, convert_format_config, load_formatters
 from robocop.formatter.tils import misc
@@ -381,9 +382,7 @@ class Config:
             line_length=raw_config.line_length,
         )
 
-        formatters_config = FormatConfigMap(
-            raw_config.format, raw_config.custom_formatters, raw_config.configure
-        )
+        formatters_config = FormatConfigMap(raw_config.format, raw_config.custom_formatters, raw_config.configure)
 
         if raw_config.verbose and raw_config.config_path:
             click.echo(f"Loaded configuration from {raw_config.config_path}")

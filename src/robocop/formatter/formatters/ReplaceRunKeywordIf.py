@@ -1,4 +1,5 @@
 from robot.api.parsing import ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, Token
+
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
 from robocop.formatter.formatters import Formatter
 from robocop.formatter.utils import misc

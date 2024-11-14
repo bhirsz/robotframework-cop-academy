@@ -50,6 +50,37 @@ class RuleMatcher:
 
 
 @dataclass
+class WhitespaceConfig:
+    space_count: int | str | None = 4
+    indent: int | str | None = None
+    continuation_indent: int | str | None = None
+    line_separator: str | None = "native"  # TODO was lineseparator in cli
+    separator: str | None = "space"
+    line_length: int | None = 120
+
+    def process_config(self):
+        """Prepare config with processed values. If value is missing, use related config as a default."""
+        if self.indent is None:
+            self.indent = self.space_count
+        if self.continuation_indent is None:
+            self.continuation_indent = self.space_count
+        if self.separator == "space":
+            self.separator = " " * self.space_count
+            self.indent = " " * self.indent
+            self.continuation_indent = " " * self.continuation_indent
+        elif self.separator == "tab":
+            self.separator = "\t"
+            self.indent = "\t"
+            self.continuation_indent = "\t"
+        if self.line_separator == "native":
+            self.line_separator = "\n"
+        elif self.line_separator == "windows":
+            self.line_separator = "\r\n"
+        elif line_sep == "unix":
+            self.line_separator = "\n"
+
+
+@dataclass
 class LinterConfig:
     configure: list[str] = field(default_factory=list)
     include: list[str] = field(default_factory=list)
@@ -106,14 +137,23 @@ class LinterConfig:
 
 
 @dataclass
-class FormatConfig:
-    pass
+class FormatterConfig:
+    whitespace_config: WhitespaceConfig = field(default_factory=WhitespaceConfig)
+    overwrite: bool | None = False
+    show_diff: bool | None = False
+    output = None  # TODO
+    color: bool | None = False
+    check: bool | None = False
+    reruns: int | None = 0  # TODO
+    start_line: int | None = None  # TODO it's startline/endline in cli
+    end_line: int | None = None
 
 
 @dataclass
 class Config:
     sources: list[str] = field(default_factory=lambda: ["."])
     linter: LinterConfig = field(default_factory=LinterConfig)
+    formatter: FormatterConfig = field(default_factory=FormatterConfig)
     language: list[str] = field(default_factory=list)
     exit_zero: bool | None = False
 
@@ -127,6 +167,8 @@ class Config:
         return cls(**configuration)
 
     def overwrite_from_config(self, overwrite_config: Config | None) -> None:
+        # TODO what about --config? toml files has config = [], and cli --config as well, what should happen?
+        # 1) cli overwrites all 2) we append to config (last, so cli overwrites the same settings) - preffered
         if not overwrite_config:
             return
         for field in dataclasses.fields(overwrite_config):

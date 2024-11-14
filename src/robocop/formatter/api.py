@@ -41,7 +41,7 @@ def format_model(model, root_dir: str, output: str | None = None, **kwargs) -> s
         robotidy_class.config.formatting.start_line, robotidy_class.config.formatting.end_line
     )
     disabler_finder.visit(model)
-    if disabler_finder.is_disabled_in_file(disablers.ALL_TRANSFORMERS):
+    if disabler_finder.is_disabled_in_file(disablers.ALL_FORMATTERS):
         return None
     diff, _, new_model = robotidy_class.format(model, disabler_finder.disablers)
     if not diff:

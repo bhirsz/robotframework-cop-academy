@@ -8,8 +8,8 @@ except ImportError:
     Config = None
 
 from robocop.formatter.disablers import skip_section_if_disabled
-from robocop.formatter.skip import Skip
 from robocop.formatter.formatters import Formatter
+from robocop.formatter.skip import Skip
 from robocop.formatter.utils.misc import is_suite_templated
 
 

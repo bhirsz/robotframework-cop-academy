@@ -26,6 +26,7 @@ except ImportError:
 from robot.api.parsing import ModelFormatter
 from robot.errors import DataError
 from robot.utils.importer import Importer
+
 from robocop.formatter.exceptions import ImportFormatterError, InvalidParameterError, InvalidParameterFormatError
 from robocop.formatter.skip import Skip, SkipConfig
 from robocop.formatter.utils import misc
@@ -181,32 +182,12 @@ class FormatConfigMap:
                 temp_formatters[name] = formatter
         self.formatters = temp_formatters
 
-    def validate_config_names(self):
-        """
-        Assert that all --configure NAME are either defaults or from --transform/--load-formatter.
-        Otherwise, raise an error with similar names.
-        """
-        # TODO: Currently not used. It enforces that every --config NAME is valid one which may not be desired
-        # if the NAME is external formatter which may not be imported.
-        # Maybe we can add special flag like --validate-config that would run this method if needed.
-        for transf_name, formatter in self.formatters.items():
-            if not formatter.is_config_only:
-                continue
-            similar_finder = misc.RecommendationFinder()
-            formatter_names = [name for name, transf in self.formatters.items() if not transf.is_config_only]
-            similar = similar_finder.find_similar(transf_name, formatter_names)
-            raise ImportFormatterError(
-                f"Configuring formatter '{transf_name}' failed. " f"Verify if correct name was provided.{similar}"
-            ) from None
-
 
 def convert_transform_config(value: str, param_name: str) -> FormatConfig:
     force_included = param_name == "transform"
     custom_formatter = param_name == "custom_formatters"
     is_config = param_name == "configure"
-    return FormatConfig(
-        value, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config
-    )
+    return FormatConfig(value, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config)
 
 
 class FormatConfigParameter(click.ParamType):
@@ -257,7 +238,9 @@ class FormatterContainer:
         s = f"## Formatter {self.name}\n" + textwrap.dedent(self.instance.__doc__)
         if self.parameters:
             s += "\nSupported parameters:\n  - " + "\n - ".join(str(param) for param in self.parameters) + "\n"
-        s += f"\nSee <https://robotidy.readthedocs.io/en/latest/formatters/{self.name}.html> for more examples."  # FIXME
+        s += (
+            f"\nSee <https://robotidy.readthedocs.io/en/latest/formatters/{self.name}.html> for more examples."  # FIXME
+        )
         return s
 
 
@@ -324,9 +307,7 @@ def import_formatter(name, config: FormatConfigMap, skip) -> Iterable[FormatterC
     try:
         imported = IMPORTER.import_class_or_module(name)
         if inspect.isclass(imported):
-            yield create_formatter_instance(
-                imported, short_name, config.get_args(name, short_name, import_path), skip
-            )
+            yield create_formatter_instance(imported, short_name, config.get_args(name, short_name, import_path), skip)
         else:
             formatters = load_formatters_from_module(imported)
             formatters = order_formatters(formatters, imported)

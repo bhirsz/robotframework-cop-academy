@@ -1,7 +1,8 @@
 from robot.api.parsing import Token
+
 from robocop.formatter.disablers import skip_if_disabled, skip_section_if_disabled
-from robocop.formatter.skip import Skip
 from robocop.formatter.formatters import Formatter
+from robocop.formatter.skip import Skip
 
 
 class ReplaceEmptyValues(Formatter):
