@@ -27,78 +27,100 @@ from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, 
 from robocop.linter.utils import get_section_name, normalize_robot_name, pattern_type, str2bool
 from robocop.linter.utils.misc import RETURN_CLASSES
 
-RULE_CATEGORY_ID = "05"
 
-rules = {
-    "0501": Rule(
+class TooLongKeywordRule(Rule):
+    name = "too-long-keyword"
+    rule_id = "LEN01"
+    message = "Keyword '{keyword_name}' is too long ({keyword_length}/{allowed_length})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_len", default=40, converter=int, desc="number of lines allowed in a keyword"),
         RuleParam(name="ignore_docs", default=False, converter=str2bool, show_type="bool", desc="Ignore documentation"),
-        SeverityThreshold("max_len", compare_method="greater", substitute_value="allowed_length"),
-        rule_id="0501",
-        name="too-long-keyword",
-        msg="Keyword '{{ keyword_name }}' is too long ({{ keyword_length }}/{{ allowed_length}})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0502": Rule(
+        SeverityThreshold("max_len", compare_method="greater", substitute_value="allowed_length")  # TODO possibly other attr? like thresholds
+    ]
+    added_in_version = "1.0.0"
+
+
+class TooFewCallsInKeywordRule(Rule):
+    name = "too-few-calls-in-keyword"
+    rule_id = "LEN02"
+    message = "Keyword '{keyword_name}' has too few keywords inside ({keyword_count}/{min_allowed_count})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="min_calls", default=1, converter=int, desc="number of keyword calls required in a keyword"),
-        SeverityThreshold("min_calls", compare_method="less", substitute_value="min_allowed_count"),
-        rule_id="0502",
-        name="too-few-calls-in-keyword",
-        msg="Keyword '{{ keyword_name }}' has too few keywords inside ({{ keyword_count }}/{{ min_allowed_count }})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0503": Rule(
+        SeverityThreshold("min_calls", compare_method="less", substitute_value="min_allowed_count")
+    ]
+    added_in_version = "1.0.0"
+
+
+class TooManyCallsInKeywordRule(Rule):
+    name = "too-many-calls-in-keyword"
+    rule_id = "LEN03"
+    message = "Keyword '{keyword_name}' has too many keywords inside ({keyword_count}/{max_allowed_count})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_calls", default=10, converter=int, desc="number of keyword calls allowed in a keyword"),
-        SeverityThreshold("max_calls", compare_method="greater", substitute_value="max_allowed_count"),
-        rule_id="0503",
-        name="too-many-calls-in-keyword",
-        msg="Keyword '{{ keyword_name }}' has too many keywords inside ({{ keyword_count }}/{{ max_allowed_count }})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0504": Rule(
+        SeverityThreshold("max_calls", compare_method="greater", substitute_value="max_allowed_count")
+    ]
+    added_in_version = "1.0.0"
+
+
+class TooLongTestCaseRule(Rule):
+    name = "too-long-test-case"
+    rule_id = "LEN04"
+    message = "Test case '{test_name}' is too long ({test_length}/{allowed_length})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_len", default=20, converter=int, desc="number of lines allowed in a test case"),
         RuleParam(name="ignore_docs", default=False, converter=str2bool, show_type="bool", desc="Ignore documentation"),
-        SeverityThreshold("max_len", compare_method="greater", substitute_value="allowed_length"),
-        rule_id="0504",
-        name="too-long-test-case",
-        msg="Test case '{{ test_name }}' is too long ({{ test_length }}/{{ allowed_length }})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0505": Rule(
+    SeverityThreshold("max_len", compare_method="greater", substitute_value="allowed_length")
+    ]
+    added_in_version = "1.0.0"
+
+
+class TooManyCallsInTestCaseRule(Rule):
+    """
+    Redesign the test and move complex logic to separate keywords to increase readability.
+    """
+    name = "too-many-calls-in-test-case"
+    rule_id = "LEN05"
+    message = "Test case '{test_name}' has too many keywords inside ({keyword_count}/{max_allowed_count})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_calls", default=10, converter=int, desc="number of keyword calls allowed in a test case"),
         RuleParam(
             name="ignore_templated", default=False, converter=str2bool, show_type="bool", desc="Ignore templated tests"
         ),
-        SeverityThreshold("max_calls", compare_method="greater", substitute_value="max_allowed_count"),
-        rule_id="0505",
-        name="too-many-calls-in-test-case",
-        msg="Test case '{{ test_name }}' has too many keywords inside ({{ keyword_count }}/{{ max_allowed_count }})",
-        docs="Redesign the test and move complex logic to separate keywords to increase readability.",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0506": Rule(
+        SeverityThreshold("max_calls", compare_method="greater", substitute_value="max_allowed_count")
+    ]
+    added_in_version = "1.0.0"
+
+
+class FileTooLongRule(Rule):
+    name = "file-too-long"
+    rule_id = "LEN06"
+    message = "File has too many lines ({lines_count}/{{max_allowed_count})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_lines", default=400, converter=int, desc="number of lines allowed in a file"),
         SeverityThreshold("max_lines", compare_method="greater", substitute_value="max_allowed_count"),
-        rule_id="0506",
-        name="file-too-long",
-        msg="File has too many lines ({{ lines_count }}/{{max_allowed_count }})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
-    "0507": Rule(
+    ]
+    added_in_version = "1.0.0"
+
+
+class TooManyArgumentsRule(Rule):
+    name = "too-many-arguments"
+    rule_id = "LEN07"
+    message = "Keyword '{keyword_name}' has too many arguments ({arguments_count}/{max_allowed_count})"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(name="max_args", default=5, converter=int, desc="number of lines allowed in a file"),
         SeverityThreshold("max_args", compare_method="greater", substitute_value="max_allowed_count"),
-        rule_id="0507",
-        name="too-many-arguments",
-        msg="Keyword '{{ keyword_name }}' has too many arguments ({{ arguments_count }}/{{ max_allowed_count }})",
-        severity=RuleSeverity.WARNING,
-        added_in_version="1.0.0",
-    ),
+    ]
+    added_in_version = "1.0.0"
+
+
+rules = {
     "0508": Rule(
         RuleParam(name="line_length", default=120, converter=int, desc="number of characters allowed in line"),
         RuleParam(
@@ -111,7 +133,7 @@ rules = {
         SeverityThreshold("line_length", substitute_value="allowed_length"),
         rule_id="0508",
         name="line-too-long",
-        msg="Line is too long ({{ line_length }}/{{ allowed_length }})",
+        msg="Line is too long ({line_length}/{allowed_length})",
         severity=RuleSeverity.WARNING,
         docs="""
         It is possible to ignore lines that match regex pattern. Configure it using following option::
@@ -126,7 +148,7 @@ rules = {
     "0509": Rule(
         rule_id="0509",
         name="empty-section",
-        msg="Section '{{ section_name }}' is empty",
+        msg="Section '{section_name}' is empty",
         severity=RuleSeverity.WARNING,
         added_in_version="1.0.0",
     ),
@@ -137,7 +159,7 @@ rules = {
         SeverityThreshold("max_returns", compare_method="greater", substitute_value="max_allowed_count"),
         rule_id="0510",
         name="number-of-returned-values",
-        msg="Too many return values ({{ return_count }}/{{ max_allowed_count }})",
+        msg="Too many return values ({return_count}/{max_allowed_count})",
         severity=RuleSeverity.WARNING,
         added_in_version="1.0.0",
     ),
@@ -151,7 +173,7 @@ rules = {
     "0512": Rule(
         rule_id="0512",
         name="empty-documentation",
-        msg="Documentation of {{ block_name }} is empty",
+        msg="Documentation of {block_name} is empty",
         severity=RuleSeverity.WARNING,
         added_in_version="1.0.0",
     ),
@@ -193,7 +215,7 @@ rules = {
     "0518": Rule(
         rule_id="0518",
         name="empty-setup",
-        msg="Setup of {{ block_name }} does not have any keywords",
+        msg="Setup of {block_name} does not have any keywords",
         severity=RuleSeverity.ERROR,
         added_in_version="1.0.0",
     ),
@@ -214,7 +236,7 @@ rules = {
     "0521": Rule(
         rule_id="0521",
         name="empty-teardown",
-        msg="Teardown of {{ block_name }} does not have any keywords",
+        msg="Teardown of {block_name} does not have any keywords",
         severity=RuleSeverity.ERROR,
         added_in_version="1.0.0",
     ),
@@ -235,7 +257,7 @@ rules = {
     "0524": Rule(
         rule_id="0524",
         name="empty-timeout",
-        msg="Timeout of {{ block_name }} is empty",
+        msg="Timeout of {block_name} is empty",
         severity=RuleSeverity.WARNING,
         added_in_version="1.0.0",
     ),
@@ -249,7 +271,7 @@ rules = {
     "0526": Rule(
         rule_id="0526",
         name="empty-arguments",
-        msg="Arguments of {{ block_name }} are empty",
+        msg="Arguments of {block_name} are empty",
         severity=RuleSeverity.ERROR,
         added_in_version="1.0.0",
     ),
@@ -264,7 +286,7 @@ rules = {
         SeverityThreshold("max_testcases or max_templated_testcases", substitute_value="max_allowed_count"),
         rule_id="0527",
         name="too-many-test-cases",
-        msg="Too many test cases ({{ test_count }}/{{ max_allowed_count }})",
+        msg="Too many test cases ({test_count}/{max_allowed_count})",
         severity=RuleSeverity.WARNING,
         added_in_version="1.10.0",
     ),
@@ -275,7 +297,7 @@ rules = {
         ),
         rule_id="0528",
         name="too-few-calls-in-test-case",
-        msg="Test case '{{ test_name }}' has too few keywords inside ({{ keyword_count }}/{{ min_allowed_count }})",
+        msg="Test case '{test_name}' has too few keywords inside ({keyword_count}/{min_allowed_count})",
         docs="""
         Test without keywords will fail. Add more keywords or set results using ``Fail``, ``Pass Execution`` or
         ``Skip`` keywords::
@@ -304,7 +326,7 @@ rules = {
     "0530": Rule(
         rule_id="0530",
         name="empty-template",
-        msg="Template of {{ block_name }} is empty. "
+        msg="Template of {block_name} is empty. "
         "To overwrite suite Test Template use more explicit [Template]  NONE",
         docs="""
         The ``[Template]`` setting overrides the possible template set in the Setting section, and an empty value for
@@ -344,7 +366,7 @@ rules = {
         ),
         rule_id="0532",
         name="arguments-per-line",
-        msg="There is too many arguments per continuation line ({{ arguments_count }} / {{ max_arguments_count }})",
+        msg="There is too many arguments per continuation line ({arguments_count} / {max_arguments_count})",
         severity=RuleSeverity.INFO,
         added_in_version="5.0.0",
         docs="""

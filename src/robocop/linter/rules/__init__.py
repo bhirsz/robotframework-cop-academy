@@ -44,6 +44,7 @@ from collections.abc import Generator
 from enum import Enum
 from functools import total_ordering
 from importlib import import_module
+from inspect import isclass
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Callable, NoReturn, Optional
@@ -328,82 +329,70 @@ class SeverityThreshold:
 class Rule:
     """
     Robocop linter rule.
-    It can be used for reporting issues that are breaking particular rule.
-    You can store configuration of the rule inside RuleParam parameters.
 
-    Every rule contains one default RuleParam - severity.
+    Class describing Robot Framework code rule, optionally checking the violations and reporting it.
+
+    Attributes:
+        name (str): (class attribute) name of the rule
+        rule_id (str): (class attribute) id of the rule
+        msg (str): (class attribute) message of the rule
+        severity (RuleSeverity): (class attribute) severity of the rule (ie: RuleSeverity.INFO)
+        version (str): (class attribute) supported Robot Framework version (ie: >=4.0)
+        added_in_version (str): (class attribute) version of the Robocop when the Rule was created
+        enabled (bool): (class attribute) enable/disable rule by default using this parameter
+        deprecated (bool): (class attribute) deprecated rule. If rule is used in configuration, it will issue a warning
+
     """
 
-    def __init__(
-        self,
-        *params: RuleParam | SeverityThreshold,
-        rule_id: str,
-        name: str,
-        msg: str,
-        severity: RuleSeverity,
-        version: str | None = None,
-        docs: str = "",
-        added_in_version: str | None = None,
-        enabled: bool = True,
-        deprecated: bool = False,
-    ):
-        """
-        :param params: RuleParam() or SeverityThreshold() instances
-        :param rule_id: id of the rule
-        :param name: name of the rule
-        :param msg: message printed when rule breach is detected
-        :param severity: severity of the rule (ie: RuleSeverity.INFO)
-        :param version: supported Robot Framework version (ie: >=4.0)
-        :param docs: Full documentation of the rule (rst supported)
-        description of the rule
-        :param added_in_version: Version of the Robocop when the Rule was created
-        :param enabled: Enable/disable rule by default using this parameter
-        :param deprecated: Deprecate rule. If rule is used in configuration, it will issue a warning.
-        """
-        self.rule_id = rule_id
-        self.name = name
-        self.msg = msg
-        self.msg_template = self.get_template(msg)
-        self.default_severity = severity
-        self.docs = dedent(docs)
-        self.config = {
-            "severity": RuleParam(
-                name="severity",
-                default=severity,
-                converter=RuleSeverity.parser,
-                desc="Rule severity (E = Error, W = Warning, I = Info)",
-                show_type="severity",
-            ),
-            "enabled": RuleParam(
-                name="enabled",
-                default=enabled,
-                converter=str2bool,
-                desc="Rule default enable status",
-                show_type="bool",
-            ),
-        }
-        for param in params:
-            self.config[param.name] = param
-        self.supported_version = version if version else "All"
-        self.deprecated = deprecated
-        self.enabled_in_version = self.supported_in_rf_version(version)
-        self.added_in_version = added_in_version
-        self.community_rule = False
-        self.category_id = None
+    name: str
+    rule_id: str
+    message: str
+    severity: RuleSeverity
+    group: str = ""
+    severity_threshold: SeverityThreshold | None = None
+    version: str | None = None
+    added_in_version: str | None = None
+    enabled: bool = True
+    deprecated: bool = False
+    parameters: list[RuleParam] | None = None
 
-    @property
-    def severity(self):
-        return self.config["severity"].value
+    def __init__(self):
+        self.enabled = not self.deprecated and self.enabled
+        self.enabled_in_version = self.supported_in_rf_version(self.version)
+        self._parameters = self._parse_parameters()
 
-    @property
-    def enabled(self):
-        if self.deprecated:
-            return False
-        return self.config["enabled"].value
+    #     self.docs = dedent(docs)
+    #     self.config = {
+    #         "severity": RuleParam(
+    #             name="severity",
+    #             default=severity,
+    #             converter=RuleSeverity.parser,
+    #             desc="Rule severity (E = Error, W = Warning, I = Info)",
+    #             show_type="severity",
+    #         ),
+    #     }
+    #     for param in params:
+    #         self.config[param.name] = param
 
-    @enabled.setter
-    def enabled(self, value):
-        self.config["enabled"].value = value
+    # TODO: Maybe when config is loaded, visit Rule and RuleParams and convert values
+    # if self.my_rule.my_param
+    # first check if my_param was defined in params, if so then if it's in config (then take parsed value)
+    # otherwise take param default
+
+    def _parse_parameters(self) -> dict[str, RuleParam]:
+        if not self.parameters:
+            return {}
+        s = property()  # FIXME dynamically create properties for RuleParam>? 
+        return {param.name: param for param in self.parameters}
+
+    # @property
+    # def severity(self):  # TODO first return overriden severity, otherwise this (optionally handle dynamic here)
+    #     return self.config["severity"].value
+
+    def __getattr__(self, name: str):
+        if name in self._parameters:  # TODO: handle configuration files
+            return self._parameters[name].value
+        # TODO handle missing
 
     @property
     def description(self) -> str:
@@ -431,52 +420,44 @@ class Rule:
     def get_severity_with_threshold(self, threshold_value):
         if threshold_value is None:
             return self.severity
-        severity_threshold = self.config.get("severity_threshold", None)
-        if severity_threshold is None:
+        if self.severity_threshold is None:
             return self.severity
-        severity = severity_threshold.get_severity(threshold_value)
-        if severity is None:
+        severity = self.severity_threshold.get_severity(threshold_value)
+        if severity is None:  # TODO
             return self.severity
         return severity
 
-    @staticmethod
-    def supported_in_rf_version(version: str) -> bool:
+    def supported_in_rf_version(self, version: str | None) -> bool:
         if not version:
             return True
-        return all(ROBOT_VERSION in VersionSpecifier(condition) for condition in version.split(";"))
-
-    @staticmethod
-    def get_template(msg: str) -> Template | None:
-        if "{" in msg:
-            return Template(msg)
-        return None
-
-    def get_message(self, **kwargs):
-        if self.msg_template:
-            return self.msg_template.render(**kwargs)
-        return self.msg
+        enabled = all(ROBOT_VERSION in VersionSpecifier(condition) for condition in version.split(";"))
+        if not enabled:
+            self.enabled = False
+        return enabled
 
     def __str__(self):
-        return f"Rule - {self.rule_id} [{self.severity}]: {self.name}: {self.msg} ({self.get_enabled_status_desc()})"
+        return (
+            f"Rule - {self.rule_id} [{self.severity}]: {self.name}: {self.message} ({self.get_enabled_status_desc()})"
+        )
 
     def get_enabled_status_desc(self) -> str:
         if self.deprecated:
             return "deprecated"
         if self.enabled:
             return "enabled"
-        if self.supported_version != "All":
-            return f"disabled - supported only for RF version {self.supported_version}"
+        if self.version is not None:
+            return f"disabled - supported only for RF version {self.version}"
         return "disabled"
 
-    def configure(self, param, value) -> None:
-        if param not in self.config:
-            count, configurables_text = self.available_configurables()
-            raise exceptions.ConfigGeneralError(
-                f"Provided param '{param}' for rule '{self.name}' does not exist. "
-                f"Available configurable{'' if count == 1 else 's'} for this rule:\n"
-                f"    {configurables_text}"
-            )
-        self.config[param].value = value
+    # def configure(self, param, value) -> None:  # TODO handle rulename.idontexist=value
+    #     if param not in self.config:
+    #         count, configurables_text = self.available_configurables()
+    #         raise exceptions.ConfigGeneralError(
+    #             f"Provided param '{param}' for rule '{self.name}' does not exist. "
+    #             f"Available configurable{'' if count == 1 else 's'} for this rule:\n"
+    #             f"    {configurables_text}"
+    #         )
+    #     self.config[param].value = value
 
     def available_configurables(self, include_severity: bool = True):
         params = []
@@ -508,19 +489,19 @@ class BaseChecker:
         self.rules: dict[str, Rule] = {}
         self.templated_suite = False
 
-    def param(self, rule, param_name):
-        try:
-            return self.rules[rule].config[param_name].value
-        except KeyError:
-            if rule not in self.rules:
-                raise RuleNotFoundError(rule, self) from None
-            if param_name not in self.rules[rule].config:
-                raise RuleParamNotFoundError(self.rules[rule], param_name, self) from None
-            raise
+    # def param(self, rule, param_name):  TODO
+    #     try:
+    #         return self.rules[rule].config[param_name].value
+    #     except KeyError:
+    #         if rule not in self.rules:
+    #             raise RuleNotFoundError(rule, self) from None
+    #         if param_name not in self.rules[rule].config:
+    #             raise RuleParamNotFoundError(self.rules[rule], param_name, self) from None
+    #         raise
 
     def report(
         self,
-        rule: str,
+        rule: Rule,
         lineno: int | None = None,
         col: int | None = None,
         end_lineno: int | None = None,
@@ -531,21 +512,20 @@ class BaseChecker:
         source: str | None = None,
         **kwargs,
     ) -> None:
-        rule_def = self.rules.get(rule, None)
-        if rule_def is None:
-            raise ValueError(f"Missing definition for message with name {rule}")
-        if not rule_def.enabled:
+        # rule_def = self.rules.get(rule, None)
+        # if rule_def is None:
+        #     raise ValueError(f"Missing definition for message with name {rule}")
+        if not rule.enabled:
             return
         # following code is used to dynamically update maximum allowed number if rule has dynamic threshold
         # for example if you set line too long to warn on 120 and fail on 200, it will update the x / 120 to 200
-        rule_threshold = rule_def.config.get("severity_threshold", None)
-        if rule_threshold and rule_threshold.substitute_value and rule_threshold.thresholds:
-            threshold_trigger = rule_threshold.get_matching_threshold(sev_threshold_value)
+        if rule.severity_threshold and rule.severity_threshold.substitute_value and rule.severity_threshold.thresholds:
+            threshold_trigger = rule.severity_threshold.get_matching_threshold(sev_threshold_value)
             if threshold_trigger is None:
                 return
-            kwargs[rule_threshold.substitute_value] = threshold_trigger
+            kwargs[rule.severity_threshold.substitute_value] = threshold_trigger
         diagnostic = Diagnostic(
-            rule=rule_def,
+            rule=rule,
             node=node,
             lineno=lineno,
             col=col,
@@ -616,7 +596,7 @@ class RawFileChecker(BaseChecker):
 
 
 def is_checker(checker_class_def: tuple) -> bool:
-    return issubclass(checker_class_def[1], BaseChecker) and getattr(checker_class_def[1], "reports", False)
+    return issubclass(checker_class_def[1], BaseChecker)
 
 
 class RobocopImporter:
@@ -630,6 +610,7 @@ class RobocopImporter:
         self.deprecated_rules = {}
 
     def get_initialized_checkers(self):
+        # TODO: simplify. internal checkers can be static
         yield from self._get_checkers_from_modules(self.get_internal_modules(), is_community=False)
         yield from self._get_checkers_from_modules(self.get_community_modules(), is_community=True)
         yield from self._get_checkers_from_modules(self.get_external_modules(), is_community=False)
@@ -664,6 +645,7 @@ class RobocopImporter:
 
         Checker name does not have to be unique, but it should use different rules.
         """
+        # FIXME: not needed
         checker_name = checker.__class__.__name__
         if checker_name in self.seen_checkers and sorted(checker.rules.keys()) in self.seen_checkers[checker_name]:
             return True
@@ -749,34 +731,31 @@ class RobocopImporter:
         return rules
 
     def register_deprecated_rules(self, module_rules: dict[str, Rule]) -> None:
+        # FIXME: currently deprecated, not used rules are hidden (we could just mentioned them in doc. or create
+        # empty checker just for deprecated stuff
         for rule_name, rule_def in module_rules.items():
             if rule_def.deprecated:
                 self.deprecated_rules[rule_name] = rule_def
                 self.deprecated_rules[rule_def.rule_id] = rule_def
 
     def get_checkers_from_module(self, module, is_community: bool) -> list:
+        # FIXME do not inspect / enter external libs such as re..
         classes = inspect.getmembers(module, inspect.isclass)
-        checkers = [checker for checker in classes if is_checker(checker)]
-        category_id = getattr(module, "RULE_CATEGORY_ID", None)
-        module_rules = self.get_rules_from_module(module)
-        self.register_deprecated_rules(module_rules)
+        checkers = [checker[1]() for checker in classes if is_checker(checker)]
+        # checkers = [checker for checker in checkers if not isinstance(checker, (VisitorChecker, RawFileChecker, ProjectChecker))]
+        # category_id = getattr(module, "RULE_CATEGORY_ID", None)
+        # module_rules = self.get_rules_from_module(module)
+        # self.register_deprecated_rules(module_rules) # FIXME
         checker_instances = []
         for checker in checkers:
-            checker_instance = checker[1]()
-            valid_checker = True
-            for reported_rule in checker_instance.reports:
-                if reported_rule not in module_rules:
-                    valid_checker = False
-                    if module_rules:
-                        # empty rules are silently ignored when rules and checkers are imported separately
-                        raise RuleReportsNotFoundError(reported_rule, checker_instance) from None
+            for rule in checker.__class__.__dict__.values():
+                if not isinstance(rule, Rule):
                     continue
-                rule = module_rules[reported_rule]
-                rule.community_rule = is_community
-                rule.category_id = category_id
-                checker_instance.rules[reported_rule] = rule
-            if valid_checker:
-                checker_instances.append(checker_instance)
+            # TODO: No need to register rules, if it's only used for enabling / disabling - handled later on config level
+            checker.rules = {
+                rule.rule_id: rule for rule in checker.__class__.__dict__.values() if isinstance(rule, Rule)
+            }
+            checker_instances.append(checker)
         return checker_instances
 
 
@@ -789,6 +768,7 @@ def init(linter: RobocopLinter) -> None:
 
 def get_builtin_rules() -> Generator[tuple[str, Rule], None, None]:
     """Get only rules definitions for documentation generation."""
+    # TODO: refactor
     robocop_importer = RobocopImporter()
     rule_modules = robocop_importer.get_internal_modules()
     yield from robocop_importer.get_imported_rules(rule_modules)

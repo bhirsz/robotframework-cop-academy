@@ -37,7 +37,7 @@ class RuleMatcher:
         return rule.enabled
 
     def is_rule_disabled(self, rule: Rule) -> bool:
-        if rule.deprecated or not rule.enabled_in_version:
+        if not rule.enabled:
             return True
         if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
             return True
@@ -293,10 +293,6 @@ class ConfigManager:
             None,
         )  # TODO: Pass them from cli / default configuration file
         for source in sources:
-            # TODO: Support for - . Instead of existing implementation, we can create temporary fake file
-            # if s == "-":
-            #     sources.add("-")
-            #     continue
             path = Path(source).resolve()
             if not files.should_parse_path(
                 path, self.overridden_sources, self.root_parent, exclude, extend_exclude, self.root_gitignore
