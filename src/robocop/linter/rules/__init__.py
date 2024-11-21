@@ -335,8 +335,9 @@ class Rule:
     Attributes:
         name (str): (class attribute) name of the rule
         rule_id (str): (class attribute) id of the rule
-        msg (str): (class attribute) message of the rule
+        message (str): (class attribute) message of the rule
         severity (RuleSeverity): (class attribute) severity of the rule (ie: RuleSeverity.INFO)
+        severity_threshold: (class attribute) Class for dynamically setting rule severity depending on the value
         version (str): (class attribute) supported Robot Framework version (ie: >=4.0)
         added_in_version (str): (class attribute) version of the Robocop when the Rule was created
         enabled (bool): (class attribute) enable/disable rule by default using this parameter
@@ -348,7 +349,6 @@ class Rule:
     rule_id: str
     message: str
     severity: RuleSeverity
-    group: str = ""
     severity_threshold: SeverityThreshold | None = None
     version: str | None = None
     added_in_version: str | None = None
@@ -359,20 +359,9 @@ class Rule:
     def __init__(self):
         self.enabled = not self.deprecated and self.enabled
         self.enabled_in_version = self.supported_in_rf_version(self.version)
-        self._parameters = self._parse_parameters()
+        self.config = self._parse_parameters()
 
     #     self.docs = dedent(docs)
-    #     self.config = {
-    #         "severity": RuleParam(
-    #             name="severity",
-    #             default=severity,
-    #             converter=RuleSeverity.parser,
-    #             desc="Rule severity (E = Error, W = Warning, I = Info)",
-    #             show_type="severity",
-    #         ),
-    #     }
-    #     for param in params:
-    #         self.config[param.name] = param
 
     # TODO: Maybe when config is loaded, visit Rule and RuleParams and convert values
     # if self.my_rule.my_param
@@ -380,18 +369,35 @@ class Rule:
     # otherwise take param default
 
     def _parse_parameters(self) -> dict[str, RuleParam]:
+        """
+        Create internal config of the rule.
+
+        By default, each rule contains severity parameter.
+        """
+        config = {
+            "severity": RuleParam(
+                name="severity",
+                default=self.severity,
+                converter=RuleSeverity.parser,
+                desc="Rule severity (E = Error, W = Warning, I = Info)",
+                show_type="severity",
+            ),
+        }
+        if self.severity_threshold is not None:
+            config["severity_threshold"] = self.severity_threshold
         if not self.parameters:
-            return {}
-        s = property()  # FIXME dynamically create properties for RuleParam>? 
-        return {param.name: param for param in self.parameters}
+            return config
+        for param in self.parameters:
+            config[param.name] = param
+        return config
 
     # @property
     # def severity(self):  # TODO first return overriden severity, otherwise this (optionally handle dynamic here)
     #     return self.config["severity"].value
 
     def __getattr__(self, name: str):
-        if name in self._parameters:  # TODO: handle configuration files
-            return self._parameters[name].value
+        if name in self.config:  # TODO: handle configuration files
+            return self.config[name].value
         # TODO handle missing
 
     @property
@@ -449,15 +455,15 @@ class Rule:
             return f"disabled - supported only for RF version {self.version}"
         return "disabled"
 
-    # def configure(self, param, value) -> None:  # TODO handle rulename.idontexist=value
-    #     if param not in self.config:
-    #         count, configurables_text = self.available_configurables()
-    #         raise exceptions.ConfigGeneralError(
-    #             f"Provided param '{param}' for rule '{self.name}' does not exist. "
-    #             f"Available configurable{'' if count == 1 else 's'} for this rule:\n"
-    #             f"    {configurables_text}"
-    #         )
-    #     self.config[param].value = value
+    def configure(self, param: str, value: str) -> None:
+        if param not in self.config:
+            count, configurables_text = self.available_configurables()
+            raise exceptions.ConfigGeneralError(
+                f"Provided param '{param}' for rule '{self.name}' does not exist. "
+                f"Available configurable{'' if count == 1 else 's'} for this rule:\n"
+                f"    {configurables_text}"
+            )
+        self.config[param].value = value
 
     def available_configurables(self, include_severity: bool = True):
         params = []

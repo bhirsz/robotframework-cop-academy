@@ -37,6 +37,7 @@ class NotEnoughWhitespaceAfterSettingRule(Rule):
         Should Be True  ${var}
 
     """
+
     name = "not-enough-whitespace-after-setting"
     rule_id = "ERR02"
     message = "Provide at least two spaces after '{setting_name}' setting"
@@ -54,6 +55,7 @@ class MissingKeywordNameRule(Rule):
         ${one}      ${two}
 
     """
+
     name = "missing-keyword-name"
     rule_id = "ERR03"
     message = "Missing keyword name when calling some values"
@@ -71,6 +73,7 @@ class VariablesImportWithArgsRule(Rule):
     Variables    module           arg3  # valid from RF > 5
 
     """
+
     name = "variables-import-with-args"
     rule_id = "ERR04"
     message = "YAML variable files do not take arguments"
@@ -88,6 +91,7 @@ class InvalidContinuationMarkRule(Rule):
     ....  2  # .... instead of ...
 
     """
+
     name = "invalid-continuation-mark"
     rule_id = "ERR05"
     message = "Invalid continuation mark '{mark}'. It should be '...'"
@@ -104,6 +108,7 @@ class NotEnoughWhitespaceAfterNewlineMarkerRule(Rule):
     ...  3
 
     """
+
     name = "not-enough-whitespace-after-newline-marker"
     rule_id = "ERR06"
     message = "Provide at least two spaces after '...' marker"
@@ -127,6 +132,7 @@ class InvalidArgumentsRule(Rule):
             [Arguments]    {var}    @args}    var=default
 
     """
+
     name = "invalid-argument"
     rule_id = "ERR07"
     message = "{error_msg}"
@@ -147,6 +153,7 @@ class NonExistingSettingRule(Rule):
            [Arguments]  ${arg}
 
     """
+
     name = "non-existing-setting"
     rule_id = "ERR08"
     message = "{error_msg}"
@@ -175,6 +182,7 @@ class SettingNotSupportedRule(Rule):
         [Timeout]	     Used for specifying a user keyword timeout.
 
     """
+
     name = "setting-not-supported"
     rule_id = "ERR09"
     message = "Setting '[{setting_name}]' is not supported in {test_or_keyword}. Allowed are: {allowed_settings}"
@@ -190,6 +198,7 @@ class NotEnoughWhitespaceAfterVariableRule(Rule):
     ${other_var}  2
 
     """
+
     name = "not-enough-whitespace-after-variable"
     rule_id = "ERR10"
     message = "Provide at least two spaces after '{variable_name}' variable name"
@@ -209,6 +218,7 @@ class NotEnoughWhitespaceAfterSuiteSettingRule(Rule):
         Suite Setup Keyword  # not enough whitespace
 
     """
+
     name = "not-enough-whitespace-after-suite-setting"
     rule_id = "ERR11"
     message = "Provide at least two spaces after '{setting_name}' setting"
@@ -249,6 +259,7 @@ class InvalidSectionInResourceRule(Rule):
     but they can't contain Test Cases or Tasks sections.
 
     """
+
     name = "invalid-section-in-resource"
     rule_id = "ERR15"
     message = "Resource file can't contain '{section_name}' section"
@@ -261,6 +272,7 @@ class InvalidSettingInResourceRule(Rule):
     The Setting section in resource files can contain only import settings (``Library``,
     ``Resource``, ``Variables``), ``Documentation`` and ``Keyword Tags``.
     """
+
     name = "invalid-setting-in-resource"
     rule_id = "ERR16"
     message = "Settings section in resource file can't contain '{section_name}' setting"
@@ -272,6 +284,7 @@ class UnsupportedSettingInIniFileRule(Rule):
     """
     Settings ``Default Tags`` and ``Test Template`` are not supported in initialization files.
     """
+
     name = "unsupported-setting-in-init-file"
     rule_id = "ERR17"
     message = "Setting '{setting}' is not supported in initialization files"
@@ -558,7 +571,9 @@ class ParsingErrorChecker(VisitorChecker):
         elif len(stripped) >= 4:
             if stripped[:4] == "....":
                 first_dot = name.find(".") + 1
-                self.report(self.invalid_continuation_mark, mark=stripped, node=node, col=first_dot, end_col=first_dot + 4)
+                self.report(
+                    self.invalid_continuation_mark, mark=stripped, node=node, col=first_dot, end_col=first_dot + 4
+                )
             else:  # '... ' or '...value' or '...\t'
                 col = name.find(".") + 1
                 self.report(

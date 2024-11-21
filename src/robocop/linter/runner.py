@@ -11,7 +11,7 @@ from robot.errors import DataError
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports
 from robocop.linter.diagnostics import Diagnostic
-from robocop.linter.rules import Rule, comments, documentation, duplications, errors
+from robocop.linter.rules import Rule, comments, documentation, duplications, errors, lengths
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
@@ -36,7 +36,14 @@ class RobocopLinter:
             errors.ParsingErrorChecker(),
             errors.TwoSpacesAfterSettingsChecker(),
             errors.VariablesImportErrorChecker(),
-            errors.MissingKeywordName()
+            errors.MissingKeywordName(),
+            lengths.LengthChecker(),
+            lengths.LineLengthChecker(),
+            lengths.TestCaseNumberChecker(),
+            lengths.EmptySectionChecker(),
+            lengths.EmptySettingsChecker(),
+            lengths.NumberOfReturnedArgsChecker(),
+            lengths.TooManyArgumentsInLineChecker(),
         ]:  # TODO:
             self.register_checker(checker)
         # self.load_checkers()
@@ -194,7 +201,7 @@ class RobocopLinter:
                 if rule.deprecated:
                     print(rule.deprecation_warning)
                 else:
-                    setattr(rule, param, value)
+                    rule.configure(param, value)
             elif name in self.reports:
                 self.reports[name].configure(param, value)
             else:
