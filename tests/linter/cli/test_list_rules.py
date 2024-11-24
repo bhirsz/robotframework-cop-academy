@@ -197,7 +197,7 @@ class TestListingRules:
     def test_list_disabled_rule(self, empty_linter, msg_0101_checker, disabled_for_4_checker, capsys):
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(disabled_for_4_checker)
-        empty_linter.config.linter.exclude = {"0101"}
+        empty_linter.config.linter.exclude_rules = {"0101"}
         if ROBOT_VERSION.major >= 4:
             enabled_for = "disabled - supported only for RF version <4.0"
         else:
@@ -218,7 +218,7 @@ class TestListingRules:
     def test_list_filter_enabled(self, empty_linter, msg_0101_checker, msg_0102_0204_checker, capsys):
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(msg_0102_0204_checker)
-        empty_linter.config.linter.exclude = {"0102", "0204"}
+        empty_linter.config.linter.exclude_rules = {"0102", "0204"}
 
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(filter_category=RuleFilter.ENABLED)
@@ -238,7 +238,7 @@ class TestListingRules:
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(msg_0102_0204_checker)
         empty_linter.register_checker(deprecated_rules_checker)
-        empty_linter.config.linter.exclude = {"0102", "0204"}
+        empty_linter.config.linter.exclude_rules = {"0102", "0204"}
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(filter_category=RuleFilter.DISABLED)
         out, _ = capsys.readouterr()
@@ -258,7 +258,7 @@ class TestListingRules:
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(msg_0102_0204_checker)
         empty_linter.register_checker(deprecated_rules_checker)
-        empty_linter.config.linter.exclude = {"0102", "0204"}
+        empty_linter.config.linter.exclude_rules = {"0102", "0204"}
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(filter_category=RuleFilter.DEPRECATED)
         out, _ = capsys.readouterr()
@@ -275,7 +275,7 @@ class TestListingRules:
     def test_multiple_checkers(self, empty_linter, msg_0101_checker, msg_0102_0204_checker, capsys):
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(msg_0102_0204_checker)
-        empty_linter.config.linter.exclude = {"0102", "0204"}
+        empty_linter.config.linter.exclude_rules = {"0102", "0204"}
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(filter_pattern="*")
         out, _ = capsys.readouterr()
@@ -292,7 +292,7 @@ class TestListingRules:
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(msg_0102_0204_checker)
         empty_linter.register_checker(deprecated_rules_checker)
-        empty_linter.config.linter.exclude = {"0102", "0204"}
+        empty_linter.config.linter.exclude_rules = {"0102", "0204"}
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(filter_pattern="01*")
         out, _ = capsys.readouterr()
@@ -305,9 +305,9 @@ class TestListingRules:
         assert not_exp_msg not in out
 
     @pytest.mark.parametrize("config", [{"filter_pattern": "*"}, {"filter_category": RuleFilter.ALL}])
-    def test_list_rule_filtered_and_community(self, config, empty_linter, msg_0101_checker, community_rule, capsys):
+    def test_list_rule_filtered_and_community(self, config, empty_linter, msg_0101_checker, community_rule_checker, capsys):
         empty_linter.register_checker(msg_0101_checker)
-        empty_linter.register_checker(community_rule)
+        empty_linter.register_checker(community_rule_checker)
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(**config)
         out, _ = capsys.readouterr()

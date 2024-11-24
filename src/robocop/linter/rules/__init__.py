@@ -360,6 +360,7 @@ class Rule:
     def __init__(self):
         self.enabled = not self.deprecated and self.enabled
         self.enabled_in_version = self.supported_in_rf_version(self.version)
+        self.default_severity = self.severity  # used for defaultConfiguration in Sarif report
         self.config = self._parse_parameters()
 
     #     self.docs = dedent(docs)
@@ -405,10 +406,9 @@ class Rule:
     def description(self) -> str:
         """Description of the rule with rule name, message and documentation."""
         description = f"Rule: [bold]{self.name}[/bold] ({self.rule_id})\n"
-        description += f"Message: {self.msg}\n"
+        description += f"Message: {self.message}\n"
         description += f"Severity: {self.severity}\n"
-        if self.docs:
-            description += self.docs
+        description += dedent(self.__doc__)
         return description
 
     @property
