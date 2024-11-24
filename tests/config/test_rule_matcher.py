@@ -5,9 +5,19 @@ from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
 from robocop.linter.runner import RuleMatcher
 
 
+class CustomRule(Rule):
+    rule_id = "0101"
+    name = "some-message"
+    message = "Some description"
+    severity = RuleSeverity.WARNING
+
+
 def get_message_with_id(rule_id):
     rule_id = replace_severity_values(rule_id)
-    return Rule(rule_id=rule_id, name=f"some-message-{rule_id}", msg="Some description", severity=RuleSeverity.WARNING)
+    custom_rule = CustomRule()
+    custom_rule.rule_id = rule_id
+    custom_rule.name = f"some-message-{rule_id}"
+    return custom_rule
 
 
 class TestIncludingExcluding:

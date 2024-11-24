@@ -139,7 +139,7 @@ class RuleSeverity(Enum):
 
 def rules_sorted_by_id(rules: dict[str, Rule]) -> list[Rule]:
     """Return rules list from rules dictionary sorted by rule id."""
-    return sorted(rules.values(), key=lambda x: int(x.rule_id))
+    return sorted(rules.values(), key=lambda x: x.rule_id)
 
 
 class RuleFilter(str, Enum):
@@ -355,6 +355,7 @@ class Rule:
     enabled: bool = True
     deprecated: bool = False
     parameters: list[RuleParam] | None = None
+    community_rule = False  # FIXME to be removed
 
     def __init__(self):
         self.enabled = not self.deprecated and self.enabled
@@ -722,20 +723,6 @@ class RobocopImporter:
             for rule in getattr(module, "rules", {}).values():
                 yield module_name, rule
 
-    @staticmethod
-    def get_rules_from_module(module) -> dict:
-        module_rules = getattr(module, "rules", {})
-        if not isinstance(module_rules, dict):
-            return {}
-        rules = {}
-        for rule_id, rule in module_rules.items():
-            if rule_id != rule.rule_id:
-                raise ValueError(
-                    f"Rule id in rules dictionary does not match defined Rule id. {rule_id} != {rule.rule_id}"
-                )
-            rules[rule.name] = rule
-        return rules
-
     def register_deprecated_rules(self, module_rules: dict[str, Rule]) -> None:
         # FIXME: currently deprecated, not used rules are hidden (we could just mentioned them in doc. or create
         # empty checker just for deprecated stuff
@@ -744,23 +731,38 @@ class RobocopImporter:
                 self.deprecated_rules[rule_name] = rule_def
                 self.deprecated_rules[rule_def.rule_id] = rule_def
 
+    def get_checker_rules(self, checker_class: type[BaseChecker], module) -> dict[str, Rule]:
+        # TODO if other checker uses the same rule, return it instead of creating new instance
+        rule_types = getattr(checker_class, "__annotations__", None)
+        if rule_types is None:
+            return {}
+        rules = {}
+        for name, rule_class in rule_types.items():
+            if isinstance(rule_class, str):  # if from future import annotations was used
+                try:  # TODO improve, without exception
+                    rule_class = getattr(module, rule_class)  # TODO check other_module.MyRule imports
+                except AttributeError:
+                    continue
+            if not (isclass(rule_class) and issubclass(rule_class, Rule)):
+                continue
+            rule_instance = rule_class()
+            rules[name] = rule_instance
+        return rules
+
     def get_checkers_from_module(self, module, is_community: bool) -> list:
         # FIXME do not inspect / enter external libs such as re..
         classes = inspect.getmembers(module, inspect.isclass)
         checkers = [checker[1]() for checker in classes if is_checker(checker)]
-        # checkers = [checker for checker in checkers if not isinstance(checker, (VisitorChecker, RawFileChecker, ProjectChecker))]
-        # category_id = getattr(module, "RULE_CATEGORY_ID", None)
-        # module_rules = self.get_rules_from_module(module)
         # self.register_deprecated_rules(module_rules) # FIXME
         checker_instances = []
         for checker in checkers:
-            for rule in checker.__class__.__dict__.values():
-                if not isinstance(rule, Rule):
-                    continue
-            # TODO: No need to register rules, if it's only used for enabling / disabling - handled later on config level
-            checker.rules = {
-                rule.rule_id: rule for rule in checker.__class__.__dict__.values() if isinstance(rule, Rule)
-            }
+            rules = self.get_checker_rules(checker, module)
+            if not rules:
+                continue
+            for attr_name, rule in rules.items():
+                checker.rules[rule.name] = rule
+                checker.rules[rule.rule_id] = rule
+                setattr(checker, attr_name, rule)  # from rule_name: Rule to rule_name = Rule()
             checker_instances.append(checker)
         return checker_instances
 
@@ -769,7 +771,7 @@ def init(linter: RobocopLinter) -> None:
     robocop_importer = RobocopImporter(external_rules_paths=linter.config_manager.default_config.linter.ext_rules)
     for checker in robocop_importer.get_initialized_checkers():
         linter.register_checker(checker)
-    linter.rules.update(robocop_importer.deprecated_rules)
+    # linter.rules.update(robocop_importer.deprecated_rules)
 
 
 def get_builtin_rules() -> Generator[tuple[str, Rule], None, None]:

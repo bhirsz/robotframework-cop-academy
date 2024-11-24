@@ -37,7 +37,7 @@ class RuleMatcher:
         return rule.enabled
 
     def is_rule_disabled(self, rule: Rule) -> bool:
-        if not rule.enabled:
+        if rule.deprecated or not rule.enabled_in_version:
             return True
         if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
             return True

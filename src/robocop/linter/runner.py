@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -9,9 +8,9 @@ from robot.api import get_init_model, get_model, get_resource_model
 from robot.errors import DataError
 
 from robocop.config import Config, ConfigManager, RuleMatcher
-from robocop.linter import exceptions, reports
+from robocop.linter import exceptions, reports, rules
 from robocop.linter.diagnostics import Diagnostic
-from robocop.linter.rules import Rule, comments, documentation, duplications, errors, lengths
+from robocop.linter.rules import Rule
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
@@ -27,44 +26,25 @@ class RobocopLinter:
         self.config: Config = self.config_manager.default_config
         self.checkers: list[BaseChecker] = []
         self.rules: dict[str, Rule] = {}
-        for checker in [  # TODO measure perf. if the same, compare code readability
-            comments.CommentChecker(),
-            comments.IgnoredDataChecker(),
-            documentation.MissingDocumentationChecker(),
-            duplications.DuplicationsChecker(),
-            duplications.SectionHeadersChecker(),
-            errors.ParsingErrorChecker(),
-            errors.TwoSpacesAfterSettingsChecker(),
-            errors.VariablesImportErrorChecker(),
-            errors.MissingKeywordName(),
-            lengths.LengthChecker(),
-            lengths.LineLengthChecker(),
-            lengths.TestCaseNumberChecker(),
-            lengths.EmptySectionChecker(),
-            lengths.EmptySettingsChecker(),
-            lengths.NumberOfReturnedArgsChecker(),
-            lengths.TooManyArgumentsInLineChecker(),
-        ]:  # TODO:
-            self.register_checker(checker)
-        # self.load_checkers()
+        self.load_checkers()
         self.reports: dict[str, reports.Report] = reports.get_reports(
             self.config.linter.reports, self.config.linter.compare
         )
 
+    def load_checkers(self) -> None:  # TODO load builtin once and copy classes for each config
+        """
+        Initialize checkers and rules containers and start rules discovery.
+
+        Instance of this class is passed over since it will be used to populate checkers/rules containers.
+        Additionally rules can also refer to instance of this class to access config class.
+        """
+        self.checkers = []
+        self.rules = {}
+        rules.init(self)
+
     def register_checker(self, checker: type[BaseChecker]) -> None:  # [type[BaseChecker]]
-        checker_module = importlib.import_module(
-            checker.__module__
-        )  # TODO perf, wouldn't be needed if not for pytest caching
-        checker_annotations = checker.__annotations__
-        for name, rule_class in checker_annotations.items():
-            if isinstance(rule_class, str):  # if from future import annotations was used
-                rule_instance = getattr(checker_module, rule_class)()
-            else:
-                rule_instance = rule_class()
-            self.rules[rule_instance.rule_id] = rule_instance
-            self.rules[rule_instance.name] = rule_instance
-            checker.rules[rule_instance.name] = rule_instance
-            setattr(checker, name, rule_instance)
+        for rule_name_or_id, rule in checker.rules.items():
+            self.rules[rule_name_or_id] = rule
         self.checkers.append(checker)
 
     def check_for_disabled_rules(self) -> None:

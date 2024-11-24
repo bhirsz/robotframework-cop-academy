@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from robot.parsing.model.statements import Documentation
 
-from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker
 from robocop.linter.utils.misc import str2bool
 
 if TYPE_CHECKING:
@@ -64,28 +64,15 @@ class MissingDocTestCaseRule(Rule):
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
-    def __init__(self):
-        self._ignore_templated = True
-        super().__init__()
-
-    @property
-    def ignore_templated(self) -> bool:
-        """Whether templated tests should be documented or not"""
-        return self._ignore_templated
-
-    @ignore_templated.setter
-    def ignore_templated(self, value: str) -> None:
-        self._ignore_templated = str2bool(value)
-
-    # parameters = [
-    #     RuleParam(
-    #         name="ignore_templated",
-    #         default="True",
-    #         converter=str2bool,
-    #         show_type="bool",
-    #         desc="whether templated tests should be documented or not",
-    #     )
-    # ]
+    parameters = [
+        RuleParam(
+            name="ignore_templated",
+            default="True",
+            converter=str2bool,
+            show_type="bool",
+            desc="whether templated tests should be documented or not",
+        )
+    ]
 
 
 class MissingDocTestSuiteRule(Rule):

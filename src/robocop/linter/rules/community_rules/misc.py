@@ -11,53 +11,53 @@ if TYPE_CHECKING:
     from robot.parsing import File
     from robot.parsing.model import Statement
 
-RULE_CATEGORY_ID = "01"
+
+class NonBuiltinImportsNotSortedRule(Rule):
+    """
+
+    Example of rule violation:
+
+        *** Settings ***
+        Library    Collections
+        Library    CustomLibrary
+        Library    AnotherCustomLibrary  # AnotherCustomLibrary library defined after custom CustomLibrary
 
 
-rules = {
-    "10101": Rule(
-        rule_id="10101",
-        name="non-builtin-imports-not-sorted",
-        msg="Non builtin library import '{{ custom_import }}' should be placed before '{{ previous_custom_import }}'",
-        severity=RuleSeverity.WARNING,
-        added_in_version="5.2.0",
-        enabled=False,
-        docs="""
-        Example of rule violation:
+    """
 
-            *** Settings ***
-            Library    Collections
-            Library    CustomLibrary
-            Library    AnotherCustomLibrary  # AnotherCustomLibrary library defined after custom CustomLibrary
-
-        """,
-    ),
-    "10102": Rule(
-        rule_id="10102",
-        name="resources-imports-not-sorted",
-        msg="Resource import '{{ resource_import }}' should be placed before '{{ previous_resource_import }}'",
-        severity=RuleSeverity.WARNING,
-        added_in_version="5.2.0",
-        enabled=False,
-        docs="""
-        Example of rule violation:
-
-            *** Settings ***
-            Resource   CustomResource.resource
-            Resource   AnotherFile.resource
-
-        """,
-    ),
-}
+    name = "non-builtin-imports-not-sorted"
+    rule_id = "10101"
+    message = "Non builtin library import '{custom_import}' should be placed before '{previous_custom_import}'"
+    severity = RuleSeverity.WARNING
+    enabled = False
+    added_in_version = "5.2.0"
 
 
-class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
+class ResourcesImportsNotSortedRule(Rule):
+    """
+
+    Example of rule violation:
+
+        *** Settings ***
+        Resource   CustomResource.resource
+        Resource   AnotherFile.resource
+
+
+    """
+
+    name = "resources-imports-not-sorted"
+    rule_id = "10102"
+    message = "Resource import '{resource_import}' should be placed before '{previous_resource_import}'"
+    severity = RuleSeverity.WARNING
+    enabled = False
+    added_in_version = "5.2.0"
+
+
+class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):  # TODO could be together with BuiltIn sorted one
     """Find and report Non Builtin Libraries or Resources imported not in alphabetical order."""
 
-    reports = (
-        "non-builtin-imports-not-sorted",
-        "resources-imports-not-sorted",
-    )
+    non_builtin_imports_not_sorted: NonBuiltinImportsNotSortedRule
+    resources_imports_not_sorted: ResourcesImportsNotSortedRule
 
     def __init__(self):
         self.non_builtin_libraries = []
@@ -73,7 +73,7 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
             if previous is not None and library.name < previous.name:
                 lib_name = library.get_token(Token.NAME)
                 self.report(
-                    "non-builtin-imports-not-sorted",
+                    self.non_builtin_imports_not_sorted,
                     custom_import=library.name,
                     previous_custom_import=previous.name,
                     node=library,
@@ -86,7 +86,7 @@ class NonBuiltinLibrariesImportOrderChecker(VisitorChecker):
             if previous is not None and resource.name < previous.name:
                 resource_name = resource.get_token(Token.NAME)
                 self.report(
-                    "resources-imports-not-sorted",
+                    self.resources_imports_not_sorted,
                     resource_import=resource.name,
                     previous_resource_import=previous.name,
                     node=resource,

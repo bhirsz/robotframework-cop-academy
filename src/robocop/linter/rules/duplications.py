@@ -97,7 +97,10 @@ class DuplicatedVariableRule(Rule):
 
     name = "duplicated-variable"
     rule_id = "DUP03"
-    message = "Multiple variables with name '{name}' (first occurrence in line {first_occurrence_line})"
+    message = (
+        "Multiple variables with name '{name}' in Variables section (first occurrence in line "
+        "{first_occurrence_line}). Note that Robot Framework is case-insensitive"
+    )
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
 
@@ -169,10 +172,7 @@ class SectionAlreadyDefinedRule(Rule):
     name = "section-already-defined"
     rule_id = "DUP08"
     message = (
-        (
-            "'{section_name}' section header already defined in file (first occurrence in line "
-            "{first_occurrence_line})"
-        ),
+        "'{section_name}' section header already defined in file (first occurrence in line " "{first_occurrence_line})"
     )
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
@@ -203,7 +203,7 @@ class SectionOutOfOrderRule(Rule):  # FIXME it is not dup, more like ORD
 
     name = "section-out-of-order"
     rule_id = "DUP09"
-    message = ("'{{ section_name }}' section header is defined in wrong order: {{ recommended_order }",)
+    message = "'{section_name}' section header is defined in wrong order: {recommended_order}"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
     parameters = [
@@ -228,7 +228,7 @@ class BothTestsAndTasksRule(Rule):
 
     name = "both-tests-and-tasks"
     rule_id = "DUP10"
-    message = "Both Task(s) and Test Case(s) section headers defined in fil"
+    message = "Both Task(s) and Test Case(s) section headers defined in file"
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
 
@@ -486,7 +486,7 @@ class SectionHeadersChecker(VisitorChecker):
 
     def visit_SectionHeader(self, node) -> None:  # noqa: N802
         section_name = node.type
-        if section_name not in self.section_out_of_order.section_order:
+        if section_name not in self.section_out_of_order.sections_order:
             return
         if section_name in (Token.TESTCASE_HEADER, "TASK HEADER"):
             # a bit awkward implementation because before RF 6.0 task header used TESTCASE_HEADER type
@@ -498,7 +498,7 @@ class SectionHeadersChecker(VisitorChecker):
                     )
             elif "TASK HEADER" in self.sections_by_existence:
                 self.report(self.both_tests_and_tasks, node=node, col=node.col_offset + 1, end_col=node.end_col_offset)
-        order_id = self.section_out_of_order.section_order[section_name]
+        order_id = self.section_out_of_order.sections_order[section_name]
         if section_name in self.sections_by_existence:
             self.report(
                 self.section_already_defined,
@@ -514,7 +514,7 @@ class SectionHeadersChecker(VisitorChecker):
             self.report(
                 self.section_out_of_order,
                 section_name=token.value,
-                recommended_order=self.section_order_to_str(self.section_out_of_order.section_order),
+                recommended_order=self.section_order_to_str(self.section_out_of_order.sections_order),
                 node=node,
                 end_col=token.end_col_offset + 1,
             )

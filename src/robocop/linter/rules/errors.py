@@ -310,7 +310,7 @@ class ParsingErrorChecker(VisitorChecker):
     invalid_setting_in_resource: InvalidSettingInResourceRule
     unsupported_setting_in_ini_file: UnsupportedSettingInIniFileRule
 
-    keyword_only_settings = {"Arguments", "Return"}
+    keyword_only_settings: set[str] = {"Arguments", "Return"}
     keyword_settings = [
         "[Documentation]",
         "[Tags]",

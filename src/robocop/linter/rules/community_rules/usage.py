@@ -18,36 +18,36 @@ from robocop.linter.utils.run_keywords import iterate_keyword_names
 if TYPE_CHECKING:
     from robocop.linter.diagnostics import Diagnostic
 
-RULE_CATEGORY_ID = "01"
 
-rules = {
-    "10101": Rule(
-        rule_id="10101",
-        name="unused-keyword",
-        msg="Keyword '{{ keyword_name }}' is not used",
-        severity=RuleSeverity.INFO,
-        added_in_version="5.3.0",
-        enabled=False,
-        docs="""
-        Reports not used keywords.
+class UnusedKeywordRule(Rule):
+    """
 
-        Example::
+    Reports not used keywords.
 
-            *** Test Cases ***
-            Test that only non used keywords are reported
-                Used Keyword
+    Example::
 
-            *** Keywords ***
-            Not Used Keyword  # this keyword will be reported as not used
-                [Arguments]    ${arg}
-                Should Be True    ${arg}>50
+        *** Test Cases ***
+        Test that only non used keywords are reported
+            Used Keyword
 
-        Rule is under development - may report false negatives or positives. Currently it does only support
-        keywords from suites and private keywords. If the keyword is called dynamically (for example through variable)
-        it will be not detected as used.
-        """,
-    )
-}
+        *** Keywords ***
+        Not Used Keyword  # this keyword will be reported as not used
+            [Arguments]    ${arg}
+            Should Be True    ${arg}>50
+
+    Rule is under development - may report false negatives or positives. Currently it does only support
+    keywords from suites and private keywords. If the keyword is called dynamically (for example through variable)
+    it will be not detected as used.
+
+    """
+
+    name = "unused-keyword"
+    rule_id = "10101"
+    message = "Keyword '{keyword_name}' is not used"
+    severity = RuleSeverity.INFO
+    enabled = False
+    added_in_version = "5.3.0"
+
 
 if ROBOT_VERSION.major < 6:
     KeywordEmbedded = EmbeddedArguments
@@ -125,7 +125,7 @@ class RobotFile:
 
 
 class UnusedKeywords(ProjectChecker):
-    reports = ("unused-keyword",)
+    unused_keyword: UnusedKeywordRule
 
     # TODO: ignore run keywords with variables?
     # TODO: handle BDD
@@ -144,7 +144,7 @@ class UnusedKeywords(ProjectChecker):
             for keyword in robot_file.not_used_keywords:
                 name = keyword.keyword_node.name
                 self.report(
-                    "unused-keyword",
+                    self.unused_keyword,
                     source=robot_file.path,
                     node=keyword.keyword_node,
                     keyword_name=name,
