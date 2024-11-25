@@ -10,6 +10,7 @@ from robot.errors import DataError
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports, rules
 from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.rules import Rule
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
@@ -23,14 +24,14 @@ class RobocopLinter:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.config: Config = self.config_manager.default_config
-        self.checkers: list = []  # [type[BaseChecker]]
+        self.checkers: list[BaseChecker] = []
         self.rules: dict[str, Rule] = {}
         self.load_checkers()
         self.reports: dict[str, reports.Report] = reports.get_reports(
             self.config.linter.reports, self.config.linter.compare
         )
 
-    def load_checkers(self) -> None:
+    def load_checkers(self) -> None:  # TODO load builtin once and copy classes for each config
         """
         Initialize checkers and rules containers and start rules discovery.
 
@@ -42,23 +43,24 @@ class RobocopLinter:
         rules.init(self)
 
     def register_checker(self, checker: type[BaseChecker]) -> None:  # [type[BaseChecker]]
-        for rule_name, rule in checker.rules.items():
-            self.rules[rule_name] = rule
-            self.rules[rule.rule_id] = rule
+        for rule_name_or_id, rule in checker.rules.items():
+            self.rules[rule_name_or_id] = rule
         self.checkers.append(checker)
 
     def check_for_disabled_rules(self) -> None:
         """Check checker configuration to disable rules."""
         rule_matcher = RuleMatcher(self.config)
-        for checker in self.checkers:
+        for checker in self.checkers:  # TODO: each config with own copy of checkers & rules
             if not self.any_rule_enabled(checker, rule_matcher):
                 checker.disabled = True
 
     def any_rule_enabled(self, checker: type[BaseChecker], rule_matcher: RuleMatcher) -> bool:
+        any_enabled = False
         for name, rule in checker.rules.items():
             rule.enabled = rule_matcher.is_rule_enabled(rule)
-            checker.rules[name] = rule
-        return any(msg.enabled for msg in checker.rules.values())
+            if rule.enabled:
+                any_enabled = True
+        return any_enabled
 
     def get_model_for_file_type(self, source: Path) -> File:
         """Recognize model type of the file and load the model."""

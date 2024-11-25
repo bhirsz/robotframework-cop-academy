@@ -26,144 +26,155 @@ def regex(value):
         raise ValueError(f"Regex error: {regex_err}")
 
 
-RULE_CATEGORY_ID = "07"
+class ToDoInCommentRule(Rule):
+    """
+    TODO-like marker found in the comment.
 
-rules = {
-    "0701": Rule(
+    By default, it reports ``TODO`` and ``FIXME`` markers.
+
+    Example::
+
+        # TODO: Refactor this code
+        # fixme
+
+    Configuration example:: FIXME: update examples
+
+        robocop --configure "todo-in-comment:markers:todo,Remove me,Fix this!"
+
+    """
+
+    name = "todo-in-comment"
+    rule_id = "COM01"
+    message = "Found a marker '{marker}' in the comments"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.0.0"
+    parameters = [
         RuleParam(
             name="markers",
             default="todo,fixme",
             converter=str,
             desc="List of case-insensitive markers that violate the rule in comments.",
-        ),
-        rule_id="0701",
-        name="todo-in-comment",
-        msg="Found a marker '{{ marker }}' in the comments",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Report occurrences of the configured, case-insensitive marker in the comments.
-        By default, it reports ``TODO`` and ``FIXME`` markers.
+        )
+    ]
 
-        Example::
 
-            # TODO: Refactor this code
-            # fixme
+class MissingSpaceAfterCommentRule(Rule):
+    """
+    No space after the ``#`` character and comment body.
 
-        Configuration example::
+    Configured regex for block comment should take into account the first character is ``#``.
 
-            robocop --configure "todo-in-comment:markers:todo,Remove me,Fix this!"
+    Example::
 
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0702": Rule(
-        RuleParam(
-            name="block",
-            default="^###",
-            converter=regex,
-            desc="Block comment regex pattern.",
-        ),
-        rule_id="0702",
-        name="missing-space-after-comment",
-        msg="Missing blank space after comment character",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Make sure to have one blank space after ``#`` comment character.
-        Configured regex for block comment should take into account the first character is ``#``.
+        #bad
+        # good
+        ### good block
 
-        Example::
+    Configuration example::
 
-            #bad
-            # good
-            ### good block
+        robocop --configure missing-space-after-comment:block:^#[*]+
 
-        Configuration example::
+        Allows commenting like:
 
-            robocop --configure missing-space-after-comment:block:^#[*]+
+            #*****
+            #
+            # Important topics here!
+            #
+            #*****
+            or
+            #* Headers *#
 
-            Allows commenting like:
+    """
 
-                #*****
-                #
-                # Important topics here!
-                #
-                #*****
-                or
-                #* Headers *#
+    name = "missing-space-after-comment"
+    rule_id = "COM02"
+    message = "Missing blank space after comment character"
+    severity = RuleSeverity.INFO  # TODO: changed severity from warning to info
+    added_in_version = "1.0.0"
+    parameters = [RuleParam(name="block", default="^###", converter=regex, desc="Block comment regex pattern.")]
 
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0703": Rule(
-        rule_id="0703",
-        name="invalid-comment",
-        msg="Invalid comment. '#' needs to be first character in the cell. "
-        "For block comments you can use '*** Comments ***' section",
-        severity=RuleSeverity.ERROR,
-        version="<4.0",
-        docs="""
-        In Robot Framework 3.2.2 comments that started from second character in the cell were not recognized as
-        comments.
 
-        Example::
+class InvalidCommentRule(Rule):
+    """
+    Invalid comment.
 
-            # good
-             # bad
-              # third cell so it's good
+    In Robot Framework 3.2.2 comments that started from second character in the cell were not recognized as
+    comments.
 
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0704": Rule(
-        rule_id="0704",
-        name="ignored-data",
-        msg="Ignored data found in file",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        All lines before first test data section
-        (`ref <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#test-data-sections>`_)
-        are ignored. It's recommended to add ``*** Comments ***`` section header for lines that should be ignored.
+    Example::
 
-        Missing section header::
+        # good
+         # bad
+          # third cell so it's good
 
-            Resource   file.resource  # it looks like *** Settings *** but section header is missing - line is ignored
+    """
 
-            *** Keywords ***
-            Keyword Name
-               No Operation
+    name = "invalid-comment"
+    rule_id = "COM03"
+    message = (
+        "Invalid comment. '#' needs to be first character in the cell. "
+        "For block comments you can use '*** Comments ***' section"
+    )
+    severity = RuleSeverity.ERROR
+    version = "<4.0"
+    added_in_version = "1.0.0"
 
-        Comment lines that should be inside ``*** Comments ***``::
 
-            Deprecated Test
-                Keyword
-                Keyword 2
+class IgnoredDataRule(Rule):
+    """
+    Ignored data found in file.
 
-            *** Test Cases ***
+    All lines before first test data section
+    (`ref <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#test-data-sections>`_)
+    are ignored. It's recommended to add ``*** Comments ***`` section header for lines that should be ignored.
 
-        """,
-        added_in_version="1.3.0",
-    ),
-    "0705": Rule(
-        rule_id="0705",
-        name="bom-encoding-in-file",
-        msg="This file contains BOM (Byte Order Mark) encoding not supported by Robot Framework",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Some code editors can save Robot file using BOM encoding. Ensure that file is saved in UTF-8 encoding.
-        """,
-        added_in_version="1.7.0",
-    ),
-}
+    Missing section header::
+
+        Resource   file.resource  # it looks like *** Settings *** but section header is missing - line is ignored
+
+        *** Keywords ***
+        Keyword Name
+           No Operation
+
+    Comment lines that should be inside ``*** Comments ***``::
+
+        Deprecated Test
+            Keyword
+            Keyword 2
+
+        *** Test Cases ***
+
+    """
+
+    name = "ignored-data"
+    rule_id = "COM04"
+    message = "Ignored data found in file"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.3.0"
+
+
+class BomEncodingRule(Rule):
+    """
+    BOM (Byte Order Mark) found in the file.
+
+    Some code editors can save Robot file using BOM encoding. It is not supported by the Robot Framework.
+    Ensure that file is saved in UTF-8 encoding.
+
+    """
+
+    name = "bom-encoding-in-file"
+    rule_id = "COM05"
+    message = "BOM (Byte Order Mark) found in the file"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.7.0"
 
 
 class CommentChecker(VisitorChecker):
     """Checker for comments content. It detects invalid comments or leftovers like `todo` or `fixme` in the code."""
 
-    reports = (
-        "todo-in-comment",
-        "missing-space-after-comment",
-        "invalid-comment",
-    )
+    todo_in_comment: ToDoInCommentRule
+    missing_space_after_comment: MissingSpaceAfterCommentRule
+    invalid_comment: InvalidCommentRule
 
     def __init__(self):
         self._markers = None
@@ -173,13 +184,13 @@ class CommentChecker(VisitorChecker):
     @property
     def markers(self):
         if not self._markers:
-            self._markers = self.param("todo-in-comment", "markers").lower().split(",")
+            self._markers = self.todo_in_comment.markers.lower().split(",")  # TODO: should be handled by param parser
         return self._markers
 
     @property
     def block(self):
         if not self._block:
-            self._block = self.param("missing-space-after-comment", "block")
+            self._block = self.missing_space_after_comment.block
         return self._block
 
     def visit_Comment(self, node: Comment) -> None:  # noqa: N802
@@ -222,21 +233,21 @@ class CommentChecker(VisitorChecker):
             return
         if name and name.lstrip().startswith("#"):
             hash_pos = name.find("#")
-            self.report("invalid-comment", node=node, col=node.col_offset + hash_pos + 1, end_col=len(name))
+            self.report(self.invalid_comment, node=node, col=node.col_offset + hash_pos + 1, end_col=len(name))
 
     def check_comment_content(self, token: Token, content: str) -> None:
         low_content = content.lower()
         for violation in [marker for marker in self.markers if marker in low_content]:
             index = low_content.find(violation)
             self.report(
-                "todo-in-comment",
+                self.todo_in_comment,
                 marker=content[index : index + len(violation)],
                 lineno=token.lineno,
                 col=token.col_offset + 1 + index,
             )
         if content.startswith("#") and not self.is_block_comment(content) and not content.startswith("# "):
             self.report(
-                "missing-space-after-comment",
+                self.missing_space_after_comment,
                 lineno=token.lineno,
                 col=token.col_offset + 1,
                 end_col=token.col_offset + len(content) + 1,
@@ -249,10 +260,9 @@ class CommentChecker(VisitorChecker):
 class IgnoredDataChecker(RawFileChecker):
     """Checker for ignored data."""
 
-    reports = (
-        "ignored-data",
-        "bom-encoding-in-file",
-    )
+    ignored_data: IgnoredDataRule
+    bom_encoding_in_file: BomEncodingRule
+
     BOM = [BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF8, BOM_UTF16_LE, BOM_UTF16_BE]
     SECTION_HEADER = "***"
     ROBOCOP_HEADER = "# robocop:"
@@ -293,7 +303,7 @@ class IgnoredDataChecker(RawFileChecker):
                 return "***" in line
         if self.ignore_empty_lines and not line.strip():
             return False
-        self.report("ignored-data", lineno=lineno, col=1, end_col=len(line))
+        self.report(self.ignored_data, lineno=lineno, col=1, end_col=len(line))
         return True
 
     def detect_bom(self, source: str) -> bool:
@@ -301,4 +311,4 @@ class IgnoredDataChecker(RawFileChecker):
             first_four = raw_file.read(4)
             self.is_bom = any(first_four.startswith(bom_marker) for bom_marker in IgnoredDataChecker.BOM)
             if self.is_bom:
-                self.report("bom-encoding-in-file", lineno=1, col=1)
+                self.report(self.bom_encoding_in_file, lineno=1, col=1)

@@ -293,10 +293,6 @@ class ConfigManager:
             None,
         )  # TODO: Pass them from cli / default configuration file
         for source in sources:
-            # TODO: Support for - . Instead of existing implementation, we can create temporary fake file
-            # if s == "-":
-            #     sources.add("-")
-            #     continue
             path = Path(source).resolve()
             if not files.should_parse_path(
                 path, self.overridden_sources, self.root_parent, exclude, extend_exclude, self.root_gitignore

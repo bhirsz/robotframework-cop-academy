@@ -47,9 +47,7 @@ class Diagnostic:
 
     @property
     def message(self) -> str:
-        if self._message is None:
-            self._message = self.rule.get_message(**self.reported_arguments)
-        return self._message
+        return self.rule.message.format(**self.reported_arguments)
 
     @staticmethod
     def get_range(

@@ -42,82 +42,119 @@ from robocop.linter.utils.misc import (
 )
 from robocop.linter.utils.variable_matcher import VariableMatches
 
-RULE_CATEGORY_ID = "09"
-
 
 def comma_separated_list(value: str) -> list[str]:
     return value.split(",")
 
 
-rules = {
-    "0901": Rule(
-        rule_id="0901",
-        name="keyword-after-return",
-        msg="{{ error_msg }}",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        To improve readability use ``[Return]`` setting at the end of the keyword. If you want to return immediately
-        from the keyword, use ``RETURN`` statement instead. ``[Return]`` does not return from the keyword but only
-        sets the values that will be returned at the end of the keyword.
+class KeywordAfterReturnRule(Rule):
+    """
+    To improve readability use ``[Return]`` setting at the end of the keyword. If you want to return immediately
+    from the keyword, use ``RETURN`` statement instead. ``[Return]`` does not return from the keyword but only
+    sets the values that will be returned at the end of the keyword.
 
-        Bad::
+    Bad::
 
-            Keyword
-                Step
-                [Return]    ${variable}
-                ${variable}    Other Step
+        Keyword
+            Step
+            [Return]    ${variable}
+            ${variable}    Other Step
 
-        Good::
+    Good::
 
-            Keyword
-                Step
-                ${variable}    Other Step
-                [Return]    ${variable}
+        Keyword
+            Step
+            ${variable}    Other Step
+            [Return]    ${variable}
 
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0903": Rule(
-        rule_id="0903",
-        name="empty-return",
-        msg="[Return] is empty",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        ``[Return]`` statement is used to define variables returned from keyword. If you don't return anything from
-        keyword,  don't use ``[Return]``.
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0907": Rule(
-        rule_id="0907",
-        name="nested-for-loop",
-        msg="Nested for loops are not supported. You can use keyword with for loop instead",
-        severity=RuleSeverity.ERROR,
-        version="<4.0",
-        docs="""
-        Older versions of Robot Framework did not support nested for loops::
+    """
 
-            FOR    ${var}    IN RANGE    10
-                FOR   ${other_var}   IN    a  b
-                    # Nesting supported from Robot Framework 4.0+
-                END
+    name = "keyword-after-return"
+    rule_id = "0901"
+    message = "{error_msg}"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.0.0"
+
+
+class EmptyReturnRule(Rule):
+    """
+    ``[Return]`` statement is used to define variables returned from keyword. If you don't return anything from
+    keyword,  don't use ``[Return]``.
+
+    """
+
+    name = "empty-return"
+    rule_id = "0903"
+    message = "[Return] is empty"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.0.0"
+
+
+class NestedForLoopRule(Rule):
+    """
+
+    Older versions of Robot Framework did not support nested for loops::
+
+        FOR    ${var}    IN RANGE    10
+            FOR   ${other_var}   IN    a  b
+                # Nesting supported from Robot Framework 4.0+
             END
+        END
 
-        """,
-        added_in_version="1.0.0",
-    ),
-    "0908": Rule(
-        rule_id="0908",
-        name="if-can-be-used",
-        msg="'{{ run_keyword }}' can be replaced with IF block since Robot Framework 4.0",
-        severity=RuleSeverity.INFO,
-        version="==4.*",
-        docs="""
-        Starting from Robot Framework 4.0 ``Run Keyword If`` and ``Run Keyword Unless`` can be replaced by IF block.
-        """,
-        added_in_version="1.4.0",
-    ),
-    "0909": Rule(
+    """
+
+    name = "nested-for-loop"
+    rule_id = "0907"
+    message = "Nested for loops are not supported. You can use keyword with for loop instead"
+    severity = RuleSeverity.ERROR
+    version = "<4.0"
+    added_in_version = "1.0.0"
+
+
+class IfCanBeUsedRule(Rule):
+    """
+    Starting from Robot Framework 4.0 ``Run Keyword If`` and ``Run Keyword Unless`` can be replaced by IF block.
+
+    """
+
+    name = "if-can-be-used"
+    rule_id = "0908"
+    message = "'{run_keyword}' can be replaced with IF block since Robot Framework 4.0"
+    severity = RuleSeverity.INFO
+    version = "==4.*"
+    added_in_version = "1.4.0"
+
+
+class InconsistentAssignmentRule(Rule):
+    """
+    Use only one type of assignment sign in a file.
+
+    Example of rule violation::
+
+        *** Keywords ***
+        Keyword
+            ${var} =  Other Keyword
+            No Operation
+
+        Keyword 2
+            No Operation
+            ${var}  ${var2}  Some Keyword  # this assignment doesn't use equal sign while the previous one uses ' ='
+
+    By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
+    assignment sign by running::
+
+        robocop --configure inconsistent-assignment:assignment_sign_type:equal_sign
+
+    You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
+    space_and_equal_sign (`` =``).
+
+    """
+
+    name = "inconsistent-assignment"
+    rule_id = "0909"
+    message = "The assignment sign is not consistent within the file. Expected '{expected_sign}' but got '{actual_sign}' instead"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(
             name="assignment_sign_type",
             default="autodetect",
@@ -126,37 +163,40 @@ rules = {
             desc="possible values: 'autodetect' (default), 'none' (''), "
             "'equal_sign' ('=') or space_and_equal_sign (' =')",
         ),
-        rule_id="0909",
-        name="inconsistent-assignment",
-        msg="The assignment sign is not consistent within the file. Expected '{{ expected_sign }}' "
-        "but got '{{ actual_sign }}' instead",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Use only one type of assignment sign in a file.
+    ]
+    added_in_version = "1.7.0"
 
-        Example of rule violation::
 
-            *** Keywords ***
-            Keyword
-                ${var} =  Other Keyword
-                No Operation
+class InconsistentAssignmentInVariablesRule(Rule):
+    """
 
-            Keyword 2
-                No Operation
-                ${var}  ${var2}  Some Keyword  # this assignment doesn't use equal sign while the previous one uses ' ='
+    Use one type of assignment sign in Variables section.
 
-        By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
-        assignment sign by running::
+    Example of rule violation::
 
-            robocop --configure inconsistent-assignment:assignment_sign_type:equal_sign
+        *** Variables ***
+        ${var} =    1
+        ${var2}=    2
+        ${var3} =   3
+        ${var4}     a
+        ${var5}     b
 
-        You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
-        space_and_equal_sign (`` =``).
+    By default, Robocop looks for the most popular assignment sign in the file. It is possible to define expected
+    assignment sign by running::
 
-        """,
-        added_in_version="1.7.0",
-    ),
-    "0910": Rule(
+        robocop --configure inconsistent-assignment-in-variables:assignment_sign_type:equal_sign
+
+    You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
+    space_and_equal_sign (`` =``).
+
+
+    """
+
+    name = "inconsistent-assignment-in-variables"
+    rule_id = "0910"
+    message = "The assignment sign is not consistent inside the variables section. Expected '{expected_sign}' but got '{actual_sign}' instead"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(
             name="assignment_sign_type",
             default="autodetect",
@@ -164,469 +204,522 @@ rules = {
             show_type="assignment sign type",
             desc="possible values: 'autodetect' (default), 'none' (''), "
             "'equal_sign' ('=') or space_and_equal_sign (' =')",
-        ),
-        rule_id="0910",
-        name="inconsistent-assignment-in-variables",
-        msg="The assignment sign is not consistent inside the variables section. Expected '{{ expected_sign }}' "
-        "but got '{{ actual_sign }}' instead",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Use one type of assignment sign in Variables section.
+        )
+    ]
+    added_in_version = "1.7.0"
 
-        Example of rule violation::
 
-            *** Variables ***
-            ${var} =    1
-            ${var2}=    2
-            ${var3} =   3
-            ${var4}     a
-            ${var5}     b
+class WrongImportOrderRule(Rule):
+    """
 
-        By default, Robocop looks for the most popular assignment sign in the file. It is possible to define expected
-        assignment sign by running::
+    Example of rule violation::
 
-            robocop --configure inconsistent-assignment-in-variables:assignment_sign_type:equal_sign
+        *** Settings ***
+        Library    Collections
+        Library    CustomLibrary
+        Library    OperatingSystem  # BuiltIn library defined after custom CustomLibrary
 
-        You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
-        space_and_equal_sign (`` =``).
+    """
 
-        """,
-        added_in_version="1.7.0",
-    ),
-    "0911": Rule(
-        rule_id="0911",
-        name="wrong-import-order",
-        msg="BuiltIn library import '{{ builtin_import }}' should be placed before '{{ custom_import }}'",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Example of rule violation::
+    name = "wrong-import-order"
+    rule_id = "0911"
+    message = "BuiltIn library import '{builtin_import}' should be placed before '{custom_import}'"
+    severity = RuleSeverity.WARNING
+    added_in_version = "1.7.0"
 
-            *** Settings ***
-            Library    Collections
-            Library    CustomLibrary
-            Library    OperatingSystem  # BuiltIn library defined after custom CustomLibrary
 
-        """,
-        added_in_version="1.7.0",
-    ),
-    "0912": Rule(
+class EmptyVariableRule(Rule):
+    r"""
+
+    Variables with placeholder ${EMPTY} values are more explicit.
+
+    Example of rule violation::
+
+        *** Variables ***
+        ${VAR_NO_VALUE}                   # missing value
+        ${VAR_WITH_EMPTY}       ${EMPTY}
+        @{MULTILINE_FIRST_EMPTY}
+        ...                               # missing value
+        ...  value
+        ${EMPTY_WITH_BACKSLASH}  \       # used backslash
+
+        *** Keywords ***
+        Create Variables
+            VAR    ${var_no_value}  # missing value
+            VAR    ${var_with_empty}    ${EMPTY}
+
+    You can configure ``empty-variable`` rule to run only in ```*** Variables ***``` section or on
+    ``VAR`` statements using ``variable_source`` parameter.
+
+    """
+
+    name = "empty-variable"
+    rule_id = "0912"
+    message = "Use built-in variable {var_type}{{EMPTY}} instead of leaving variable without value or using backslash"
+    severity = RuleSeverity.INFO
+    parameters = [
         RuleParam(
             name="variable_source",
             default="section,var",
             converter=comma_separated_list,
             show_type="comma separated list",
             desc="Variable sources that will be checked",
-        ),
-        rule_id="0912",
-        name="empty-variable",
-        msg="Use built-in variable {{ var_type }}{EMPTY} instead of leaving variable without value or using backslash",
-        severity=RuleSeverity.INFO,
-        docs="""
-        Variables with placeholder ${EMPTY} values are more explicit.
+        )
+    ]
+    added_in_version = "1.10.0"
 
-        Example of rule violation::
 
-            *** Variables ***
-            ${VAR_NO_VALUE}                   # missing value
-            ${VAR_WITH_EMPTY}       ${EMPTY}
-            @{MULTILINE_FIRST_EMPTY}
-            ...                               # missing value
-            ...  value
-            ${EMPTY_WITH_BACKSLASH}  \\       # used backslash
+class CanBeResourceFileRule(Rule):
+    """
+    If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension.
 
-            *** Keywords ***
-            Create Variables
-                VAR    ${var_no_value}  # missing value
-                VAR    ${var_with_empty}    ${EMPTY}
+    """
 
-        You can configure ``empty-variable`` rule to run only in ```*** Variables ***``` section or on
-        ``VAR`` statements using ``variable_source`` parameter.
-        """,
-        added_in_version="1.10.0",
-    ),
-    "0913": Rule(
-        rule_id="0913",
-        name="can-be-resource-file",
-        msg="No tests in '{{ file_name }}' file, consider renaming to '{{ file_name_stem }}.resource'",
-        severity=RuleSeverity.INFO,
-        docs="""
-        If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension.
-        """,
-        added_in_version="1.10.0",
-    ),
-    "0914": Rule(
-        rule_id="0914",
-        name="if-can-be-merged",
-        msg="IF statement can be merged with previous IF (defined in line {{ line }})",
-        severity=RuleSeverity.INFO,
-        version=">=4.0",
-        docs="""
-        ``IF`` statement follows another ``IF`` with identical conditions. It can be possibly merged into one.
+    name = "can-be-resource-file"
+    rule_id = "0913"
+    message = "No tests in '{file_name}' file, consider renaming to '{file_name_stem}.resource'"
+    severity = RuleSeverity.INFO
+    added_in_version = "1.10.0"
 
-        Example of rule violation::
 
-            IF  ${var} == 4
-                Keyword
-            END
-            # comments are ignored
-            IF  ${var}  == 4
-                Keyword 2
-            END
+class IfCanBeMergedRule(Rule):
+    """
 
-        ``IF`` statement is considered identical only if all branches have identical conditions.
+    ``IF`` statement follows another ``IF`` with identical conditions. It can be possibly merged into one.
 
-        Similar but not identical ``IF``::
+    Example of rule violation::
 
-            IF  ${variable}
-                Keyword
-            ELSE
-                Other Keyword
-            END
-            IF  ${variable}
-                Keyword
-            END
+        IF  ${var} == 4
+            Keyword
+        END
+        # comments are ignored
+        IF  ${var}  == 4
+            Keyword 2
+        END
 
-        """,
-        added_in_version="2.0.0",
-    ),
-    "0915": Rule(
-        rule_id="0915",
-        name="statement-outside-loop",
-        msg="{{ name }} {{ statement_type }} used outside a loop",
-        severity=RuleSeverity.ERROR,
-        version=">=5.0",
-        docs="""
-        Following keywords and statements should only be used inside loop (``WHILE`` or ``FOR``):
-            - ``Exit For Loop``
-            - ``Exit For Loop If``
-            - ``Continue For Loop``
-            - ``Continue For Loop If``
-            - ``CONTINUE``
-            - ``BREAK``
+    ``IF`` statement is considered identical only if all branches have identical conditions.
 
-        """,
-        added_in_version="2.0.0",
-    ),
-    "0916": Rule(
+    Similar but not identical ``IF``::
+
+        IF  ${variable}
+            Keyword
+        ELSE
+            Other Keyword
+        END
+        IF  ${variable}
+            Keyword
+        END
+
+    """
+
+    name = "if-can-be-merged"
+    rule_id = "0914"
+    message = "IF statement can be merged with previous IF (defined in line {line})"
+    severity = RuleSeverity.INFO
+    version = ">=4.0"
+    added_in_version = "2.0.0"
+
+
+class StatementOutsideLoopRule(Rule):
+    """
+    Following keywords and statements should only be used inside loop (``WHILE`` or ``FOR``):
+        - ``Exit For Loop``
+        - ``Exit For Loop If``
+        - ``Continue For Loop``
+        - ``Continue For Loop If``
+        - ``CONTINUE``
+        - ``BREAK``
+
+    """
+
+    name = "statement-outside-loop"
+    rule_id = "0915"
+    message = "{name} {statement_type} used outside a loop"
+    severity = RuleSeverity.ERROR
+    version = ">=5.0"
+    added_in_version = "2.0.0"
+
+
+class InlineIfCanBeUsedRule(Rule):
+    """
+    Short and simple ``IF`` statements can be replaced with ``inline IF``.
+
+    Following ``IF``::
+
+        IF    $condition
+            BREAK
+        END
+
+    can be replaced with::
+
+        IF    $condition    BREAK
+
+
+    """
+
+    name = "inline-if-can-be-used"
+    rule_id = "0916"
+    message = "IF can be replaced with inline IF"
+    severity = RuleSeverity.INFO
+    version = ">=5.0"
+    parameters = [
         RuleParam(
             name="max_width",
             default=80,
             converter=int,
             desc="maximum width of IF (in characters) below which it will be recommended to use inline IF",
         ),
-        SeverityThreshold("max_width", compare_method="less"),
-        rule_id="0916",
-        name="inline-if-can-be-used",
-        msg="IF can be replaced with inline IF",
-        severity=RuleSeverity.INFO,
-        version=">=5.0",
-        docs="""
-        Short and simple ``IF`` statements can be replaced with ``inline IF``.
+    ]
+    severity_threshold = SeverityThreshold("max_width", compare_method="less")
+    added_in_version = "2.0.0"
 
-        Following ``IF``::
 
-            IF    $condition
+class UnreachableCodeRule(Rule):
+    """
+    Detect the unreachable code after ``RETURN``, ``BREAK`` or ``CONTINUE`` statements.
+
+    For example::
+
+        Example Keyword
+            FOR    ${animal}    IN    cat    dog
+                IF    '${animal}' == 'cat'
+                    CONTINUE
+                    Log  ${animal}  # unreachable log
+                END
                 BREAK
-            END
-
-        can be replaced with::
-
-            IF    $condition    BREAK
-
-        """,
-        added_in_version="2.0.0",
-    ),
-    "0917": Rule(
-        rule_id="0917",
-        name="unreachable-code",
-        msg="Unreachable code after {{ statement }} statement",
-        severity=RuleSeverity.WARNING,
-        version=">=5.0",
-        docs="""
-        Detect the unreachable code after ``RETURN``, ``BREAK`` or ``CONTINUE`` statements.
-
-        For example::
-
-            Example Keyword
-                FOR    ${animal}    IN    cat    dog
-                    IF    '${animal}' == 'cat'
-                        CONTINUE
-                        Log  ${animal}  # unreachable log
-                    END
-                    BREAK
-                    Log    Unreachable log
-                END
-                RETURN
                 Log    Unreachable log
-
-        """,
-        added_in_version="3.1.0",
-    ),
-    "0918": Rule(
-        rule_id="0918",
-        name="multiline-inline-if",
-        msg="Avoid splitting inline IF to multiple lines",
-        severity=RuleSeverity.WARNING,
-        version=">=5.0",
-        docs="""
-        It's allowed to create ``inline IF`` that spans multiple lines, but it should be avoided,
-        since it decreases readability. Try to use normal ``IF``/``ELSE`` instead.
-
-        Bad::
-
-            IF  ${condition}  Log  hello
-            ...    ELSE       Log  hi!
-
-        Good::
-
-            IF  ${condition}    Log  hello     ELSE    Log  hi!
-
-        or also good::
-
-            IF  ${condition}
-                Log  hello
-            ELSE
-                Log  hi!
             END
-        """,
-        added_in_version="3.1.0",
-    ),
-    "0919": Rule(
-        rule_id="0919",
-        name="unused-argument",
-        msg="Keyword argument '{{ name }}' is not used",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Keyword argument was defined but not used::
+            RETURN
+            Log    Unreachable log
 
-            *** Keywords ***
-            Keyword
-                [Arguments]    ${used}    ${not_used}  # will report ${not_used}
-                Log    ${used}
-                IF    $used
-                    Log    Escaped syntax is supported.
+    """
+
+    name = "unreachable-code"
+    rule_id = "0917"
+    message = "Unreachable code after {statement} statement"
+    severity = RuleSeverity.WARNING
+    version = ">=5.0"
+    added_in_version = "3.1.0"
+
+
+class MultilineInlineIfRule(Rule):
+    """
+    It's allowed to create ``inline IF`` that spans multiple lines, but it should be avoided,
+    since it decreases readability. Try to use normal ``IF``/``ELSE`` instead.
+
+    Bad::
+
+        IF  ${condition}  Log  hello
+        ...    ELSE       Log  hi!
+
+    Good::
+
+        IF  ${condition}    Log  hello     ELSE    Log  hi!
+
+    or also good::
+
+        IF  ${condition}
+            Log  hello
+        ELSE
+            Log  hi!
+        END
+
+    """
+
+    name = "multiline-inline-if"
+    rule_id = "0918"
+    message = "Avoid splitting inline IF to multiple lines"
+    severity = RuleSeverity.WARNING
+    version = ">=5.0"
+    added_in_version = "3.1.0"
+
+
+class UnusedArgumentRule(Rule):
+    """
+    Keyword argument was defined but not used::
+
+        *** Keywords ***
+        Keyword
+            [Arguments]    ${used}    ${not_used}  # will report ${not_used}
+            Log    ${used}
+            IF    $used
+                Log    Escaped syntax is supported.
+            END
+
+        Keyword with ${embedded} and ${not_used}  # will report ${not_used}
+            Log    ${embedded}
+
+    """
+
+    name = "unused-argument"
+    rule_id = "0919"
+    message = "Keyword argument '{name}' is not used"
+    severity = RuleSeverity.WARNING
+    added_in_version = "3.2.0"
+
+
+class UnusedVariableRule(Rule):
+    """
+    Variable was assigned but not used::
+
+        *** Keywords ***
+        Get Triangle Base Points
+            [Arguments]       ${triangle}
+            ${p1}    ${p2}    ${p3}    Get Triangle Points    ${triangle}
+            Log      Triangle base points are: ${p1} and ${p2}.
+            RETURN   ${p1}    ${p2}  # ${p3} is never used
+
+    Use ``${_}`` variable name if you purposefully do not use variable::
+
+        *** Keywords ***
+        Process Value 10 Times
+            [Arguments]    ${value}
+            FOR    ${_}   IN RANGE    10
+                Process Value    ${value}
+            END
+
+    Note that some keywords may use your local variables even if you don't pass them directly. For example
+    BuiltIn ``Replace Variables`` or any custom keyword that retrieves variables from local scope. In such case
+    Robocop will still raise ``unused-variable`` even if variable is used.
+
+    """
+
+    name = "unused-variable"
+    rule_id = "0920"
+    message = "Variable '{name}' is assigned but not used"
+    severity = RuleSeverity.INFO
+    added_in_version = "3.2.0"
+
+
+class ArgumentOverwrittenBeforeUsageRule(Rule):
+    """
+
+    Keyword argument was overwritten before it is used::
+
+        *** Keywords ***
+        Overwritten Argument
+            [Arguments]    ${overwritten}  # we do not use ${overwritten} value at all
+            ${overwritten}    Set Variable    value  # we only overwrite it
+
+    """
+
+    name = "argument-overwritten-before-usage"
+    rule_id = "0921"
+    message = "Keyword argument '{name}' is overwritten before usage"
+    severity = RuleSeverity.WARNING
+    added_in_version = "3.2.0"
+
+
+class VariableOverwrittenBeforeUsageRule(Rule):
+    """
+
+    Local variable in Keyword, Test Case or Task is overwritten before it is used::
+
+        *** Keywords ***
+        Overwritten Variable
+            ${value}    Keyword
+            ${value}    Keyword
+
+    In case the value of the variable is not important, it is possible to use ``${_}`` name::
+
+        *** Test Cases ***
+        Call keyword and ignore some return values
+            ${_}    ${item}    Unpack List    @{LIST}
+            FOR    ${_}    IN RANGE  10
+                Log    Run this code 10 times.
+            END
+
+    """
+
+    name = "variable-overwritten-before-usage"
+    rule_id = "0922"
+    message = "Local variable '{name}' is overwritten before usage"
+    severity = RuleSeverity.WARNING
+    added_in_version = "3.2.0"
+
+
+class UnnecessaryStringConversionRule(Rule):
+    """
+
+    Expressions in Robot Framework are evaluated using Python's eval function. When a variable is used
+    in the expression using the normal ``${variable}`` syntax, its value is replaced before the expression
+    is evaluated. For example, with the following expression::
+
+        *** Test Cases ***
+        Check if schema was uploaded
+            Upload Schema    schema.avsc
+            Check If File Exist In SFTP    schema.avsc
+
+        *** Keywords ***
+        Upload Schema
+            [Arguments]    ${filename}
+            IF    ${filename} == 'default'
+                ${filename}    Get Default Upload Path
+            END
+            Send File To SFTP Root   ${filename}
+
+    "${filename}" will be replaced by "schema.avsc"::
+
+        IF    schema.avsc == 'default'
+
+    "schema.avsc" will not be recognized as Python variable. That's why you need to quote it::
+
+        IF    '${filename}' == 'default'
+
+    However it introduces unnecessary string conversion and can mask difference in the type. For example::
+
+        ${numerical}    Set Variable    10  # ${numerical} is actually string 10, not integer 10
+        IF    "${numerical}" == "10"
+
+    You can use  ``$variable`` syntax instead::
+
+        IF    $numerical == 10
+
+    It will put the actual variable in the evaluated expression without converting it to string.
+
+    """
+
+    name = "unnecessary-string-conversion"
+    rule_id = "0923"
+    message = "Variable '{name}' in '{block_name}' condition has unnecessary string conversion"
+    severity = RuleSeverity.INFO
+    version = ">=4.0"
+    added_in_version = "4.0.0"
+
+
+class ExpressionCanBeSimplifiedRule(Rule):
+    """
+
+    Evaluated expression can be simplified. For example::
+
+        *** Keywords ***
+        Click On Element
+            [Arguments]    ${locator}
+            IF    ${is_element_visible}==${TRUE}    RETURN
+            ${is_element_enabled}    Set Variable    ${TRUE}
+            WHILE    ${is_element_enabled} != ${TRUE}
+                ${is_element_enabled}    Get Element Status    ${locator}
+            END
+            Click    ${locator}
+
+    can be rewritten to::
+
+        *** Keywords ***
+        Click On Element
+            [Arguments]    ${locator}
+            IF    ${is_element_visible}    RETURN
+            ${is_element_enabled}    Set Variable    ${FALSE}
+            WHILE    not ${is_element_enabled}
+                ${is_element_enabled}    Get Element Status    ${locator}
+            END
+            Click    ${locator}
+
+    Comparisons to empty sequences (lists, dicts, sets), empty string or ``0`` can be also simplified::
+
+        *** Test Cases ***
+        Check conditions
+            Should Be True     ${list} == []  # equivalent of 'not ${list}'
+            Should Be True     ${string} != ""  # equivalent of '${string}'
+            Should Be True     len(${sequence}))  # equivalent of '${sequence}'
+
+    """
+
+    name = "expression-can-be-simplified"
+    rule_id = "0924"
+    message = "'{block_name}' condition can be simplified"
+    severity = RuleSeverity.INFO
+    version = ">=4.0"
+    added_in_version = "4.0.0"
+
+
+class MisplacedNegativeConditionRule(Rule):
+    """
+    Position of not operator can be changed for better readability.
+
+    For example::
+
+        *** Keywords ***
+        Check Unmapped Codes
+            ${codes}    Get Codes From API
+            IF    not ${codes} is None
+                FOR    ${code}    IN    @{codes}
+                    Validate Single Code    ${code}
                 END
+            ELSE
+                Fail    Did not receive codes from API.
+            END
 
-            Keyword with ${embedded} and ${not_used}  # will report ${not_used}
-                Log    ${embedded}
+    Can be rewritten to::
 
-        """,
-        added_in_version="3.2.0",
-    ),
-    "0920": Rule(
-        rule_id="0920",
-        name="unused-variable",
-        msg="Variable '{{ name }}' is assigned but not used",
-        severity=RuleSeverity.INFO,
-        docs="""
-        Variable was assigned but not used::
-
-            *** Keywords ***
-            Get Triangle Base Points
-                [Arguments]       ${triangle}
-                ${p1}    ${p2}    ${p3}    Get Triangle Points    ${triangle}
-                Log      Triangle base points are: ${p1} and ${p2}.
-                RETURN   ${p1}    ${p2}  # ${p3} is never used
-
-        Use ``${_}`` variable name if you purposefully do not use variable::
-
-            *** Keywords ***
-            Process Value 10 Times
-                [Arguments]    ${value}
-                FOR    ${_}   IN RANGE    10
-                    Process Value    ${value}
+        *** Keywords ***
+        Check Unmapped Codes
+            ${codes}    Get Codes From API
+            IF    ${codes} is not None
+                FOR    ${code}    IN    @{codes}
+                    Validate Single Code    ${code}
                 END
+            ELSE
+                Fail    Did not receive codes from API.
+            END
 
-        Note that some keywords may use your local variables even if you don't pass them directly. For example
-        BuiltIn ``Replace Variables`` or any custom keyword that retrieves variables from local scope. In such case
-        Robocop will still raise ``unused-variable`` even if variable is used.
+    """
 
-    """,
-        added_in_version="3.2.0",
-    ),
-    "0921": Rule(
-        rule_id="0921",
-        name="argument-overwritten-before-usage",
-        msg="Keyword argument '{{ name }}' is overwritten before usage",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Keyword argument was overwritten before it is used::
+    name = "misplaced-negative-condition"
+    rule_id = "0925"
+    message = "'{block_name}' condition '{original_condition}' can be rewritten to '{proposed_condition}'"
+    severity = RuleSeverity.INFO
+    version = ">=4.0"
+    added_in_version = "4.0.0"
 
-            *** Keywords ***
-            Overwritten Argument
-                [Arguments]    ${overwritten}  # we do not use ${overwritten} value at all
-                ${overwritten}    Set Variable    value  # we only overwrite it
 
-        """,
-        added_in_version="3.2.0",
-    ),
-    "0922": Rule(
-        rule_id="0922",
-        name="variable-overwritten-before-usage",
-        msg="Local variable '{{ name }}' is overwritten before usage",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Local variable in Keyword, Test Case or Task is overwritten before it is used::
+class BuiltinImportsNotSortedRule(Rule):
+    """
 
-            *** Keywords ***
-            Overwritten Variable
-                ${value}    Keyword
-                ${value}    Keyword
+    Example of rule violation::
 
-        In case the value of the variable is not important, it is possible to use ``${_}`` name::
+        *** Settings ***
+        Library    OperatingSystem
+        Library    Collections  # BuiltIn libraries imported not in alphabetical order
 
-            *** Test Cases ***
-            Call keyword and ignore some return values
-                ${_}    ${item}    Unpack List    @{LIST}
-                FOR    ${_}    IN RANGE  10
-                    Log    Run this code 10 times.
-                END
+    """
 
-        """,
-        added_in_version="3.2.0",
-    ),
-    "0923": Rule(
-        rule_id="0923",
-        name="unnecessary-string-conversion",
-        msg="Variable '{{ name }}' in '{{ block_name }}' condition has unnecessary string conversion",
-        severity=RuleSeverity.INFO,
-        deprecated=True,
-        version=">=4.0",
-        docs="""
-        Expressions in Robot Framework are evaluated using Python's eval function. When a variable is used
-        in the expression using the normal ``${variable}`` syntax, its value is replaced before the expression
-        is evaluated. For example, with the following expression::
+    name = "builtin-imports-not-sorted"
+    rule_id = "0926"
+    message = "BuiltIn library import '{builtin_import}' should be placed before '{previous_builtin_import}'"
+    severity = RuleSeverity.WARNING
+    added_in_version = "5.2.0"
 
-            *** Test Cases ***
-            Check if schema was uploaded
-                Upload Schema    schema.avsc
-                Check If File Exist In SFTP    schema.avsc
 
-            *** Keywords ***
-            Upload Schema
-                [Arguments]    ${filename}
-                IF    ${filename} == 'default'
-                    ${filename}    Get Default Upload Path
-                END
-                Send File To SFTP Root   ${filename}
+class TestCaseSectionOutOfOrderRule(Rule):
+    """
 
-        "${filename}" will be replaced by "schema.avsc"::
+    Sections should be defined in order set by ``sections_order``
+    parameter (default: ``documentation,tags,timeout,setup,template,keyword,teardown``).
 
-            IF    schema.avsc == 'default'
+    To change the default order use following option::
 
-        "schema.avsc" will not be recognized as Python variable. That's why you need to quote it::
+        robocop --configure test-case-section-out-of-order:sections_order:comma,separated,list,of,sections
 
-            IF    '${filename}' == 'default'
+    where section should be case-insensitive name from the list:
+    documentation, tags, timeout, setup, template, keywords, teardown.
+    Order of not configured sections is ignored.
 
-        However it introduces unnecessary string conversion and can mask difference in the type. For example::
+    Example of rule violation::
 
-            ${numerical}    Set Variable    10  # ${numerical} is actually string 10, not integer 10
-            IF    "${numerical}" == "10"
+    *** Test Cases ***
+    Keyword After Teardown
+        [Documentation]    This is test Documentation
+        [Tags]    tag1    tag2
+        [Teardown]    Log    abc
+        Keyword1
 
-        You can use  ``$variable`` syntax instead::
+    """
 
-            IF    $numerical == 10
-
-        It will put the actual variable in the evaluated expression without converting it to string.
-        """,
-        added_in_version="4.0.0",
-    ),
-    "0924": Rule(
-        rule_id="0924",
-        name="expression-can-be-simplified",
-        msg="'{{ block_name }}' condition can be simplified",
-        severity=RuleSeverity.INFO,
-        version=">=4.0",
-        docs="""
-        Evaluated expression can be simplified. For example::
-
-            *** Keywords ***
-            Click On Element
-                [Arguments]    ${locator}
-                IF    ${is_element_visible}==${TRUE}    RETURN
-                ${is_element_enabled}    Set Variable    ${TRUE}
-                WHILE    ${is_element_enabled} != ${TRUE}
-                    ${is_element_enabled}    Get Element Status    ${locator}
-                END
-                Click    ${locator}
-
-        can be rewritten to::
-
-            *** Keywords ***
-            Click On Element
-                [Arguments]    ${locator}
-                IF    ${is_element_visible}    RETURN
-                ${is_element_enabled}    Set Variable    ${FALSE}
-                WHILE    not ${is_element_enabled}
-                    ${is_element_enabled}    Get Element Status    ${locator}
-                END
-                Click    ${locator}
-
-        Comparisons to empty sequences (lists, dicts, sets), empty string or ``0`` can be also simplified::
-
-            *** Test Cases ***
-            Check conditions
-                Should Be True     ${list} == []  # equivalent of 'not ${list}'
-                Should Be True     ${string} != ""  # equivalent of '${string}'
-                Should Be True     len(${sequence}))  # equivalent of '${sequence}'
-
-        """,
-        added_in_version="4.0.0",
-    ),
-    "0925": Rule(
-        rule_id="0925",
-        name="misplaced-negative-condition",
-        msg="'{{ block_name }}' condition '{{ original_condition }}' can be rewritten to '{{ proposed_condition }}'",
-        severity=RuleSeverity.INFO,
-        version=">=4.0",
-        docs="""
-        Position of not operator can be changed for better readability.
-
-        For example::
-
-            *** Keywords ***
-            Check Unmapped Codes
-                ${codes}    Get Codes From API
-                IF    not ${codes} is None
-                    FOR    ${code}    IN    @{codes}
-                        Validate Single Code    ${code}
-                    END
-                ELSE
-                    Fail    Did not receive codes from API.
-                END
-
-        Can be rewritten to::
-
-            *** Keywords ***
-            Check Unmapped Codes
-                ${codes}    Get Codes From API
-                IF    ${codes} is not None
-                    FOR    ${code}    IN    @{codes}
-                        Validate Single Code    ${code}
-                    END
-                ELSE
-                    Fail    Did not receive codes from API.
-                END
-
-        """,
-        added_in_version="4.0.0",
-    ),
-    "0926": Rule(
-        rule_id="0926",
-        name="builtin-imports-not-sorted",
-        msg="BuiltIn library import '{{ builtin_import }}' should be placed before '{{ previous_builtin_import }}'",
-        severity=RuleSeverity.WARNING,
-        added_in_version="5.2.0",
-        docs="""
-        Example of rule violation::
-
-            *** Settings ***
-            Library    OperatingSystem
-            Library    Collections  # BuiltIn libraries imported not in alphabetical order
-
-        """,
-    ),
-    "0927": Rule(
+    name = "test-case-section-out-of-order"
+    rule_id = "0927"
+    message = "'{section_name}' is in wrong place of Test Case. Recommended order of elements in Test Cases: {recommended_order}"
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(
             name="sections_order",
             default="documentation,tags,timeout,setup,template,keyword,teardown",
@@ -634,35 +727,41 @@ rules = {
             show_type="str",
             desc="order of sections in comma-separated list",
         ),
-        rule_id="0927",
-        name="test-case-section-out-of-order",
-        msg="'{{ section_name }}' is in wrong place of Test Case. "
-        "Recommended order of elements in Test Cases: {{ recommended_order }}",
-        severity=RuleSeverity.WARNING,
-        added_in_version="5.3.0",
-        docs="""
-        Sections should be defined in order set by ``sections_order``
-        parameter (default: ``documentation,tags,timeout,setup,template,keyword,teardown``).
+    ]
+    added_in_version = "5.3.0"
 
-        To change the default order use following option::
 
-            robocop --configure test-case-section-out-of-order:sections_order:comma,separated,list,of,sections
+class KeywordSectionOutOfOrderRule(Rule):
+    """
+    Sections should be defined in order set by ``sections_order``
+    parameter (default: ``documentation,tags,arguments,timeout,setup,keyword,teardown``).
 
-        where section should be case-insensitive name from the list:
-        documentation, tags, timeout, setup, template, keywords, teardown.
-        Order of not configured sections is ignored.
+    To change the default order use following option::
 
-        Example of rule violation::
+        robocop --configure keyword-section-out-of-order:sections_order:comma,separated,list,of,sections
 
-            *** Test Cases ***
-            Keyword After Teardown
-                [Documentation]    This is test Documentation
-                [Tags]    tag1    tag2
-                [Teardown]    Log    abc
-                Keyword1
-        """,
-    ),
-    "0928": Rule(
+    where section should be case-insensitive name from the list:
+    documentation, tags, arguments, timeout, setup, keyword, teardown.
+    Order of not configured sections is ignored.
+
+    Example of rule violation::
+
+        *** Keywords ***
+        Keyword After Teardown
+            [Documentation]    This is keyword Documentation
+            [Tags]    tag1    tag2
+            [Teardown]    Log    abc
+            Keyword1
+
+    """
+
+    name = "keyword-section-out-of-order"
+    rule_id = "0928"
+    message = (
+        "'{section_name}' is in wrong place of Keyword. Recommended order of elements in Keyword: {recommended_order}"
+    )
+    severity = RuleSeverity.WARNING
+    parameters = [
         RuleParam(
             name="sections_order",
             default="documentation,tags,arguments,timeout,setup,keyword,teardown",
@@ -670,44 +769,15 @@ rules = {
             show_type="str",
             desc="order of sections in comma-separated list",
         ),
-        rule_id="0928",
-        name="keyword-section-out-of-order",
-        msg="'{{ section_name }}' is in wrong place of Keyword. "
-        "Recommended order of elements in Keyword: {{ recommended_order }}",
-        severity=RuleSeverity.WARNING,
-        added_in_version="5.3.0",
-        docs="""
-        Sections should be defined in order set by ``sections_order``
-        parameter (default: ``documentation,tags,arguments,timeout,setup,keyword,teardown``).
-
-        To change the default order use following option::
-
-            robocop --configure keyword-section-out-of-order:sections_order:comma,separated,list,of,sections
-
-        where section should be case-insensitive name from the list:
-        documentation, tags, arguments, timeout, setup, keyword, teardown.
-        Order of not configured sections is ignored.
-
-        Example of rule violation::
-
-            *** Keywords ***
-            Keyword After Teardown
-                [Documentation]    This is keyword Documentation
-                [Tags]    tag1    tag2
-                [Teardown]    Log    abc
-                Keyword1
-        """,
-    ),
-}
+    ]
+    added_in_version = "5.3.0"
 
 
 class ReturnChecker(VisitorChecker):
     """Checker for [Return] and Return From Keyword violations."""
 
-    reports = (
-        "keyword-after-return",
-        "empty-return",
-    )
+    keyword_after_return: KeywordAfterReturnRule
+    empty_return: EmptyReturnRule
 
     def visit_Keyword(self, node) -> None:  # noqa: N802
         return_setting_node = None
@@ -724,7 +794,7 @@ class ReturnChecker(VisitorChecker):
                 if not child.values:
                     token = child.data_tokens[0]
                     self.report(
-                        "empty-return",
+                        self.empty_return,
                         node=child,
                         col=token.col_offset + 1,
                         end_col=token.col_offset + len(token.value),
@@ -743,7 +813,7 @@ class ReturnChecker(VisitorChecker):
         if keyword_after_return:
             token = return_setting_node.data_tokens[0]
             self.report(
-                "keyword-after-return",
+                self.keyword_after_return,
                 error_msg=error,
                 node=token,
                 col=token.col_offset + 1,
@@ -757,7 +827,7 @@ class ReturnChecker(VisitorChecker):
 class UnreachableCodeChecker(VisitorChecker):
     """Checker for unreachable code after RETURN, BREAK or CONTINUE statements."""
 
-    reports = ("unreachable-code",)
+    unreachable_code: UnreachableCodeRule
 
     def visit_Keyword(self, node) -> None:  # noqa: N802
         statement_node = None
@@ -769,7 +839,7 @@ class UnreachableCodeChecker(VisitorChecker):
                 token = statement_node.data_tokens[0]
                 code_after_statement = child.data_tokens[0] if hasattr(child, "data_tokens") else child
                 self.report(
-                    "unreachable-code",
+                    self.unreachable_code,
                     statement=token.value,
                     node=child,
                     col=code_after_statement.col_offset + 1,
@@ -782,21 +852,23 @@ class UnreachableCodeChecker(VisitorChecker):
     visit_If = visit_For = visit_While = visit_Try = visit_Keyword  # noqa: N815
 
 
-class NestedForLoopsChecker(VisitorChecker):
+class NestedForLoopsChecker(VisitorChecker):  # TODO: merge
     """
     Checker for not supported nested FOR loops.
 
     Deprecated in RF 4.0
     """
 
-    reports = ("nested-for-loop",)
+    nested_for_loop: NestedForLoopRule
 
     def visit_ForLoop(self, node) -> None:  # noqa: N802
         # For RF 4.0 node is "For" but we purposely don't visit it because nested for loop is allowed in 4.0
         for child in node.body:
             if child.type == "FOR":
                 token = child.get_token(Token.FOR)
-                self.report("nested-for-loop", node=child, col=token.col_offset + 1, end_col=token.end_col_offset + 1)
+                self.report(
+                    self.nested_for_loop, node=child, col=token.col_offset + 1, end_col=token.end_col_offset + 1
+                )
 
 
 class IfBlockCanBeUsed(VisitorChecker):
@@ -806,7 +878,7 @@ class IfBlockCanBeUsed(VisitorChecker):
     Run Keyword variants (Run Keyword If, Run Keyword Unless) can be replaced with IF in RF 4.0
     """
 
-    reports = ("if-can-be-used",)
+    if_can_be_used: IfCanBeUsedRule
     run_keyword_variants = {"runkeywordif", "runkeywordunless"}
 
     def visit_KeywordCall(self, node) -> None:  # noqa: N802
@@ -814,7 +886,9 @@ class IfBlockCanBeUsed(VisitorChecker):
             return
         if normalize_robot_name(node.keyword, remove_prefix="builtin.") in self.run_keyword_variants:
             col = keyword_col(node)
-            self.report("if-can-be-used", run_keyword=node.keyword, node=node, col=col, end_col=col + len(node.keyword))
+            self.report(
+                self.if_can_be_used, run_keyword=node.keyword, node=node, col=col, end_col=col + len(node.keyword)
+            )
 
 
 class ConsistentAssignmentSignChecker(VisitorChecker):
@@ -835,10 +909,8 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
 
     """
 
-    reports = (
-        "inconsistent-assignment",
-        "inconsistent-assignment-in-variables",
-    )
+    inconsistent_assignment: InconsistentAssignmentRule
+    inconsistent_assignment_in_variables: InconsistentAssignmentInVariablesRule
 
     def __init__(self):
         self.keyword_expected_sign_type = None
@@ -846,16 +918,13 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
         super().__init__()
 
     def visit_File(self, node) -> None:  # noqa: N802
-        self.keyword_expected_sign_type = self.param("inconsistent-assignment", "assignment_sign_type")
-        self.variables_expected_sign_type = self.param("inconsistent-assignment-in-variables", "assignment_sign_type")
-        if "autodetect" in [
-            self.param("inconsistent-assignment", "assignment_sign_type"),
-            self.param("inconsistent-assignment-in-variables", "assignment_sign_type"),
-        ]:
+        self.keyword_expected_sign_type = self.inconsistent_assignment.assignment_sign_type
+        self.variables_expected_sign_type = self.inconsistent_assignment_in_variables.assignment_sign_type
+        if "autodetect" in [self.keyword_expected_sign_type, self.variables_expected_sign_type]:
             auto_detector = self.auto_detect_assignment_sign(node)
-            if self.param("inconsistent-assignment", "assignment_sign_type") == "autodetect":
+            if self.keyword_expected_sign_type == "autodetect":
                 self.keyword_expected_sign_type = auto_detector.keyword_most_common
-            if self.param("inconsistent-assignment-in-variables", "assignment_sign_type") == "autodetect":
+            if self.variables_expected_sign_type == "autodetect":
                 self.variables_expected_sign_type = auto_detector.variables_most_common
         self.generic_visit(node)
 
@@ -867,7 +936,7 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
             self.check_assign_type(
                 assign_tokens[-1],
                 self.keyword_expected_sign_type,
-                "inconsistent-assignment",
+                self.inconsistent_assignment,
             )
         return node
 
@@ -879,9 +948,7 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
                 continue
             var_token = child.get_token(Token.VARIABLE)
             self.check_assign_type(
-                var_token,
-                self.variables_expected_sign_type,
-                "inconsistent-assignment-in-variables",
+                var_token, self.variables_expected_sign_type, self.inconsistent_assignment_in_variables
             )
         return node
 
@@ -911,10 +978,8 @@ class SettingsOrderChecker(VisitorChecker):
     BuiltIn libraries imports should always be placed before other libraries imports.
     """
 
-    reports = (
-        "wrong-import-order",
-        "builtin-imports-not-sorted",
-    )
+    wrong_import_order: WrongImportOrderRule
+    builtin_imports_not_sorted: BuiltinImportsNotSortedRule
 
     def __init__(self):
         self.libraries = []
@@ -932,7 +997,7 @@ class SettingsOrderChecker(VisitorChecker):
             elif library.name in STDLIBS:
                 lib_name = library.get_token(Token.NAME)
                 self.report(
-                    "wrong-import-order",
+                    self.wrong_import_order,
                     builtin_import=library.name,
                     custom_import=first_non_builtin,
                     node=library,
@@ -943,7 +1008,7 @@ class SettingsOrderChecker(VisitorChecker):
                 if previous_builtin is not None and library.name < previous_builtin.name:
                     lib_name = library.get_token(Token.NAME)
                     self.report(
-                        "builtin-imports-not-sorted",
+                        self.builtin_imports_not_sorted,
                         builtin_import=library.name,
                         previous_builtin_import=previous_builtin.name,
                         node=library,
@@ -961,7 +1026,7 @@ class SettingsOrderChecker(VisitorChecker):
 class EmptyVariableChecker(VisitorChecker):
     """Checker for variables without value."""
 
-    reports = ("empty-variable",)
+    empty_variable: EmptyVariableRule
 
     def __init__(self):
         self.visit_var_section = False
@@ -969,7 +1034,7 @@ class EmptyVariableChecker(VisitorChecker):
         super().__init__()
 
     def visit_File(self, node) -> None:  # noqa: N802
-        variable_source = self.param("empty-variable", "variable_source")
+        variable_source = self.empty_variable.variable_source
         self.visit_var_section = "section" in variable_source
         self.visit_var = "var" in variable_source
         self.generic_visit(node)
@@ -988,11 +1053,11 @@ class EmptyVariableChecker(VisitorChecker):
         if get_errors(node):
             return
         if not node.value:  # catch variable declaration without any value
-            self.report("empty-variable", var_type=node.name[0], node=node, end_col=node.end_col_offset)
+            self.report(self.empty_variable, var_type=node.name[0], node=node, end_col=node.end_col_offset)
         for token in node.get_tokens(Token.ARGUMENT):
             if not token.value or token.value == "\\":
                 self.report(
-                    "empty-variable",
+                    self.empty_variable,
                     var_type="$",
                     node=token,
                     lineno=token.lineno,
@@ -1006,7 +1071,7 @@ class EmptyVariableChecker(VisitorChecker):
         if not node.value:  # catch variable declaration without any value
             first_data = node.data_tokens[0]
             self.report(
-                "empty-variable",
+                self.empty_variable,
                 var_type=node.name[0],
                 node=first_data,
                 col=first_data.col_offset + 1,
@@ -1015,7 +1080,7 @@ class EmptyVariableChecker(VisitorChecker):
         for token in node.get_tokens(Token.ARGUMENT):
             if not token.value or token.value == "\\":
                 self.report(
-                    "empty-variable",
+                    self.empty_variable,
                     var_type="$",
                     node=token,
                     lineno=token.lineno,
@@ -1027,7 +1092,7 @@ class EmptyVariableChecker(VisitorChecker):
 class ResourceFileChecker(VisitorChecker):
     """Checker for resource files."""
 
-    reports = ("can-be-resource-file",)
+    can_be_resource_file: CanBeResourceFileRule
 
     def visit_File(self, node) -> None:  # noqa: N802
         source = node.source if node.source else self.source
@@ -1040,17 +1105,15 @@ class ResourceFileChecker(VisitorChecker):
                 and node.sections
                 and not any(isinstance(section, TestCaseSection) for section in node.sections)
             ):
-                self.report("can-be-resource-file", file_name=Path(source).name, file_name_stem=file_name, node=node)
+                self.report(self.can_be_resource_file, file_name=Path(source).name, file_name_stem=file_name, node=node)
 
 
 class IfChecker(VisitorChecker):
     """Checker for IF blocks"""
 
-    reports = (
-        "if-can-be-merged",
-        "inline-if-can-be-used",
-        "multiline-inline-if",
-    )
+    if_can_be_merged: IfCanBeMergedRule
+    inline_if_can_be_used: InlineIfCanBeUsedRule
+    multiline_inline_if: MultilineInlineIfRule
 
     def visit_TestCase(self, node) -> None:  # noqa: N802
         if get_errors(node):
@@ -1072,7 +1135,7 @@ class IfChecker(VisitorChecker):
                 self.check_whether_if_should_be_inline(child)
                 if previous_if and child.header and self.compare_conditions(child, previous_if):
                     token = child.header.get_token(child.header.type)
-                    self.report("if-can-be-merged", line=previous_if.lineno, node=token, col=token.col_offset + 1)
+                    self.report(self.if_can_be_merged, line=previous_if.lineno, node=token, col=token.col_offset + 1)
                 previous_if = child
             elif not isinstance(child, (Comment, EmptyLine)):
                 previous_if = None
@@ -1115,7 +1178,7 @@ class IfChecker(VisitorChecker):
             if node.lineno != node.end_lineno:
                 if_header = node.header.data_tokens[0]
                 self.report(
-                    "multiline-inline-if",
+                    self.multiline_inline_if,
                     node=node,
                     col=if_header.col_offset + 1,
                     end_lineno=node.end_lineno,
@@ -1131,16 +1194,16 @@ class IfChecker(VisitorChecker):
         ):
             return
         min_possible = self.tokens_length(node.header.tokens) + self.tokens_length(node.body[0].tokens[1:]) + 2
-        if min_possible > self.param("inline-if-can-be-used", "max_width"):
+        if min_possible > self.inline_if_can_be_used.max_width:
             return
         token = node.header.get_token(node.header.type)
-        self.report("inline-if-can-be-used", node=node, col=token.col_offset + 1, sev_threshold_value=min_possible)
+        self.report(self.inline_if_can_be_used, node=node, col=token.col_offset + 1, sev_threshold_value=min_possible)
 
 
 class LoopStatementsChecker(VisitorChecker):
     """Checker for loop keywords and statements such as CONTINUE or Exit For Loop"""
 
-    reports = ("statement-outside-loop",)
+    statement_outside_loop: StatementOutsideLoopRule
     for_keyword = {"continueforloop", "continueforloopif", "exitforloop", "exitforloopif"}
 
     def __init__(self):
@@ -1164,7 +1227,7 @@ class LoopStatementsChecker(VisitorChecker):
         if normalize_robot_name(node.keyword, remove_prefix="builtin.") in self.for_keyword:
             col = keyword_col(node)
             self.report(
-                "statement-outside-loop",
+                self.statement_outside_loop,
                 name=f"'{node.keyword}'",
                 statement_type="keyword",
                 node=node,
@@ -1183,7 +1246,7 @@ class LoopStatementsChecker(VisitorChecker):
         for error_token in node.get_tokens(Token.ERROR):
             if "is not allowed in this context" in error_token.error:
                 self.report(
-                    "statement-outside-loop",
+                    self.statement_outside_loop,
                     name=error_token.value,
                     statement_type="statement",
                     node=node,
@@ -1194,7 +1257,7 @@ class LoopStatementsChecker(VisitorChecker):
         if self.loops or node.errors and f"{token_type} can only be used inside a loop." not in node.errors:
             return
         self.report(
-            "statement-outside-loop",
+            self.statement_outside_loop,
             name=token_type,
             statement_type="statement",
             node=node,
@@ -1225,12 +1288,10 @@ class SectionVariablesCollector(ast.NodeVisitor):
 
 
 class UnusedVariablesChecker(VisitorChecker):
-    reports = (
-        "unused-argument",
-        "unused-variable",
-        "argument-overwritten-before-usage",
-        "variable-overwritten-before-usage",
-    )
+    unused_argument: UnusedArgumentRule
+    unused_variable: UnusedVariableRule
+    argument_overwritten_before_usage: ArgumentOverwrittenBeforeUsageRule
+    variable_overwritten_before_usage: VariableOverwrittenBeforeUsageRule
 
     def __init__(self):
         self.arguments: dict[str, CachedVariable] = {}
@@ -1281,7 +1342,7 @@ class UnusedVariablesChecker(VisitorChecker):
         for arg in self.arguments.values():
             if not arg.is_used:
                 value, *_ = arg.token.value.split("=", maxsplit=1)
-                self.report_arg_or_var_rule("unused-argument", arg.token, value)
+                self.report_arg_or_var_rule(self.unused_argument, arg.token, value)
         self.check_unused_variables()
         self.arguments = {}
 
@@ -1292,7 +1353,7 @@ class UnusedVariablesChecker(VisitorChecker):
     def check_unused_variables_in_scope(self, scope) -> None:
         for variable in scope.values():
             if not variable.is_used:
-                self.report_arg_or_var_rule("unused-variable", variable.token, variable.name)
+                self.report_arg_or_var_rule(self.unused_variable, variable.token, variable.name)
 
     def report_arg_or_var_rule(self, rule, token, value=None) -> None:
         if value is None:
@@ -1483,7 +1544,7 @@ class UnusedVariablesChecker(VisitorChecker):
         arg = self.arguments.get(normalized, None)
         if arg is not None:
             if not arg.is_used:
-                self.report_arg_or_var_rule("argument-overwritten-before-usage", arg.token)
+                self.report_arg_or_var_rule(self.argument_overwritten_before_usage, arg.token)
             arg.is_used = is_used = True
         else:
             is_used = False
@@ -1493,7 +1554,7 @@ class UnusedVariablesChecker(VisitorChecker):
                 is_used = variable_scope[normalized].is_used
                 if not variable_scope[normalized].is_used and not self.ignore_overwriting:
                     self.report_arg_or_var_rule(
-                        "variable-overwritten-before-usage", variable_scope[normalized].token, variable_match.name
+                        self.variable_overwritten_before_usage, variable_scope[normalized].token, variable_match.name
                     )
             else:  # check for attribute access like .lower() or .x
                 for variable_scope in self.variables[::-1]:
@@ -1593,7 +1654,9 @@ class UnusedVariablesChecker(VisitorChecker):
 
 
 class ExpressionsChecker(VisitorChecker):
-    reports = ("expression-can-be-simplified", "misplaced-negative-condition")
+    expression_can_be_simplified: ExpressionCanBeSimplifiedRule
+    misplaced_negative_condition: MisplacedNegativeConditionRule
+
     QUOTE_CHARS = {"'", '"'}
     CONDITION_KEYWORDS = {"passexecutionif", "setvariableif", "shouldbetrue", "shouldnotbetrue", "skipif"}
     COMPARISON_SIGNS = {"==", "!="}
@@ -1647,7 +1710,7 @@ class ExpressionsChecker(VisitorChecker):
         original_condition = f"not {variable} {orig_right_side}"
         proposed_condition = f"{variable} is not {right_tokens[2]}"
         self.report(
-            "misplaced-negative-condition",
+            self.misplaced_negative_condition,
             block_name=node_name,
             original_condition=original_condition,
             proposed_condition=proposed_condition,
@@ -1666,7 +1729,7 @@ class ExpressionsChecker(VisitorChecker):
         if len(normalized) < 3:
             if normalized == ")" and left_side.endswith("len("):
                 self.report(
-                    "expression-can-be-simplified",
+                    self.expression_can_be_simplified,
                     block_name=node_name,
                     node=condition_token,
                     col=position - len("len("),
@@ -1679,7 +1742,7 @@ class ExpressionsChecker(VisitorChecker):
             return
         if compared_value in self.EMPTY_COMPARISON:
             self.report(
-                "expression-can-be-simplified",
+                self.expression_can_be_simplified,
                 block_name=node_name,
                 node=condition_token,
                 col=position,
@@ -1688,7 +1751,8 @@ class ExpressionsChecker(VisitorChecker):
 
 
 class TestAndKeywordOrderChecker(VisitorChecker):
-    reports = ("test-case-section-out-of-order", "keyword-section-out-of-order")
+    test_case_section_out_of_order: TestCaseSectionOutOfOrderRule
+    keyword_section_out_of_order: KeywordSectionOutOfOrderRule
 
     def __init__(self):
         self.rules_by_node_type = {}
@@ -1696,10 +1760,13 @@ class TestAndKeywordOrderChecker(VisitorChecker):
         super().__init__()
 
     def visit_File(self, node) -> None:  # noqa: N802
-        self.rules_by_node_type = {Keyword: "keyword-section-out-of-order", TestCase: "test-case-section-out-of-order"}
+        self.rules_by_node_type = {
+            Keyword: self.keyword_section_out_of_order,
+            TestCase: self.test_case_section_out_of_order,
+        }
         self.expected_order = {
-            Keyword: self.param("keyword-section-out-of-order", "sections_order"),
-            TestCase: self.param("test-case-section-out-of-order", "sections_order"),
+            Keyword: self.keyword_section_out_of_order.sections_order,
+            TestCase: self.test_case_section_out_of_order.sections_order,
         }
         self.generic_visit(node)
 

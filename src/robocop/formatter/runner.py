@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import os
 import sys
 from difflib import unified_diff

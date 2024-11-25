@@ -200,7 +200,7 @@ def list_rules(
         rules = filter_rules_by_category(runner.rules, filter_category)
     severity_counter = {"E": 0, "W": 0, "I": 0}
     for rule in rules:
-        console.print(rule)
+        console.print(str(rule))
         severity_counter[rule.severity.value] += 1
     configurable_rules_sum = sum(severity_counter.values())
     plural = get_plural_form(configurable_rules_sum)

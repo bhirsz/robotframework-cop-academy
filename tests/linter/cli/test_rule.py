@@ -10,9 +10,11 @@ class TestDescribeRule:
             describe_rule("duplicated-keyword")
         out, _ = capsys.readouterr()
         expected = textwrap.dedent("""
-        Rule: duplicated-keyword (0802)
-        Message: Multiple keywords with name '{{ name }}' (first occurrence in line {{ first_occurrence_line }})
+        Rule: duplicated-keyword (DUP02)
+        Message: Multiple keywords with name '{name}' (first occurrence in line {first_occurrence_line})
         Severity: E
+        
+        Multiple keywords with the same name in the file.
 
         Do not define keywords with the same name inside the same file. Name matching is case-insensitive and
         ignores spaces and underscore characters.
@@ -37,8 +39,8 @@ class TestDescribeRule:
             describe_rule("line-too-long")
         out, _ = capsys.readouterr()
         expected = textwrap.dedent("""
-        Rule: line-too-long (0508)
-        Message: Line is too long ({{ line_length }}/{{ allowed_length }})
+        Rule: line-too-long (LEN08)
+        Message: Line is too long ({line_length}/{allowed_length})
         Severity: W
 
         It is possible to ignore lines that match regex pattern. Configure it using following option::
@@ -49,13 +51,13 @@ class TestDescribeRule:
         
         
         Configurables:
+            severity_threshold
             line_length = 120
                 type: int
                 info: number of characters allowed in line
             ignore_pattern = re.compile('https?://\\\\S+')
                 type: pattern_type
                 info: ignore lines that contain configured pattern
-            severity_threshold
 
         """).lstrip()
         assert expected == out
