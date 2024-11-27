@@ -22,22 +22,22 @@ def get_message_with_id(rule_id):
 
 class TestIncludingExcluding:
     @pytest.mark.parametrize(
-        ("included", "excluded"),
+        ("selected", "ignored"),
         [
             (["0101"], ["0102", "0501", "0402"]),
             (["W0101", "0102"], ["0501", "0402"]),
             (["E0501", "I0402"], ["0101", "0102"]),
         ],
     )
-    def test_only_included(self, included, excluded):
-        linter_config = LinterConfig(include=included, exclude=excluded)
+    def test_only_selected(self, selected, ignored):
+        linter_config = LinterConfig(select=selected, ignore=ignored)
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
-        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in included)
-        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in excluded)
+        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
+        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
     @pytest.mark.parametrize(
-        ("patterns", "included", "excluded"),
+        ("patterns", "selected", "ignored"),
         [
             (["01*"], [], ["0202", "0501", "0403"]),
             (["01*", "*5"], ["0101", "0105", "0405"], ["0204", "0402"]),
@@ -45,30 +45,30 @@ class TestIncludingExcluding:
             (["*"], ["0101", "0105", "0204", "0405", "0405"], []),
         ],
     )
-    def test_only_included_patterns(self, patterns, included, excluded):
-        linter_config = LinterConfig(include=patterns)
+    def test_only_selected_patterns(self, patterns, selected, ignored):
+        linter_config = LinterConfig(select=patterns)
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
-        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in included)
-        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in excluded)
+        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
+        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
     @pytest.mark.parametrize(
-        ("included", "excluded"),
+        ("selected", "ignored"),
         [
             (["0101"], ["0102", "0501", "0402"]),
             (["W0101", "0102"], ["0501", "0402"]),
             (["E0501", "I0402"], ["0101", "0102"]),
         ],
     )
-    def test_only_excluded(self, included, excluded):
-        linter_config = LinterConfig(exclude=excluded)
+    def test_only_ignored(self, selected, ignored):
+        linter_config = LinterConfig(ignore=ignored)
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
-        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in included)
-        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in excluded)
+        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
+        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
     @pytest.mark.parametrize(
-        ("patterns", "included", "excluded"),
+        ("patterns", "selected", "ignored"),
         [
             (["01*"], ["0204", "0405", "0405"], ["0101", "0105"]),
             (["01*", "*5"], ["0204"], ["0101", "0105", "0405", "0405"]),
@@ -76,19 +76,19 @@ class TestIncludingExcluding:
             (["*"], [], ["0101", "0105", "0204", "0405", "0405"]),
         ],
     )
-    def test_only_excluded_patterns(self, patterns, included, excluded):
+    def test_only_ignored_patterns(self, patterns, selected, ignored):
         """
         Test data contains rules with rule id's "0101", "0105", "0204", "0405", "0405"
         and rule names created using `some-message-{rule_id}` pattern
         """
-        linter_config = LinterConfig(exclude=excluded)
+        linter_config = LinterConfig(ignore=ignored)
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
-        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in included)
-        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in excluded)
+        assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
+        assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
-    def test_both_included_excluded(self):
-        linter_config = LinterConfig(include=["0101"], exclude=["W0101"])
+    def test_both_selected_excluded(self):
+        linter_config = LinterConfig(select=["0101"], ignore=["W0101"])
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
         msg = get_message_with_id("0101")

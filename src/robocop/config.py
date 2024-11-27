@@ -83,8 +83,8 @@ class WhitespaceConfig:
 @dataclass
 class LinterConfig:
     configure: list[str] = field(default_factory=list)
-    include: list[str] = field(default_factory=list)
-    exclude: list[str] = field(default_factory=list)
+    select: list[str] = field(default_factory=list)
+    ignore: list[str] = field(default_factory=list)
     issue_format: str = DEFAULT_ISSUE_FORMAT
     threshold: RuleSeverity | None = RuleSeverity.INFO
     ext_rules: list[str] = field(default_factory=list)
@@ -103,15 +103,15 @@ class LinterConfig:
         We need to remove optional severity and split it into patterns and not patterns for easier filtering.
 
         """
-        if self.include:
-            for rule in self.include:
+        if self.select:
+            for rule in self.select:
                 rule_without_sev = replace_severity_values(rule)
                 if "*" in rule_without_sev:
                     self.include_rules_patterns.add(compile_rule_pattern(rule_without_sev))
                 else:
                     self.include_rules.add(rule_without_sev)
-        if self.exclude:
-            for rule in self.exclude:
+        if self.ignore:
+            for rule in self.ignore:
                 rule_without_sev = replace_severity_values(rule)
                 if "*" in rule_without_sev:
                     self.exclude_rules_patterns.add(compile_rule_pattern(rule_without_sev))

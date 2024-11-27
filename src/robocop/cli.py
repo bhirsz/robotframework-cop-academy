@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
-from robocop import config
+from robocop import config, files
 from robocop.formatter.runner import RobocopFormatter
 from robocop.linter.reports import print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
@@ -54,8 +54,12 @@ def parse_rule_severity(value: str):
 @app.command(name="check")
 def check_files(
     sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
-    include: Annotated[list[str], typer.Option("--include", "-i", show_default=False)] = None,
-    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=False)] = None,
+    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(files.DEFAULT_INCLUDE))] = None,
+    extend_include: Annotated[list[str], typer.Option("--extend-include", show_default=False)] = None,
+    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(files.DEFAULT_EXCLUDE))] = None,
+    extend_exclude: Annotated[list[str], typer.Option("--extend-exclude", show_default=False)] = None,
+    select: Annotated[list[str], typer.Option("--select", "-s", show_default=False)] = None,
+    ignore: Annotated[list[str], typer.Option("--ignore", "-ig", show_default=False)] = None,
     threshold: Annotated[
         RuleSeverity,
         typer.Option(
@@ -112,8 +116,8 @@ def check_files(
     """Lint files."""
     linter_config = config.LinterConfig(
         configure=configure,
-        include=include,
-        exclude=exclude,
+        select=select,
+        ignore=ignore,
         issue_format=issue_format,
         threshold=threshold,
         ext_rules=ext_rules,
