@@ -16,6 +16,8 @@ except ImportError:  # from Python 3.11
 
 
 CONFIG_NAMES = frozenset(("robotidy.toml", "pyproject.toml"))
+DEFAULT_INCLUDE = ("*.robot", "*.resource")
+DEFAULT_EXCLUDE = (".direnv", ".eggs", ".git", ".svn", ".hg", ".nox", ".tox", ".venv", "venv", "dist")
 INCLUDE_EXT = (".robot", ".resource")
 
 
@@ -98,12 +100,12 @@ def find_source_config_file(src: Path, ignore_git_dir: bool = False) -> Path | N
     returns ``None``.
     """
     if src.is_dir():
-        if not ignore_git_dir and src.name == ".git":
-            return None
         for config_filename in CONFIG_NAMES:
             if (src / config_filename).is_file():
                 return src / config_filename
         if not src.parents:
+            return None
+        if not ignore_git_dir and (src.parent / ".git").is_dir():
             return None
     return find_source_config_file(src.parent, ignore_git_dir)
 

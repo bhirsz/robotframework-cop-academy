@@ -71,7 +71,7 @@ class RuleAcceptance:
         expected_file: str | None = None,
         configure: list[str] | None = None,
         threshold: RuleSeverity | None = None,
-        include: list[str] | None = None,
+        select: list[str] | None = None,
         src_files: list | None = None,
         target_version: str | list[str] | None = None,
         issue_format: str = "default",
@@ -84,8 +84,8 @@ class RuleAcceptance:
         test_data = self.test_class_dir
         expected = load_expected_file(test_data, expected_file)
         issue_format = self.get_issue_format(issue_format)
-        if include is None:
-            include = [self.rule_name]
+        if select is None:
+            select = [self.rule_name]
         if src_files is None:
             paths = [test_data]
         else:
@@ -95,7 +95,7 @@ class RuleAcceptance:
                 with pytest.raises(click.exceptions.Exit):
                     check_files(
                         sources=paths,
-                        include=include,
+                        select=select,
                         configure=configure,
                         issue_format=issue_format,
                         threshold=threshold,
