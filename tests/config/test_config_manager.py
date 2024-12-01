@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from robocop.config import Config, LinterConfig, FormatterConfig, FileFiltersOptions, ConfigManager
 from robocop import files
+from robocop.config import Config, ConfigManager, FileFiltersOptions, FormatterConfig, LinterConfig
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +52,7 @@ def overwrite_config() -> Config:
         ext_rules=None,
         reports=None,
         persistent=None,
-        compare=None
+        compare=None,
     )
     formatter = FormatterConfig(
         overwrite=None,
@@ -64,12 +64,7 @@ def overwrite_config() -> Config:
         end_line=None,
     )
     return Config(
-        sources=None,
-        file_filters=file_filters,
-        linter=linter,
-        formatter=formatter,
-        language=None,
-        exit_zero=None
+        sources=None, file_filters=file_filters, linter=linter, formatter=formatter, language=None, exit_zero=None
     )
 
 
@@ -89,7 +84,7 @@ class TestConfigFinder:
         expected_results = {
             config_dir / "file1.robot": config,
             config_dir / "subdir" / "file2.robot": config,
-            config_dir / "subdir" / "file3.resource": config
+            config_dir / "subdir" / "file3.resource": config,
         }
 
         # Act
@@ -113,7 +108,7 @@ class TestConfigFinder:
         subdir_config.file_filters.extend_exclude = ["file3.resource"]
         expected_results = {
             config_dir / "file1.robot": default_config,
-            config_dir / "subdir" / "file2.robot": subdir_config
+            config_dir / "subdir" / "file2.robot": subdir_config,
             # file3.resource is excluded in the subdir config
         }
 
@@ -123,7 +118,9 @@ class TestConfigFinder:
         # Assert
         assert actual_results == expected_results
 
-    def test_one_config_subdir_with_overwrite_config(self, test_data, cli_config, cli_config_path):  # TODO do the same with --extend-exclude
+    def test_one_config_subdir_with_overwrite_config(
+        self, test_data, cli_config, cli_config_path
+    ):  # TODO do the same with --extend-exclude
         """Ignore found configuration files if --config is used."""
         # Arrange
         config_dir = test_data / "one_config_subdir"
@@ -131,7 +128,7 @@ class TestConfigFinder:
             config_dir / "file1.robot": cli_config,
             config_dir / "subdir" / "file2.robot": cli_config,
             # file3.resource would be excluded by config, but cli config overwrites it
-            config_dir / "subdir" / "file3.resource": cli_config
+            config_dir / "subdir" / "file3.resource": cli_config,
         }
 
         # Act
@@ -161,7 +158,7 @@ class TestConfigFinder:
             # file2.robot should be included, but cli option overwrites it
             # config_dir / "subdir" / "file2.robot": subdir_config,
             # file3.resource would be excluded by config, but cli config overwrites it
-            config_dir / "subdir" / "file3.resource": subdir_config
+            config_dir / "subdir" / "file3.resource": subdir_config,
         }
 
         # Act
@@ -170,7 +167,9 @@ class TestConfigFinder:
         # Assert
         assert actual_results == expected_results
 
-    def test_one_config_subdir_with_overwrite_config_and_option(self, test_data, overwrite_config, cli_config, cli_config_path):
+    def test_one_config_subdir_with_overwrite_config_and_option(
+        self, test_data, overwrite_config, cli_config, cli_config_path
+    ):
         """Both overridden config and cli option will be used (cli option takes precedence)."""
         # Arrange
         config_dir = test_data / "one_config_subdir"
@@ -183,7 +182,7 @@ class TestConfigFinder:
             # file2.robot is excluded by cli config, but cli option overwrites it
             config_dir / "subdir" / "file2.robot": cli_config,
             # file3.resource would be excluded by config, but cli option overwrites it
-            config_dir / "subdir" / "file3.resource": cli_config
+            config_dir / "subdir" / "file3.resource": cli_config,
         }
 
         # Act
@@ -214,7 +213,7 @@ class TestConfigFinder:
         expected_results = {
             config_dir / "file1.robot": first_config,
             config_dir / "subdir" / "file2.robot": second_config,
-            config_dir / "subdir" / "file3.resource": second_config
+            config_dir / "subdir" / "file3.resource": second_config,
         }
 
         # Act

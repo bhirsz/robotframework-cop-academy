@@ -134,3 +134,27 @@ Can be now achieved by::
 
     robocop format --select YourTransformer --configure YourTransformer.parameter=value --configure DefaultTransformer.other_parameter=value
 
+
+New features
+=============
+
+Multiple configuration files
+-----------------------------
+
+Robocop can now use multiple configuration files. With the following example::
+
+    project/
+        file1.robot
+        pyproject.toml  # config1
+        subdir/
+            file1.robot
+            file2.robot
+            pyproject.toml  # config2, excludes file1.robot
+
+We will end up with the following files:
+
+- project/file1.robot, using config1 configuration
+- project/file2.robot, using config2 configuration
+
+This feature allow to apply different configuration (for example exclude specific rules in the directory) for all
+directories in your project.

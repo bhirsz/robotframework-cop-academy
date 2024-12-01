@@ -4,7 +4,6 @@ import dataclasses
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -233,8 +232,6 @@ class Config:
         return cls(**parsed_config)
 
     def overwrite_from_config(self, overwrite_config: Config | None) -> None:
-        # TODO what about --config? toml files has config = [], and cli --config as well, what should happen?
-        # 1) cli overwrites all 2) we append to config (last, so cli overwrites the same settings) - preferred
         if not overwrite_config:
             return
         for field in dataclasses.fields(overwrite_config):
@@ -286,6 +283,7 @@ class GitIgnoreResolver:
 
         Returns:
             PathSpec from merged gitignores.
+
         """
         # TODO: respect nogitignore flag
         if path.is_file():
