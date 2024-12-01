@@ -54,9 +54,9 @@ def parse_rule_severity(value: str):
 @app.command(name="check")
 def check_files(
     sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
-    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(files.DEFAULT_INCLUDE))] = None,
+    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE))] = None,
     extend_include: Annotated[list[str], typer.Option("--extend-include", show_default=False)] = None,
-    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(files.DEFAULT_EXCLUDE))] = None,
+    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE))] = None,
     extend_exclude: Annotated[list[str], typer.Option("--extend-exclude", show_default=False)] = None,
     select: Annotated[list[str], typer.Option("--select", "-s", show_default=False)] = None,
     ignore: Annotated[list[str], typer.Option("--ignore", "-ig", show_default=False)] = None,
@@ -125,7 +125,12 @@ def check_files(
         persistent=persistent,
         compare=compare,
     )
-    overwrite_config = config.Config(linter=linter_config, formatter=None, language=language, exit_zero=exit_zero)
+    file_filters = config.FileFiltersOptions(
+        include=include, extend_include=extend_include, exclude=exclude, extend_exclude=extend_exclude
+    )
+    overwrite_config = config.Config(
+        linter=linter_config, formatter=None, file_filters=file_filters, language=language, exit_zero=exit_zero
+    )
     config_manager = config.ConfigManager(
         sources=sources,
         config=configuration_file,
