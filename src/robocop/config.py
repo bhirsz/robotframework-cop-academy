@@ -4,14 +4,20 @@ import dataclasses
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from robocop import files
+import pathspec
+
+from robocop import errors, files
 from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
 from robocop.linter.utils.misc import compile_rule_pattern
 
-DEFAULT_EXCLUDES = r"(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)"
+CONFIG_NAMES = frozenset(("robotidy.toml", "pyproject.toml"))
+DEFAULT_INCLUDE = frozenset(("*.robot", "*.resource"))
+DEFAULT_EXCLUDE = frozenset((".direnv", ".eggs", ".git", ".svn", ".hg", ".nox", ".tox", ".venv", "venv", "dist"))
+
 DEFAULT_ISSUE_FORMAT = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
 if TYPE_CHECKING:
@@ -82,17 +88,17 @@ class WhitespaceConfig:
 
 @dataclass
 class LinterConfig:
-    configure: list[str] = field(default_factory=list)
-    select: list[str] = field(default_factory=list)
-    ignore: list[str] = field(default_factory=list)
-    issue_format: str = DEFAULT_ISSUE_FORMAT
+    configure: list[str] | None = field(default_factory=list)
+    select: list[str] | None = field(default_factory=list)
+    ignore: list[str] | None = field(default_factory=list)
+    issue_format: str | None = DEFAULT_ISSUE_FORMAT
     threshold: RuleSeverity | None = RuleSeverity.INFO
-    ext_rules: list[str] = field(default_factory=list)
-    include_rules: set[str] = field(default_factory=set)
-    exclude_rules: set[str] = field(default_factory=set)
-    include_rules_patterns: set[re.Pattern] = field(default_factory=set)
-    exclude_rules_patterns: set[re.Pattern] = field(default_factory=set)
-    reports: list[str] = field(default_factory=list)
+    ext_rules: list[str] | None = field(default_factory=list)
+    include_rules: set[str] | None = field(default_factory=set)
+    exclude_rules: set[str] | None = field(default_factory=set)
+    include_rules_patterns: set[re.Pattern] | None = field(default_factory=set)
+    exclude_rules_patterns: set[re.Pattern] | None = field(default_factory=set)
+    reports: list[str] | None = field(default_factory=list)
     persistent: bool | None = False
     compare: bool | None = False
 
@@ -103,6 +109,7 @@ class LinterConfig:
         We need to remove optional severity and split it into patterns and not patterns for easier filtering.
 
         """
+        # TODO: with overwrite, it will not be called
         if self.select:
             for rule in self.select:
                 rule_without_sev = replace_severity_values(rule)
@@ -121,8 +128,6 @@ class LinterConfig:
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]
     # reports: list[str]
-    # ignore: re.Pattern = re.compile(DEFAULT_EXCLUDES)
-    #         self.filetypes = {".robot", ".resource", ".tsv"}
     #         self.output = None
     #         self.recursive = True  TODO do we need it anymore?
     #         self.persistent = False  TODO maybe better name, ie cache-results
@@ -134,6 +139,13 @@ class LinterConfig:
     #             rule_def = rules[rule]
     #             if rule_def.deprecated:
     #                 print(rule_def.deprecation_warning)
+
+    @classmethod
+    def from_toml(cls, config: dict) -> LinterConfig:
+        configure = config.pop("configure", [])  # TODO repeat the same for all params (use fields?)
+        return cls(
+            configure=configure,
+        )
 
 
 @dataclass
@@ -150,29 +162,83 @@ class FormatterConfig:
 
 
 @dataclass
+class FileFiltersOptions:
+    include: set[str] | None = field(default_factory=lambda: DEFAULT_INCLUDE)
+    extend_include: set[str] | None = None
+    exclude: set[str] | None = field(default_factory=lambda: DEFAULT_EXCLUDE)
+    extend_exclude: set[str] | None = None
+
+    def overwrite(self, other: FileFiltersOptions) -> None:
+        """
+        Overwrite default value with options from cli.
+
+        Ignore None values.
+        """
+        if other.include is not None:
+            self.include = other.include
+        if other.extend_include is not None:
+            self.extend_include = other.extend_include
+        if other.exclude is not None:
+            self.exclude = other.exclude
+        if other.extend_exclude is not None:
+            self.extend_exclude = other.extend_exclude
+
+    def path_excluded(self, path: Path) -> bool:
+        """Exclude all paths matching exclue patterns."""
+        if self.exclude:
+            for pattern in self.exclude:
+                if path.match(pattern):
+                    return True
+        if self.extend_exclude:
+            for pattern in self.extend_exclude:
+                if path.match(pattern):
+                    return True
+        return False
+
+    def path_included(self, path: Path) -> bool:
+        """Only allow paths matching include patterns."""
+        include_paths = self.include
+        if self.extend_include:
+            include_paths.extend(self.extend_include)
+        for pattern in include_paths:
+            if path.match(pattern):
+                return True
+        return False
+
+
+@dataclass
 class Config:
-    sources: list[str] = field(default_factory=lambda: ["."])
+    sources: list[str] | None = field(default_factory=lambda: ["."])
+    file_filters: FileFiltersOptions = field(default_factory=FileFiltersOptions)
     linter: LinterConfig = field(default_factory=LinterConfig)
     formatter: FormatterConfig = field(default_factory=FormatterConfig)
-    language: list[str] = field(default_factory=list)
+    language: list[str] | None = field(default_factory=list)
     exit_zero: bool | None = False
+    config_source: str = "default configuration"
 
     @classmethod
-    def from_toml(cls, config_path: Path) -> Config:
+    def from_toml(cls, config: dict, config_path: Path) -> Config:
         """
-        Load configuration from toml file. If there is parent configuration, use it to overwrite loaded configuration.
+        Load configuration from toml dict. If there is parent configuration, use it to overwrite loaded configuration.
         """
-        configuration = files.read_toml_config(config_path)
         # TODO: validate all key and types
-        return cls(**configuration)
+        parsed_config = {"config_source": str(config_path)}
+        parsed_config["linter"] = LinterConfig.from_toml(config.pop("lint", {}))
+        filter_config = {}
+        for key in ("include", "extend_include", "exclude", "extend_exclude"):
+            if key in config:
+                filter_config[key] = config.pop(key)
+        parsed_config["file_filters"] = FileFiltersOptions(**filter_config)
+        parsed_config = {key: value for key, value in parsed_config.items() if value is not None}
+        return cls(**parsed_config)
 
     def overwrite_from_config(self, overwrite_config: Config | None) -> None:
         # TODO what about --config? toml files has config = [], and cli --config as well, what should happen?
-        # 1) cli overwrites all 2) we append to config (last, so cli overwrites the same settings) - preffered
+        # 1) cli overwrites all 2) we append to config (last, so cli overwrites the same settings) - preferred
         if not overwrite_config:
             return
         for field in dataclasses.fields(overwrite_config):
-            if field.name == "linter":
+            if field.name in ("linter", "formatter", "file_filters", "config_source"):  # TODO Use field metadata maybe
                 continue
             value = getattr(overwrite_config, field.name)
             if value:
@@ -182,7 +248,59 @@ class Config:
                 value = getattr(overwrite_config.linter, field.name)
                 if value:
                     setattr(self.linter, field.name, value)
+        self.file_filters.overwrite(overwrite_config.file_filters)
         # TODO: same for formatter
+
+    def __str__(self):
+        return str(self.config_source)
+
+
+class GitIgnoreResolver:
+    def __init__(self):
+        self.cached_ignores: dict[Path, pathspec.PathSpec] = {}
+
+    def path_excluded(self, path: Path, gitignores: list[tuple[Path, pathspec.PathSpec]]) -> bool:
+        """Find path gitignores and check if file is excluded."""
+        if not gitignores:
+            return False
+        for gitignore_path, gitignore in gitignores:
+            relative_path = files.get_path_relative_to_path(path, gitignore_path)
+            if gitignore.match_file(relative_path):  # TODO test on dir
+                return True
+        return False
+
+    def read_gitignore(self, path: Path) -> pathspec.PathSpec:
+        """Return a PathSpec loaded from the file."""
+        with path.open(encoding="utf-8") as gf:
+            lines = gf.readlines()
+        return pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, lines)
+
+    def resolve_path_ignores(self, path: Path) -> list[tuple[Path, pathspec.PathSpec]]:
+        """
+        Visit all parent directories and find all gitignores.
+
+        Gitignores are cached for multiple sources.
+
+        Args:
+            path: path to file/directory
+
+        Returns:
+            PathSpec from merged gitignores.
+        """
+        # TODO: respect nogitignore flag
+        if path.is_file():
+            path = path.parent
+        gitignores = []
+        for path in [path, *path.parents]:
+            if path in self.cached_ignores:
+                gitignores.append(self.cached_ignores[path])
+            elif (gitignore_path := path / ".gitignore").is_file():
+                gitignore = self.read_gitignore(gitignore_path)
+                self.cached_ignores[path] = (path, gitignore)
+                gitignores.append((path, gitignore))
+            if (path / ".git").is_dir():
+                break
+        return gitignores
 
 
 class ConfigManager:
@@ -217,127 +335,120 @@ class ConfigManager:
         self.cached_configs: dict[Path, Config] = {}
         self.overwrite_config = overwrite_config
         self.ignore_git_dir = ignore_git_dir
-        self.root = Path(root) if root else files.find_project_root(sources, ignore_git_dir)
-        self.root_parent = self.root.parent if self.root.parent else self.root
-        self.root_gitignore = self.get_root_gitignore(skip_gitignore)
+        self.gitignore_resolver = GitIgnoreResolver()
         self.overridden_config = (
             config is not None
         )  # TODO: what if both cli and --config? should take --config then apply cli
+        self.root = Path.cwd()  # FIXME or just check if its fine
         self.default_config: Config = self.get_default_config(config)
-        self.sources = sources if sources else self.default_config.sources
-        self.overridden_sources = self.get_overridden_sources(sources)
+        self.sources = sources
+        self._paths: dict[Path, Config] | None = None
 
-    def get_and_cache_config_from_toml(self, config_path: Path) -> Config:
-        # TODO: merge with cli options
-        # TODO: some options may require resolving paths (relative paths in config)
-        config = Config.from_toml(config_path)
-        config.overwrite_from_config(self.overwrite_config)
-        self.cached_configs[config_path.parent] = config
-        return config
+    @property
+    def paths(self) -> Generator[tuple[Path, Config], None, None]:
+        # TODO: what if we provide the same path twice - tests
+        if self._paths is None:
+            self._paths = {}
+            sources = self.sources if self.sources else self.default_config.sources
+            ignore_file_filters = bool(sources)
+            self.resolve_paths(sources, gitignores=None, ignore_file_filters=ignore_file_filters)
+        for path, config in self._paths.items():
+            yield path, config
 
-    def get_default_config(self, config: str | None) -> Config:
+    def get_default_config(self, config_path: Path | None) -> Config:
         """Get default config either from --config option or find it in the project root."""
-        if config:
-            config_path = Path(config)  # TODO: fail if doesn't exist, and pass Path instead of str here
-        else:
-            config_path = files.get_config_path(self.root)
-        if not config_path:
-            config = Config()
+        if config_path:
+            configuration = files.read_toml_config(config_path)
+            config = Config.from_toml(configuration, config_path)
             config.overwrite_from_config(self.overwrite_config)
             return config
-        return self.get_and_cache_config_from_toml(config_path)
+        config = Config()
+        config.overwrite_from_config(self.overwrite_config)
+        return config
 
-    def get_root_gitignore(self, skip_gitignore: bool) -> pathspec.PathSpec | None:
-        """Load gitignore from project root if it exists and skip_gitignore is False."""
-        if skip_gitignore:
-            return None
-        return files.get_gitignore(self.root)
-
-    @staticmethod
-    def get_overridden_sources(sources: list[str] | None) -> set[Path]:
+    def find_closest_config(self, source: Path) -> Config:
         """
-        We can force Robocop to lint/format file even if does match our file filters if we pass path to file in cli.
-
-        This method filters out list of sources from cli for file-like paths.
-
-        Args:
-            sources: List of sources with Robot Framework files from the CLI.
-
-        Returns:
-            Set of Paths with only files from the sources.
-
+        Look in the directory and its parents for the closest valid configuration file.
         """
-        if not sources:
-            return set()
-        filtered = set()
-        for source in sources:
-            path = Path(source)
-            if path.is_file():
-                filtered.add(path)
-        return filtered
-
-    def get_source_files(self, sources: list[str]) -> list[Path]:
-        """
-        Return list of source files paths that should be parsed by Robocop.
-
-        Args:
-            sources: List of sources from CLI or default configuration file.
-
-        Returns:
-            List of source paths.
-
-        """
-        source_files = []
-        exclude, extend_exclude = (
-            re.compile(r"/(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)/"),
-            None,
-        )  # TODO: Pass them from cli / default configuration file
-        for source in sources:
-            path = Path(source).resolve()
-            if not files.should_parse_path(
-                path, self.overridden_sources, self.root_parent, exclude, extend_exclude, self.root_gitignore
-            ):
-                continue
-            if path.is_file():
-                source_files.append(path)
-            elif path.is_dir():
-                source_files.extend(
-                    files.iterate_dir(
-                        path.iterdir(),
-                        self.overridden_sources,
-                        exclude,
-                        extend_exclude,
-                        self.root_parent,
-                        self.root_gitignore,
-                    )
-                )
-        return source_files
+        # we always look for configuration in parent directory, unless we hit the top already
+        if (self.ignore_git_dir or not (source / ".git").is_dir()) and source.parents:
+            source = source.parent
+        check_dirs = [source, *source.parents]
+        seen = []  # if we find config, mark all visited directories with resolved config
+        config = self.default_config
+        found_config = False
+        for check_dir in check_dirs:
+            if check_dir in self.cached_configs:
+                return self.cached_configs[check_dir]
+            seen.append(check_dir)
+            for config_filename in CONFIG_NAMES:
+                if (config_path := (check_dir / config_filename)).is_file():
+                    configuration = files.read_toml_config(config_path)
+                    if configuration is not None:
+                        config = Config.from_toml(configuration, config_path)
+                        config.overwrite_from_config(self.overwrite_config)  # TODO those two lines together
+                        found_config = True
+                        break
+            if found_config or (not self.ignore_git_dir and (check_dir / ".git").is_dir()):
+                break
+        for check_dir in seen:
+            self.cached_configs[check_dir] = config
+        return config
 
     def get_config_for_source_file(self, source_file: Path) -> Config:
         """
-        Find the closest config to the source file.
+        Find the closest config to the source file or directory.
 
         If it was loaded before it will be returned from the cache. Otherwise, we will load it and save it to cache
         first.
 
         Args:
-            source_file: Path to Robot Framework source file.
+            source_file: Path to Robot Framework source file or directory.
 
         """
         if self.overridden_config:
             return self.default_config
-        if source_file.parent in self.cached_configs:
-            return self.cached_configs[source_file.parent]
-        config_path = files.find_source_config_file(source_file.parent, self.ignore_git_dir)
-        if config_path is None:
-            self.cached_configs[source_file.parent] = self.default_config
-            return self.default_config
-        if config_path.parent in self.cached_configs:
-            return self.cached_configs[config_path.parent]
-        return self.get_and_cache_config_from_toml(config_path)
+        return self.find_closest_config(source_file)
 
-    def get_sources_with_configs(self) -> Generator[tuple[Path, Config], None, None]:
-        source_files = self.get_source_files(self.sources)
-        for source in source_files:
+    def resolve_paths(
+        self,
+        sources: list[str | Path],
+        gitignores: list[tuple[Path, pathspec.PathSpec]] | None,
+        ignore_file_filters: bool = False,
+    ) -> None:
+        """
+        Find all files to parse and their corresponding configs.
+
+        Initially sources can be ["."] (if not path provided, assume current working directory).
+        It can be also any list of paths, for example ["tests/", "file.robot"].
+
+        Args:
+            sources: list of sources from CLI or configuration file.
+            gitignores: list of gitignore pathspec and their locations for path resolution.
+            ignore_file_filters: force robocop to parse file even if it's excluded in the configuration
+
+        """
+        # FIXME ignore file filters is True for default source
+        for source in sources:
+            source = Path(source).resolve()
+            if source in self._paths:
+                continue
+            if not source.exists():  # TODO only for passed sources
+                raise errors.FileError(source)
+            # if gitignores is None:  # TODO it works, but should be added with tests later
+            #     source_gitignore = self.gitignore_resolver.resolve_path_ignores(source)
+            # else:
+            #     source_gitignore = gitignores
             config = self.get_config_for_source_file(source)
-            yield source, config
+            # if self.gitignore_resolver.path_excluded(source, source_gitignore):
+            #     continue
+            if not ignore_file_filters:
+                if config.file_filters.path_excluded(source):
+                    continue
+                if source.is_file() and not config.file_filters.path_included(source):
+                    continue
+            if source.is_dir():
+                self.resolve_paths(source.iterdir(), gitignores)
+                # TODO cache resolved dirs too
+            elif source.is_file():
+                self._paths[source] = config

@@ -273,18 +273,6 @@ class MainConfig:
         self.loaded_configs[str(loaded_config.config_directory)] = loaded_config
         return tuple(config["src"])
 
-    def get_sources_with_configs(self):
-        sources = files.get_paths(
-            self.sources, self.default.exclude, self.default.extend_exclude, self.default.skip_gitignore
-        )
-        for source in sources:
-            if self.default.config:
-                loaded_config = self.default_loaded
-            else:
-                src = Path().resolve() if source == "-" else source
-                loaded_config = self.get_config_for_source(src)
-            yield SourceAndConfig(source, loaded_config)
-
     def get_config_for_source(self, source: Path):
         config_path = files.find_source_config_file(source, self.default.ignore_git_dir)
         if config_path is None:

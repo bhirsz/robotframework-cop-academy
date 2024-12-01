@@ -305,7 +305,9 @@ class TestListingRules:
         assert not_exp_msg not in out
 
     @pytest.mark.parametrize("config", [{"filter_pattern": "*"}, {"filter_category": RuleFilter.ALL}])
-    def test_list_rule_filtered_and_community(self, config, empty_linter, msg_0101_checker, community_rule_checker, capsys):
+    def test_list_rule_filtered_and_community(
+        self, config, empty_linter, msg_0101_checker, community_rule_checker, capsys
+    ):
         empty_linter.register_checker(msg_0101_checker)
         empty_linter.register_checker(community_rule_checker)
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):

@@ -74,7 +74,7 @@ class RobocopLinter:
 
     def run(self) -> None:
         issues_no = 0
-        for source, config in self.config_manager.get_sources_with_configs():
+        for source, config in self.config_manager.paths:
             # TODO: If there is only one config, we do not need to reload it every time - some sort of caching?
             self.config = config  # need to save it for rules to access rules config (also TODO: load rules config)
             self.configure_checkers_or_reports()

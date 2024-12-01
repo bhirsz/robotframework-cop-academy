@@ -157,6 +157,7 @@ class MissingDocumentationChecker(VisitorChecker):
     def check_if_docs_are_present(  # TODO: could be implemented inside 'MissingDocumentationRule' class
         self, node: Keyword | TestCase | SettingSection, rule: Rule, extend_disablers: bool
     ) -> None:
+        # TODO indent
         for statement in node.body:
             if isinstance(statement, Documentation):
                 break

@@ -11,3 +11,6 @@ class TestRuleAcceptance(RuleAcceptance):
             src_files=["severity_threshold.robot"],
             expected_file="expected_output_severity_threshold.txt",
         )
+
+
+# TODO: test with line length
