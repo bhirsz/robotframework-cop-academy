@@ -4,7 +4,6 @@ import dataclasses
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -284,6 +283,7 @@ class GitIgnoreResolver:
 
         Returns:
             PathSpec from merged gitignores.
+
         """
         # TODO: respect nogitignore flag
         if path.is_file():

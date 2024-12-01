@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
 from functools import lru_cache
 from pathlib import Path
-from re import Pattern
 from typing import Any
 
 import click

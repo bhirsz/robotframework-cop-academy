@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
-from robocop import config, files
+from robocop import config
 from robocop.formatter.runner import RobocopFormatter
 from robocop.linter.reports import print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
