@@ -4,7 +4,7 @@ import sys
 
 from click import NoSuchOption
 
-from robocop.formatter.tils import misc
+from robocop.formatter.utils import misc
 
 
 class RobotidyConfigError(Exception):

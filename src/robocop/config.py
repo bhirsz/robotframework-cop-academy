@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+try:
+    from robot.api import Languages  # RF 6.0
+except ImportError:
+    Languages = None
 import pathspec
+from typing_extensions import Self
 
 from robocop import errors, files
+from robocop.formatter import formatters
+from robocop.formatter.utils import misc  # TODO merge with linter misc
 from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
 from robocop.linter.utils.misc import compile_rule_pattern
 
@@ -55,7 +63,21 @@ class RuleMatcher:
 
 
 @dataclass
-class WhitespaceConfig:
+class ConfigContainer:
+    def overwrite(self, other: Self) -> None:
+        """
+        Overwrite options loaded from configuration or default options with config from cli.
+
+        If other has value set to None, it was never set and can be ignored.
+        """
+        for field in dataclasses.fields(other):
+            value = getattr(other, field.name)
+            if value is not None:
+                setattr(self, field.name, value)
+
+
+@dataclass
+class WhitespaceConfig(ConfigContainer):
     space_count: int | str | None = 4
     indent: int | str | None = None
     continuation_indent: int | str | None = None
@@ -78,7 +100,7 @@ class WhitespaceConfig:
             self.indent = "\t"
             self.continuation_indent = "\t"
         if self.line_separator == "native":
-            self.line_separator = "\n"
+            self.line_separator = os.linesep
         elif self.line_separator == "windows":
             self.line_separator = "\r\n"
         elif line_sep == "unix":
@@ -150,37 +172,133 @@ class LinterConfig:
 @dataclass
 class FormatterConfig:
     whitespace_config: WhitespaceConfig = field(default_factory=WhitespaceConfig)
+    select: list[str] | None = field(default_factory=list)
+    custom_formatters: list[str] | None = field(default_factory=list)
+    configure: list[str] | None = field(default_factory=list)
+    force_order: bool | None = False
+    target_version: int | None = misc.ROBOT_VERSION.major
+    skip = None  # TODO
     overwrite: bool | None = False
     show_diff: bool | None = False
-    output = None  # TODO
+    output: Path | None = None  # TODO
     color: bool | None = False
     check: bool | None = False
     reruns: int | None = 0  # TODO
     start_line: int | None = None  # TODO it's startline/endline in cli
     end_line: int | None = None
+    language: list[str] | None = field(default_factory=list)
+    languages: Languages | None = None
+    _parameters: dict[str, dict[str, str]] | None = None
+    _formatters: dict[str, ...] | None = None
+
+    @property
+    def formatters(self) -> dict[str, ...]:
+        if self._formatters is None:
+            self.whitespace_config.process_config()
+            self.load_formatters()
+        return self._formatters
+
+    def load_formatters(self):
+        self._formatters = {}
+        allow_disabled = False  # TODO
+        allow_version_mismatch = False
+        self.load_languages()
+        for formatter in self.selected_formatters():
+            for container in formatters.import_formatter(formatter, self.combined_configure, self.skip):
+                if "NormalizeTags" in container.name:
+                    print()
+                if container.name in self.select or formatter in self.select:
+                    enabled = True
+                elif "enabled" in container.args:
+                    enabled = container.args["enabled"].lower() == "true"
+                else:
+                    enabled = getattr(container.instance, "ENABLED", True)
+                if not (enabled or allow_disabled):
+                    continue
+                if formatters.can_run_in_robot_version(
+                    container.instance,
+                    overwritten=container.name in self.select,
+                    target_version=self.target_version,
+                ):
+                    container.enabled_by_default = enabled
+                    self._formatters[container.name] = container.instance
+                elif allow_version_mismatch and allow_disabled:
+                    container.instance.ENABLED = False
+                    container.enabled_by_default = False
+                    self._formatters[container.name] = container.instance
+                container.instance.formatting_config = self.whitespace_config
+                container.instance.formatters = self.formatters
+                container.instance.languages = self.languages
+
+    def selected_formatters(self) -> list[str]:
+        if not self.select:
+            return formatters.FORMATTERS + self.custom_formatters
+        if not self.force_order:
+            return self.ordered_select + self.custom_formatters
+        return self.select + self.custom_formatters
+
+    def load_languages(self) -> None:
+        if Languages is not None:
+            self.languages = Languages(self.language)
+
+    @property
+    def ordered_select(self) -> list[str]:
+        """
+        Order formatter names from --select using default formatters list.
+
+        Custom formatters are put last.
+        """
+        selected = []
+        for formatter in formatters.FORMATTERS:
+            if formatter in self.select:
+                selected.append(formatter)
+        for formatter in self.select:
+            if formatter not in selected:
+                selected.append(formatter)
+        return selected
+
+    def _parse_configure(self, configure: str) -> tuple[str, str, str]:
+        try:
+            name, param_value = configure.split(".", maxsplit=1)
+            param, value = param_value.split("=", maxsplit=1)
+            name, param, value = name.strip(), param.strip(), value.strip()
+        except ValueError:
+            raise errors.InvalidParameterFormatError(configure) from None
+        return name, param, value
+
+    @property
+    def combined_configure(self) -> dict[str, dict[str, str]]:
+        """
+        Aggregate configure for formatters and their parameters.
+
+        For example:
+
+            robocop format -c MyFormatter.param=value -c MyFormatter2.param=value -c MyFormatter.param=value
+
+        will return:
+
+            {"MyFormatter": {"param": "value", "param2": "value"}, "MyFormatter2": {"param": "value"}}
+
+        Returns:
+            Map of formatters and their parameters.
+
+        """
+        if self._parameters is None:
+            self._parameters = {}
+            for config in self.configure:
+                name, param, value = self._parse_configure(config)
+                if name not in self._parameters:
+                    self._parameters[name] = {}
+                self._parameters[name][param] = value
+        return self._parameters
 
 
 @dataclass
-class FileFiltersOptions:
+class FileFiltersOptions(ConfigContainer):
     include: set[str] | None = field(default_factory=lambda: DEFAULT_INCLUDE)
     extend_include: set[str] | None = None
     exclude: set[str] | None = field(default_factory=lambda: DEFAULT_EXCLUDE)
     extend_exclude: set[str] | None = None
-
-    def overwrite(self, other: FileFiltersOptions) -> None:
-        """
-        Overwrite default value with options from cli.
-
-        Ignore None values.
-        """
-        if other.include is not None:
-            self.include = other.include
-        if other.extend_include is not None:
-            self.extend_include = other.extend_include
-        if other.exclude is not None:
-            self.exclude = other.exclude
-        if other.extend_exclude is not None:
-            self.extend_exclude = other.extend_exclude
 
     def path_excluded(self, path: Path) -> bool:
         """Exclude all paths matching exclue patterns."""
@@ -214,6 +332,7 @@ class Config:
     language: list[str] | None = field(default_factory=list)
     exit_zero: bool | None = False
     config_source: str = "default configuration"
+    # keep rules and formatters here, loaded upon first call
 
     @classmethod
     def from_toml(cls, config: dict, config_path: Path) -> Config:
@@ -228,6 +347,7 @@ class Config:
             if key in config:
                 filter_config[key] = config.pop(key)
         parsed_config["file_filters"] = FileFiltersOptions(**filter_config)
+        # TODO whitespace config
         parsed_config = {key: value for key, value in parsed_config.items() if value is not None}
         return cls(**parsed_config)
 
@@ -245,8 +365,16 @@ class Config:
                 value = getattr(overwrite_config.linter, field.name)
                 if value:
                     setattr(self.linter, field.name, value)
+        if overwrite_config.formatter:
+            for field in dataclasses.fields(overwrite_config.formatter):
+                if field.name in ("whitespace_config",) or field.name.startswith("_"):
+                    continue
+                value = getattr(overwrite_config.formatter, field.name)
+                if value:
+                    setattr(self.formatter, field.name, value)
+            self.formatter.whitespace_config.overwrite(overwrite_config.formatter.whitespace_config)
+            self.formatter.language = self.language  # TODO
         self.file_filters.overwrite(overwrite_config.file_filters)
-        # TODO: same for formatter
 
     def __str__(self):
         return str(self.config_source)

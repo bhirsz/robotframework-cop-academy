@@ -146,7 +146,30 @@ def check_files(
 @app.command(name="format")
 def format_files(
     sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
+    select: Annotated[
+        list[str], typer.Option(show_default=False, metavar="FORMATTER", help="Select formatters to run.")
+    ] = None,
+    custom_formatters: Annotated[
+        list[str], typer.Option(show_default=False, metavar="FORMATTER", help="Run custom formatters.")
+    ] = None,
+    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE))] = None,
+    extend_include: Annotated[list[str], typer.Option("--extend-include", show_default=False)] = None,
+    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE))] = None,
+    extend_exclude: Annotated[list[str], typer.Option("--extend-exclude", show_default=False)] = None,
+    configure: Annotated[
+        list[str],
+        typer.Option(
+            "--configure",
+            "-c",
+            help="Configure checker or report with parameter value",
+            metavar="rule.param=value",
+            show_default=False,
+        ),
+    ] = None,
     configuration_file: config_option = None,
+    overwrite: bool = None,
+    check: bool = None,
+    output: Path = None,
     language: Annotated[
         list[str],
         typer.Option(
@@ -157,19 +180,49 @@ def format_files(
             help="Parse Robot Framework files using additional languages.",
         ),
     ] = None,
+    space_count: Annotated[int, typer.Option(show_default="4")] = None,
+    indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
+    continuation_indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
+    line_length: Annotated[int, typer.Option(show_default="120")] = None,
+    start_line: Annotated[int, typer.Option(show_default=False)] = None,
+    end_line: Annotated[int, typer.Option(show_default=False)] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
     root: project_root_option = None,
 ) -> None:
     """Format files."""
-    formatter_config = config.FormatterConfig()
-    overwrite_config = config.Config(formatter=formatter_config, linter=None, language=language)
+    whitespace_config = config.WhitespaceConfig(
+        space_count=space_count,  # TODO
+        indent=indent,
+        continuation_indent=continuation_indent,
+        line_separator=None,
+        separator=None,
+        line_length=line_length,
+    )
+    formatter_config = config.FormatterConfig(
+        select=select,
+        custom_formatters=custom_formatters,
+        whitespace_config=whitespace_config,
+        configure=configure,
+        overwrite=overwrite,
+        output=output,
+        check=check,
+        start_line=start_line,
+        end_line=end_line,
+    )
+    file_filters = config.FileFiltersOptions(
+        include=include, extend_include=extend_include, exclude=exclude, extend_exclude=extend_exclude
+    )
+    overwrite_config = config.Config(
+        formatter=formatter_config, linter=None, language=language, file_filters=file_filters
+    )
     config_manager = config.ConfigManager(
         sources=sources,
         config=configuration_file,
         root=root,
         ignore_git_dir=ignore_git_dir,
         skip_gitignore=skip_gitignore,
+        overwrite_config=overwrite_config,
     )
     runner = RobocopFormatter(config_manager)
     runner.run()
