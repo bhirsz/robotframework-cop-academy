@@ -167,9 +167,9 @@ def format_files(
         ),
     ] = None,
     configuration_file: config_option = None,
-    overwrite: bool | None = None,
-    check: bool | None = None,
-    output: Path | None = None,
+    overwrite: bool = None,
+    check: bool = None,
+    output: Path = None,
     language: Annotated[
         list[str],
         typer.Option(
