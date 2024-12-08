@@ -1,14 +1,14 @@
 from robot.api import Token
-from robotidy.transformers import Transformer
+from robocop.formatter.formatters import Formatter
 
 
-class CustomClass1(Transformer):
+class CustomClass1(Formatter):
     def visit_SettingSection(self, node):
         node.header.data_tokens[0].value = node.header.data_tokens[0].value.lower()
         return node
 
 
-class CustomClass2(Transformer):
+class CustomClass2(Formatter):
     def __init__(self, extra_param: bool = False):
         self.extra_param = extra_param
         super().__init__()

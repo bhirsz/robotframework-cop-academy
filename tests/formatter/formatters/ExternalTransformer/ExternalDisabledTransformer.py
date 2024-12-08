@@ -1,7 +1,7 @@
-from robotidy.transformers import Transformer
+from robocop.formatter.formatters import Formatter
 
 
-class ExternalDisabledTransformer(Transformer):
+class ExternalDisabledTransformer(Formatter):
     """
     This transformer is disabled by default. If it is enabled, it replaces setting names to lowercase.
     """
