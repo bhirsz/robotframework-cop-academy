@@ -2,7 +2,7 @@
 Formatters are classes used to transform passed Robot Framework code model.
 
 To create your own formatter you need to create file with the same name as your formatter class. Your class
-need to inherit from ``ModelFormatter`` or ``ast.NodeFormatter`` class. Finally put name of your formatter in
+need to inherit from ``ModelTransformer`` or ``ast.NodeTransformer`` class. Finally put name of your formatter in  # TODO only inherit from Transformer (our class)
 ``TRANSFORMERS`` variable in this file.
 
 If you don't want to run your formatter by default and only when calling robocop format with --transform YourFormatter
@@ -14,8 +14,10 @@ from __future__ import annotations
 import copy
 import inspect
 import pathlib
+import sys
 import textwrap
 from collections.abc import Iterable
+from dataclasses import dataclass, field
 from itertools import chain
 
 try:
@@ -23,10 +25,11 @@ try:
 except ImportError:
     import click
 
-from robot.api.parsing import ModelFormatter
+from robot.api.parsing import ModelTransformer
 from robot.errors import DataError
 from robot.utils.importer import Importer
 
+from robocop import errors
 from robocop.formatter.exceptions import ImportFormatterError, InvalidParameterError, InvalidParameterFormatError
 from robocop.formatter.skip import Skip, SkipConfig
 from robocop.formatter.utils import misc
@@ -66,7 +69,6 @@ FORMATTERS = [
     "Translate",
     "NormalizeComments",
 ]
-
 
 IMPORTER = Importer()
 
@@ -244,7 +246,7 @@ class FormatterContainer:
         return s
 
 
-class Formatter(ModelFormatter):
+class Formatter(ModelTransformer):
     def __init__(self, skip: Skip | None = None):
         self.formatting_config = None  # to make lint happy (we're injecting the configs)
         self.languages = None
@@ -254,19 +256,23 @@ class Formatter(ModelFormatter):
         self.skip = skip
 
 
-def get_formatter_short_name(name):
-    """Removes module path or file extension for better printing the errors."""
-    if name.endswith(".py"):
-        return name.split(".")[-2]
-    return name.split(".")[-1]
+def get_formatter_short_name(name: str):
+    """
+     Removes module path or file extension for better printing the errors.
+
+    Examples:
+       ShortName -> ShortName
+       import.path.formatter -> formatter
+       C://path/to/formatter.py -> formatter
+
+    """
+    return pathlib.Path(name).stem
 
 
-def get_absolute_path_to_formatter(name, short_name):
+def get_absolute_path_to_formatter(name):
     """
     If the formatter is not default one, try to get absolute path to formatter to make it easier to import it.
     """
-    if short_name in TRANSFORMERS:
-        return name
     if pathlib.Path(name).exists():
         return pathlib.Path(name).resolve()
     return name
@@ -276,9 +282,9 @@ def load_formatters_from_module(module):
     classes = inspect.getmembers(module, inspect.isclass)
     formatters = dict()
     for name, formatter_class in classes:
-        if issubclass(formatter_class, (Formatter, ModelFormatter)) and formatter_class not in (
+        if issubclass(formatter_class, (Formatter, ModelTransformer)) and formatter_class not in (
             Formatter,
-            ModelFormatter,
+            ModelTransformer,
         ):
             formatters[name] = formatter_class
     return formatters
@@ -300,24 +306,38 @@ def order_formatters(formatters, module):
     return ordered_formatters
 
 
-def import_formatter(name, config: FormatConfigMap, skip) -> Iterable[FormatterContainer]:
-    import_path = resolve_core_import_path(name)
-    short_name = get_formatter_short_name(import_path)
-    name = get_absolute_path_to_formatter(import_path, short_name)
+def import_formatter(name: str, formatter_args: dict[str, dict], skip) -> Generator[FormatterContainer, None, None]:
+    if name in FORMATTERS:
+        yield from import_default_formatter(name, formatter_args, skip)
+    else:
+        yield from import_custom_formatter(name, formatter_args, skip)
+
+
+def import_default_formatter(
+    name: str, formatter_args: dict[str, dict], skip
+) -> Generator[FormatterContainer, None, None]:
+    import_path = f"robocop.formatter.formatters.{name}"
+    imported = IMPORTER.import_class_or_module(import_path)
+    yield create_formatter_instance(imported, name, formatter_args.get(name, {}), skip)
+
+
+def import_custom_formatter(
+    name: str, formatter_args: dict[str, dict], skip
+) -> Generator[FormatterContainer, None, None]:
     try:
-        imported = IMPORTER.import_class_or_module(name)
+        short_name = get_formatter_short_name(name)
+        abs_path = get_absolute_path_to_formatter(name)
+        imported = IMPORTER.import_class_or_module(abs_path)
         if inspect.isclass(imported):
-            yield create_formatter_instance(imported, short_name, config.get_args(name, short_name, import_path), skip)
+            yield create_formatter_instance(imported, short_name, formatter_args.get(short_name, {}), skip)
         else:
             formatters = load_formatters_from_module(imported)
             formatters = order_formatters(formatters, imported)
             for name, formatter_class in formatters.items():
-                yield create_formatter_instance(
-                    formatter_class, name, config.get_args(name, short_name, import_path), skip
-                )
+                yield create_formatter_instance(formatter_class, name, formatter_args.get(name, {}), skip)
     except DataError:
         similar_finder = misc.RecommendationFinder()
-        similar = similar_finder.find_similar(short_name, TRANSFORMERS)
+        similar = similar_finder.find_similar(short_name, FORMATTERS)
         raise ImportFormatterError(
             f"Importing formatter '{short_name}' failed. "
             f"Verify if correct name or configuration was provided.{similar}"
@@ -420,11 +440,6 @@ def resolve_args(formatter, spec, args, global_skip, handles_skip):
         raise InvalidParameterError(formatter, f" {err}") from None
 
 
-def resolve_core_import_path(name):
-    """Append import path if formatter is core Robotidy formatter."""
-    return f"robocop.formatter.formatters.{name}" if name in TRANSFORMERS else name
-
-
 def can_run_in_robot_version(formatter, overwritten, target_version):
     if not hasattr(formatter, "MIN_VERSION"):
         return True
@@ -460,9 +475,9 @@ def load_formatters(
 ):
     """Dynamically load all classes from this file with attribute `name` defined in selected_formatters"""
     loaded_formatters = []
-    formatters_config.update_with_defaults(TRANSFORMERS)
+    formatters_config.update_with_defaults(FORMATTERS)
     if not force_order:
-        formatters_config.order_using_list(TRANSFORMERS)
+        formatters_config.order_using_list(FORMATTERS)
     for name, formatter_config in formatters_config.formatters.items():
         if not allow_disabled and not formatters_config.formatter_should_be_included(name):
             continue

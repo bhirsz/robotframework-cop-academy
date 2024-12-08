@@ -1254,7 +1254,7 @@ class LoopStatementsChecker(VisitorChecker):
                 )
 
     def check_statement_in_loop(self, node, token_type) -> None:
-        if self.loops or node.errors and f"{token_type} can only be used inside a loop." not in node.errors:
+        if self.loops or (node.errors and f"{token_type} can only be used inside a loop." not in node.errors):
             return
         self.report(
             self.statement_outside_loop,

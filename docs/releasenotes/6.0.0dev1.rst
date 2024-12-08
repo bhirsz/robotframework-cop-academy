@@ -77,6 +77,22 @@ to::
 
     robocop format --configure formatter.param=value
 
+It is also no longer possible to chain multiple configurations in one configure call::
+
+    robotidy --configure formatter:param=value:param2=value
+
+For readability reasons it can be now done only using separate options::
+
+    robocop format --configure formatter:param=value --configure formatter:param2=value
+
+Passing configuration through file names that contains formatter is also deprecated::
+
+    robotidy --configure MyFormatter.py:param=2
+
+Use implicit name of the formatter instead::
+
+    robocop format --configure MyFormatter.param=2
+
 return_status report is now optional
 -------------------------------------
 
@@ -123,8 +139,8 @@ from the reports. Full example::
 (Robotidy) Formatter deprecated --transform option
 ---------------------------------------------------
 
-``--transform`` option use to select formatters is now deprecated. It is replaced by ``--select`` which works similarly
-but have one distinction - it does not support configuration.
+``--transform`` option use to select formatters is now deprecated. It has been replaced by ``--select`` which function
+in a similar way but has one key difference: it does not support configuration.
 
 Previous command::
 
@@ -134,6 +150,13 @@ Can be now achieved by::
 
     robocop format --select YourTransformer --configure YourTransformer.parameter=value --configure DefaultTransformer.other_parameter=value
 
+Deprecating configuring through the ``--select`` (formerly ``--transform``) option simplifies the design and enhances
+user experience.
+
+All other ``transform`` mentions were also deprecated, for example:
+
+- ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
+- ``Transformer`` class was renamed to ``Formatter``
 
 New features
 =============

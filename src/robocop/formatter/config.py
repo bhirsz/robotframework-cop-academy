@@ -19,8 +19,8 @@ import click
 from click.core import ParameterSource
 
 from robocop.formatter import exceptions, files, skip
-from robocop.formatter.ormatters import FormatConfig, FormatConfigMap, convert_format_config, load_formatters
-from robocop.formatter.tils import misc
+from robocop.formatter.formatters import FormatConfig, FormatConfigMap, convert_format_config, load_formatters
+from robocop.formatter.utils import misc
 
 
 class FormattingConfig:
