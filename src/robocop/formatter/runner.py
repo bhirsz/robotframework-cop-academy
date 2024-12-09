@@ -140,7 +140,7 @@ class RobocopFormatter:
             misc.ModelWriter(output=output, newline=self.get_line_ending(source)).write(model)
 
     def get_line_ending(self, path: str):
-        if self.config.formatter.whitespace_config.line_separator == "auto":
+        if self.config.formatter.whitespace_config.line_ending == "auto":
             with open(path) as f:
                 f.readline()
                 if f.newlines is None:
@@ -148,7 +148,7 @@ class RobocopFormatter:
                 if isinstance(f.newlines, str):
                     return f.newlines
                 return f.newlines[0]
-        return self.config.formatter.whitespace_config.line_separator
+        return self.config.formatter.whitespace_config.line_ending
 
     def output_diff(self, path: Path, old_model: misc.StatementLinesCollector, new_model: misc.StatementLinesCollector):
         if not self.config.formatter.show_diff:

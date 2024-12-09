@@ -5,7 +5,6 @@ import difflib
 import os
 import re
 from collections.abc import Iterable
-from enum import Enum
 from functools import total_ordering
 from re import Pattern
 
@@ -56,13 +55,6 @@ ROBOT_VERSION = Version.parse(RF_VERSION)
 
 def rf_supports_lang():
     return ROBOT_VERSION.major >= 6
-
-
-class TargetVersion(Enum):
-    RF4 = 4
-    RF5 = 5
-    RF6 = 6
-    RF7 = 7
 
 
 class StatementLinesCollector(ModelVisitor):

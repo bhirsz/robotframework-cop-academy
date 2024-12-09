@@ -5,6 +5,7 @@ import os
 import re
 from collections.abc import Generator
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +13,7 @@ try:
     from robot.api import Languages  # RF 6.0
 except ImportError:
     Languages = None
+import click
 import pathspec
 from typing_extensions import Self
 
@@ -81,7 +83,7 @@ class WhitespaceConfig(ConfigContainer):
     space_count: int | str | None = 4
     indent: int | str | None = None
     continuation_indent: int | str | None = None
-    line_separator: str | None = "native"  # TODO was lineseparator in cli
+    line_ending: str | None = "native"
     separator: str | None = "space"
     line_length: int | None = 120
 
@@ -99,12 +101,39 @@ class WhitespaceConfig(ConfigContainer):
             self.separator = "\t"
             self.indent = "\t"
             self.continuation_indent = "\t"
-        if self.line_separator == "native":
-            self.line_separator = os.linesep
-        elif self.line_separator == "windows":
-            self.line_separator = "\r\n"
-        elif line_sep == "unix":
-            self.line_separator = "\n"
+        if self.line_ending == "native":
+            self.line_ending = os.linesep
+        elif self.line_ending == "windows":
+            self.line_ending = "\r\n"
+        elif self.line_ending == "unix":
+            self.line_ending = "\n"
+
+
+class TargetVersion(Enum):
+    RF4 = "4"
+    RF5 = "5"
+    RF6 = "6"
+    RF7 = "7"
+
+
+def validate_target_version(value: str | None) -> int | None:
+    if isinstance(value, int):
+        return value
+    if value is None:
+        return misc.ROBOT_VERSION.major
+    try:
+        target_version = int(TargetVersion[f"RF{value}"].value)
+    except KeyError:
+        versions = ", ".join(ver.value for ver in TargetVersion)
+        raise click.BadParameter(
+            f"Invalid target Robot Framework version: '{value}' is not one of {versions}"
+        ) from None
+    if target_version > misc.ROBOT_VERSION.major:
+        raise click.BadParameter(
+            f"Target Robot Framework version ({target_version}) should not be higher than "
+            f"installed version ({misc.ROBOT_VERSION})."
+        ) from None
+    return target_version
 
 
 @dataclass
@@ -176,7 +205,7 @@ class FormatterConfig:
     custom_formatters: list[str] | None = field(default_factory=list)
     configure: list[str] | None = field(default_factory=list)
     force_order: bool | None = False
-    target_version: int | None = misc.ROBOT_VERSION.major
+    target_version: int | str | None = misc.ROBOT_VERSION.major
     skip = None  # TODO
     overwrite: bool | None = False
     show_diff: bool | None = False
@@ -195,6 +224,7 @@ class FormatterConfig:
     def formatters(self) -> dict[str, ...]:
         if self._formatters is None:
             self.whitespace_config.process_config()
+            self.target_version = validate_target_version(self.target_version)
             self.load_formatters()
         return self._formatters
 
@@ -205,8 +235,6 @@ class FormatterConfig:
         self.load_languages()
         for formatter in self.selected_formatters():
             for container in formatters.import_formatter(formatter, self.combined_configure, self.skip):
-                if "NormalizeTags" in container.name:
-                    print()
                 if container.name in self.select or formatter in self.select:
                     enabled = True
                 elif "enabled" in container.args:

@@ -73,14 +73,14 @@ class RuleAcceptance:
         threshold: RuleSeverity | None = None,
         select: list[str] | None = None,
         src_files: list | None = None,
-        target_version: str | list[str] | None = None,
+        test_on_version: str | list[str] | None = None,
         issue_format: str = "default",
         language: list[str] | None = None,
         deprecated: bool = False,
         **kwargs,
     ):
-        if not self.enabled_in_version(target_version):
-            pytest.skip(f"Test enabled only for RF {target_version}")
+        if not self.enabled_in_version(test_on_version):
+            pytest.skip(f"Test enabled only for RF {test_on_version}")
         test_data = self.test_class_dir
         expected = load_expected_file(test_data, expected_file)
         issue_format = self.get_issue_format(issue_format)
@@ -141,7 +141,7 @@ class RuleAcceptance:
         return robocop_rules[self.rule_name].enabled_in_version
 
     @staticmethod
-    def enabled_in_version(target_version: list | str | None):
+    def enabled_in_version(test_on_version: list | str | None):
         """
         Check if rule is enabled for given target version condition.
 
@@ -150,11 +150,11 @@ class RuleAcceptance:
         that should match RF version.
         If the target version is a list of strings, any version conditions need to match.
         """
-        if target_version is None:
+        if test_on_version is None:
             return True
-        if isinstance(target_version, list):
-            return any(ROBOT_VERSION in VersionSpecifier(version) for version in target_version)
-        if ";" in target_version:
-            must_match_versions = target_version.split(";")
+        if isinstance(test_on_version, list):
+            return any(ROBOT_VERSION in VersionSpecifier(version) for version in test_on_version)
+        if ";" in test_on_version:
+            must_match_versions = test_on_version.split(";")
             return all(ROBOT_VERSION in VersionSpecifier(version) for version in must_match_versions)
-        return ROBOT_VERSION in VersionSpecifier(target_version)
+        return ROBOT_VERSION in VersionSpecifier(test_on_version)

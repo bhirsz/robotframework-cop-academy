@@ -13,7 +13,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             expected="feed_until_line_length.robot",
             configure=configure,
             space_count=4,
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_split_too_long_lines_4(self):
@@ -22,7 +22,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             source="tests.robot",
             expected="feed_until_line_length_4.robot",
             config=configure,
-            target_version="==4",
+            test_on_version="==4",
         )
 
     def test_split_too_long_lines_split_on_every_arg(self):
@@ -30,7 +30,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             source="tests.robot",
             expected="split_on_every_arg.robot",
             configure=[f"{self.FORMATTER_NAME}.line_length=80"],
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_split_too_long_lines_split_on_every_arg_4(self):
@@ -38,7 +38,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             source="tests.robot",
             expected="split_on_every_arg_4.robot",
             configure=[f"{self.FORMATTER_NAME}.line_length=80"],
-            target_version="==5",
+            test_on_version="==5",
         )
 
     def test_split_lines_with_multiple_assignments(self):
@@ -67,7 +67,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             source="disablers.robot",
             configure=[f"{self.FORMATTER_NAME}.line_length=80"],
             not_modified=True,
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_continuation_indent(self):
@@ -79,7 +79,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             space_count=2,
             continuation_indent=4,
             indent=2,
-            target_version=">=5",
+            test_on_version=">=5",
         )
         configure = [f"{self.FORMATTER_NAME}.line_length=80", f"{self.FORMATTER_NAME}.split_on_every_arg=True"]
         self.compare(
@@ -89,7 +89,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             space_count=2,
             continuation_indent=4,
             indent=2,
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_variables_split(self):
@@ -118,7 +118,7 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             source="tests.robot",
             expected="skip_keywords.robot",
             configure=configure,
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_comments(self):
@@ -225,4 +225,4 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
         )
 
     def test_var_syntax(self):
-        self.compare(source="VAR_syntax.robot", target_version=">=7")
+        self.compare(source="VAR_syntax.robot", test_on_version=">=7")
