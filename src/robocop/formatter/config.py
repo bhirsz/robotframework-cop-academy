@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import copy
-import dataclasses
 import os
 import re
 import sys
-from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
 from re import Pattern
@@ -23,100 +21,6 @@ from robocop.formatter.formatters import FormatConfig, FormatConfigMap, convert_
 from robocop.formatter.utils import misc
 
 
-class FormattingConfig:
-    def __init__(
-        self,
-        space_count: int,
-        indent: int | None,
-        continuation_indent: int | None,
-        line_sep: str,
-        start_line: int | None,
-        end_line: int | None,
-        separator: str,
-        line_length: int,
-    ):
-        self.start_line = start_line
-        self.end_line = end_line
-        self.space_count = space_count
-        self.line_length = line_length
-
-        if indent is None:
-            indent = space_count
-        if continuation_indent is None:
-            continuation_indent = space_count
-
-        if separator == "space":
-            self.separator = " " * space_count
-            self.indent = " " * indent
-            self.continuation_indent = " " * continuation_indent
-        elif separator == "tab":
-            self.separator = "\t"
-            self.indent = "\t"
-            self.continuation_indent = "\t"
-
-        self.line_sep = self.get_line_sep(line_sep)
-
-    @staticmethod
-    def get_line_sep(line_sep):
-        if line_sep == "windows":
-            return "\r\n"
-        if line_sep == "unix":
-            return "\n"
-        if line_sep == "auto":
-            return "auto"
-        return os.linesep
-
-
-def validate_target_version(value: str | None) -> int | None:
-    if value is None:
-        return misc.ROBOT_VERSION.major
-    try:
-        target_version = misc.TargetVersion[value.upper()].value
-    except KeyError:
-        versions = ", ".join(ver.value for ver in misc.TargetVersion)
-        raise click.BadParameter(f"Invalid target Robot Framework version: '{value}' is not one of {versions}")
-    if target_version > misc.ROBOT_VERSION.major:
-        raise click.BadParameter(
-            f"Target Robot Framework version ({target_version}) should not be higher than "
-            f"installed version ({misc.ROBOT_VERSION})."
-        )
-    return target_version
-
-
-def csv_list_type(value: str | None) -> list[str]:
-    if not value:
-        return []
-    return value.split(",")
-
-
-def convert_formatters_config(
-    param_name: str,
-    config: dict,
-    force_included: bool = False,
-    custom_formatter: bool = False,
-    is_config: bool = False,
-) -> list[FormatConfig]:
-    return [
-        FormatConfig(tr, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config)
-        for tr in config.get(param_name, ())
-    ]
-
-
-def str_to_bool(v):
-    if isinstance(v, bool):
-        return v
-    return v.lower() in ("yes", "true", "1")
-
-
-def map_class_fields_with_their_types(cls):
-    """Returns map of dataclass attributes with their types."""
-    fields = dataclasses.fields(cls)
-    return {field.name: field.type for field in fields}
-
-
-SourceAndConfig = namedtuple("SourceAndConfig", "source config")
-
-
 @dataclass
 class RawConfig:
     """Configuration read directly from cli or configuration file."""
@@ -132,18 +36,9 @@ class RawConfig:
     diff: bool = False
     color: bool = True
     check: bool = False
-    spacecount: int = 4
-    indent: int = None
-    continuation_indent: int = None
-    lineseparator: str = "native"
+
     verbose: bool = False
-    config: str = None
-    config_path: Path = None
-    separator: str = "space"
-    startline: int = None
-    endline: int = None
-    line_length: int = 120
-    list_formatters: str = ""
+
     generate_config: str = ""
     desc: str = None
     output: Path = None

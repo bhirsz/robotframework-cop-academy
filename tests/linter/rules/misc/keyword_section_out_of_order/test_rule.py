@@ -9,7 +9,7 @@ class TestRuleAcceptance(RuleAcceptance):
         self.check_rule(
             src_files=["test.robot", "test_kw_setup_added_in_rf7.robot"],
             expected_file="expected_output_rf7.txt",
-            target_version=">=7",
+            test_on_version=">=7",
         )
 
     def test_rule_teardown_keyword(self):

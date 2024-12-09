@@ -8,7 +8,7 @@ class TestRuleAcceptance(RuleAcceptance):
             expected_file="expected_output.txt",
             configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_rule_rf3(self):
@@ -17,7 +17,7 @@ class TestRuleAcceptance(RuleAcceptance):
             expected_file="expected_output_rf3.txt",
             configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
-            target_version="==3.*",
+            test_on_version="==3.*",
         )
 
     def test_rule_rf4(self):
@@ -26,5 +26,5 @@ class TestRuleAcceptance(RuleAcceptance):
             expected_file="expected_output_rf4.txt",
             configure=["not-allowed-keyword.keywords=NotAllowed,Not_AllowedWithArgs,library.not_allowed_with_lib"],
             issue_format="end_col",
-            target_version="==4.*",
+            test_on_version="==4.*",
         )

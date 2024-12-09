@@ -168,6 +168,7 @@ def format_files(
     ] = None,
     configuration_file: config_option = None,
     overwrite: bool = None,
+    diff: bool = None,
     check: bool = None,
     output: Path = None,
     language: Annotated[
@@ -184,8 +185,11 @@ def format_files(
     indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
     continuation_indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
     line_length: Annotated[int, typer.Option(show_default="120")] = None,
+    separator: Annotated[str, typer.Option(show_default="space")] = None,
+    line_ending: Annotated[str, typer.Option(show_default="native")] = None,
     start_line: Annotated[int, typer.Option(show_default=False)] = None,
     end_line: Annotated[int, typer.Option(show_default=False)] = None,
+    target_version: Annotated[config.TargetVersion, typer.Option(case_sensitive=False)] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
     root: project_root_option = None,
@@ -195,8 +199,8 @@ def format_files(
         space_count=space_count,  # TODO
         indent=indent,
         continuation_indent=continuation_indent,
-        line_separator=None,
-        separator=None,
+        line_ending=line_ending,
+        separator=separator,
         line_length=line_length,
     )
     formatter_config = config.FormatterConfig(
@@ -206,9 +210,11 @@ def format_files(
         configure=configure,
         overwrite=overwrite,
         output=output,
+        show_diff=diff,
         check=check,
         start_line=start_line,
         end_line=end_line,
+        target_version=target_version,
     )
     file_filters = config.FileFiltersOptions(
         include=include, extend_include=extend_include, exclude=exclude, extend_exclude=extend_exclude

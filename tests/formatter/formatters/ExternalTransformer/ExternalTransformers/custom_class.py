@@ -1,4 +1,5 @@
 from robot.api import Token
+
 from robocop.formatter.formatters import Formatter
 
 

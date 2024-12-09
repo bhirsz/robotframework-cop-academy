@@ -44,7 +44,7 @@ class FormatterAcceptanceTest:
         not_modified: bool = False,
         expected: str | None = None,
         configure: list[str] = "",
-        target_version: str | None = None,
+        test_on_version: str | None = None,
         run_all: bool = False,
         select: list[str] = None,
         **kwargs,
@@ -66,7 +66,7 @@ class FormatterAcceptanceTest:
             configure=configure,
             source=source,
             not_modified=not_modified,
-            target_version=target_version,
+            test_on_version=test_on_version,
             **kwargs,
         )
         if not not_modified:
@@ -79,11 +79,11 @@ class FormatterAcceptanceTest:
         source: str = None,
         exit_code: int = 0,
         not_modified: bool = False,
-        target_version: str | None = None,
+        test_on_version: str | None = None,
         **kwargs,
     ):
-        if not self.enabled_in_version(target_version):
-            pytest.skip(f"Test enabled only for RF {target_version}")
+        if not self.enabled_in_version(test_on_version):
+            pytest.skip(f"Test enabled only for RF {test_on_version}")
         output_path = self.FORMATTERS_DIR / "actual" / source
         if source is None:
             source_path = self.FORMATTERS_DIR / self.FORMATTER_NAME / "source"

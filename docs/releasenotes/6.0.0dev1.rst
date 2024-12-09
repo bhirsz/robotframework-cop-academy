@@ -93,6 +93,21 @@ Use implicit name of the formatter instead::
 
     robocop format --configure MyFormatter.param=2
 
+Renamed options from Robotidy
+------------------------------
+
+Following options from Robotidy are now available in robocop under different name:
+
+- ``--lineseparator`` -> ``--line-ending``
+- ``--startline`` -> ``--start-line``
+- ``--endline`` -> ``--end-line``
+
+--target-version different input syntax
+---------------------------------------
+
+Formatter ``--target-version`` can now only accept numbers. Previous configuration such as ``--target-version RF5``
+should be now ``--target-version 5``.
+
 return_status report is now optional
 -------------------------------------
 

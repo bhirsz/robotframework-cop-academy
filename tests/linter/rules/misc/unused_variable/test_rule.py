@@ -7,7 +7,7 @@ class TestRuleAcceptance(RuleAcceptance):
             src_files=["test.robot", "unused_section_vars.robot"],
             expected_file="expected_output_after_var.txt",
             issue_format="end_col",
-            target_version=">=7",
+            test_on_version=">=7",
         )
 
     def test_rule_pre_var(self):
@@ -15,7 +15,7 @@ class TestRuleAcceptance(RuleAcceptance):
             src_files=["test.robot", "unused_section_vars.robot"],
             expected_file="expected_output_pre_var.txt",
             issue_format="end_col",
-            target_version=">=4;<7",
+            test_on_version=">=4;<7",
         )
 
     def test_rule_rf3(self):
@@ -23,7 +23,7 @@ class TestRuleAcceptance(RuleAcceptance):
             src_files=["test.robot", "unused_section_vars.robot"],
             expected_file="expected_output_rf3.txt",
             issue_format="end_col",
-            target_version="==3.*",
+            test_on_version="==3.*",
         )
 
     def test_rule_on_loops(self):
@@ -31,5 +31,5 @@ class TestRuleAcceptance(RuleAcceptance):
             src_files=["loops.robot"],
             expected_file="expected_output_loops.txt",
             issue_format="end_col",
-            target_version=">=5",
+            test_on_version=">=5",
         )

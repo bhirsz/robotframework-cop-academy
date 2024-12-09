@@ -13,7 +13,7 @@ class TestRuleAcceptance(RuleAcceptance):
             ],
             src_files=["bug629.robot"],
             expected_file="expected_output_bug629_rf3.txt",
-            target_version="==3.2.2",
+            test_on_version="==3.2.2",
         )
 
     def test_bug629_rf4(self):
@@ -24,7 +24,7 @@ class TestRuleAcceptance(RuleAcceptance):
             ],
             src_files=["bug629.robot"],
             expected_file="expected_output_bug629_rf4.txt",
-            target_version="==4.1.3",
+            test_on_version="==4.1.3",
         )
 
     def test_bug629(self):
@@ -35,7 +35,7 @@ class TestRuleAcceptance(RuleAcceptance):
             ],
             src_files=["bug629.robot"],
             expected_file="expected_output_bug629.txt",
-            target_version=">=5",
+            test_on_version=">=5",
         )
 
     def test_severity_threshold(self):
