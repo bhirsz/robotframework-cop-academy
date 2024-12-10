@@ -31,7 +31,7 @@ from robot.utils.importer import Importer
 
 from robocop import errors
 from robocop.formatter.exceptions import ImportFormatterError, InvalidParameterError, InvalidParameterFormatError
-from robocop.formatter.skip import Skip, SkipConfig
+from robocop.formatter.skip import SKIP_OPTIONS, Skip, SkipConfig
 from robocop.formatter.utils import misc
 
 FORMATTERS = [
@@ -306,35 +306,37 @@ def order_formatters(formatters, module):
     return ordered_formatters
 
 
-def import_formatter(name: str, formatter_args: dict[str, dict], skip) -> Generator[FormatterContainer, None, None]:
+def import_formatter(
+    name: str, formatter_args: dict[str, dict], skip_config: SkipConfig
+) -> Generator[FormatterContainer, None, None]:
     if name in FORMATTERS:
-        yield from import_default_formatter(name, formatter_args, skip)
+        yield from import_default_formatter(name, formatter_args, skip_config)
     else:
-        yield from import_custom_formatter(name, formatter_args, skip)
+        yield from import_custom_formatter(name, formatter_args, skip_config)
 
 
 def import_default_formatter(
-    name: str, formatter_args: dict[str, dict], skip
+    name: str, formatter_args: dict[str, dict], skip_config: SkipConfig
 ) -> Generator[FormatterContainer, None, None]:
     import_path = f"robocop.formatter.formatters.{name}"
     imported = IMPORTER.import_class_or_module(import_path)
-    yield create_formatter_instance(imported, name, formatter_args.get(name, {}), skip)
+    yield create_formatter_instance(imported, name, formatter_args.get(name, {}), skip_config)
 
 
 def import_custom_formatter(
-    name: str, formatter_args: dict[str, dict], skip
+    name: str, formatter_args: dict[str, dict], skip_config: SkipConfig
 ) -> Generator[FormatterContainer, None, None]:
     try:
         short_name = get_formatter_short_name(name)
         abs_path = get_absolute_path_to_formatter(name)
         imported = IMPORTER.import_class_or_module(abs_path)
         if inspect.isclass(imported):
-            yield create_formatter_instance(imported, short_name, formatter_args.get(short_name, {}), skip)
+            yield create_formatter_instance(imported, short_name, formatter_args.get(short_name, {}), skip_config)
         else:
             formatters = load_formatters_from_module(imported)
             formatters = order_formatters(formatters, imported)
             for name, formatter_class in formatters.items():
-                yield create_formatter_instance(formatter_class, name, formatter_args.get(name, {}), skip)
+                yield create_formatter_instance(formatter_class, name, formatter_args.get(name, {}), skip_config)
     except DataError:
         similar_finder = misc.RecommendationFinder()
         similar = similar_finder.find_similar(short_name, FORMATTERS)
@@ -344,24 +346,24 @@ def import_custom_formatter(
         ) from None
 
 
-def create_formatter_instance(imported_class, short_name, args, skip):
+def create_formatter_instance(imported_class, short_name, args, skip_config: SkipConfig):
     spec = IMPORTER._get_arg_spec(imported_class)
     handles_skip = getattr(imported_class, "HANDLES_SKIP", {})
-    positional, named, argument_names = resolve_args(short_name, spec, args, skip, handles_skip=handles_skip)
+    positional, named, argument_names = resolve_args(short_name, spec, args, skip_config, handles_skip=handles_skip)
     instance = imported_class(*positional, **named)
     return FormatterContainer(instance, argument_names, spec, args)
 
 
-def split_args_to_class_and_skip(args):
-    filtered_args = []
+def split_args_to_class_and_skip(args) -> tuple[dict, dict]:
+    filtered_args = {}
     skip_args = {}
     for arg, value in args.items():
         if arg == "enabled":
             continue
-        if arg in SkipConfig.HANDLES:
+        if arg in SKIP_OPTIONS:
             skip_args[arg.replace("skip_", "")] = value
         else:
-            filtered_args.append(f"{arg}={value}")
+            filtered_args[arg] = value
     return filtered_args, skip_args
 
 
@@ -375,13 +377,12 @@ def resolve_argument_names(argument_names: list[str], handles_skip):
     return new_args
 
 
-def assert_handled_arguments(formatter, args, argument_names):
+def assert_handled_arguments(formatter, args: dict, argument_names):
     """
     Check if provided arguments are handled by given formatter.
     Raises InvalidParameterError if arguments does not match.
     """
-    arg_names = [arg.split("=")[0] for arg in args]
-    for arg in arg_names:
+    for arg in args:
         # it's fine to only check for first non-matching parameter
         if arg not in argument_names:
             similar_finder = misc.RecommendationFinder()
@@ -400,23 +401,20 @@ def get_skip_args_from_spec(spec):
     """
     defaults = dict()
     for arg, value in spec.defaults.items():
-        if arg in SkipConfig.HANDLES:
+        if arg in SKIP_OPTIONS:
             defaults[arg.replace("skip_", "")] = value
     return defaults
 
 
-def get_skip_class(spec, skip_args, global_skip):
+def get_skip_class(spec, skip_args, global_skip: SkipConfig):
     defaults = get_skip_args_from_spec(spec)
     defaults.update(skip_args)
-    if global_skip is None:
-        skip_config = SkipConfig()
-    else:
-        skip_config = copy.deepcopy(global_skip)
+    skip_config = copy.deepcopy(global_skip)
     skip_config.update_with_str_config(**defaults)
     return Skip(skip_config)
 
 
-def resolve_args(formatter, spec, args, global_skip, handles_skip):
+def resolve_args(formatter, spec, args, global_skip: SkipConfig, handles_skip):
     """
     Use class definition to identify which arguments from configuration
     should be used to invoke it.
@@ -431,7 +429,7 @@ def resolve_args(formatter, spec, args, global_skip, handles_skip):
     argument_names = resolve_argument_names(spec_args, handles_skip)
     assert_handled_arguments(formatter, args, argument_names)
     try:
-        positional, named = spec.resolve(args)
+        positional, named = spec.resolve([f"{arg}={value}" for arg, value in args.items()])
         named = dict(named)
         if "skip" in spec_args:
             named["skip"] = get_skip_class(spec, skip_args, global_skip)

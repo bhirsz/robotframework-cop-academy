@@ -93,8 +93,8 @@ Use implicit name of the formatter instead::
 
     robocop format --configure MyFormatter.param=2
 
-Renamed options from Robotidy
-------------------------------
+Renamed options from formatter (Robotidy)
+-----------------------------------------
 
 Following options from Robotidy are now available in robocop under different name:
 
@@ -107,6 +107,48 @@ Following options from Robotidy are now available in robocop under different nam
 
 Formatter ``--target-version`` can now only accept numbers. Previous configuration such as ``--target-version RF5``
 should be now ``--target-version 5``.
+
+deprecated singular skip options in formatter (Robotidy)
+-----------------------------------------------
+
+Robotidy offered multiple options to skip formatting of different statement types, if the formatter allows it::
+
+    --skip-documentation
+    --skip-return-values
+    --skip-keyword-call
+    --skip-keyword-call-pattern
+    --skip-settings
+    --skip-arguments
+    --skip-setup
+    --skip-teardown
+    --skip-timeout
+    --skip-template
+    --skip-return
+    --skip-tags
+    --skip-comments
+    --skip-block-comments
+    --skip-sections
+
+Several options were combined under single option named ``skip``::
+
+    --skip documentation
+    --skip return-values
+    --skip settings
+    --skip arguments
+    --skip setup
+    --skip teardown
+    --skip timeout
+    --skip template
+    --skip return
+    --skip tags
+    --skip comments
+    --skip block-comments
+    --skip-sections
+    --skip-keyword-call
+    --skip-keyword-call-pattern
+
+``skip`` accept multiple values from the cli or the configuration files.
+When configuring skip options for the particular formatter, you can also use comma separated list.
 
 return_status report is now optional
 -------------------------------------

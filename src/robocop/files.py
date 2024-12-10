@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import click
-import pathspec
 
 try:
     import tomli as toml
@@ -38,42 +36,8 @@ def read_toml_config(config_path: Path) -> dict[str, Any] | None:
     return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
 
-@lru_cache
-def find_source_config_file(src: Path, ignore_git_dir: bool = False) -> Path | None:
-    """
-    Find and return configuration file for the source path.
-
-    This method looks iteratively in source parents for directory that contains configuration file and
-    returns its path. The lru_cache speeds up searching if there are multiple files in the same directory (they will
-    have the same configuration file).
-
-    If ``.git`` directory is found and ``ignore_git_dir`` is set to ``False``, or top directory is reached, this method
-    returns ``None``.
-    """
-    if src.is_dir():
-        for config_filename in CONFIG_NAMES:
-            if (src / config_filename).is_file():
-                return src / config_filename
-        if not src.parents:
-            return None
-        if not ignore_git_dir and (src.parent / ".git").is_dir():
-            return None
-    return find_source_config_file(src.parent, ignore_git_dir)
-
-
 def get_path_relative_to_path(path: Path, root_parent: Path) -> Path:
     try:
         return path.relative_to(root_parent)
     except ValueError:
         return path
-
-
-@lru_cache
-def get_gitignore(root: Path) -> pathspec.PathSpec:
-    """Return a PathSpec matching gitignore content if present."""
-    gitignore = root / ".gitignore"
-    lines: list[str] = []
-    if gitignore.is_file():
-        with gitignore.open(encoding="utf-8") as gf:
-            lines = gf.readlines()
-    return pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, lines)

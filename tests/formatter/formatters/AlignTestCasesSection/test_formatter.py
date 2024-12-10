@@ -153,15 +153,18 @@ class TestAlignTestCasesSection(FormatterAcceptanceTest):
             configure=configure,
         )
 
-    # def test_skip_return_values_overflow(self):  # TODO global skip
-    #     """From https://github.com/MarketSquare/robotframework-tidy/issues/386"""
-    #     self.compare(
-    #         source="skip_return_values_overflow.robot",
-    #         config=":widths=24,28,20:"
-    #         "handle_too_long=compact_overflow:"
-    #         "compact_overflow_limit=1:"
-    #         "skip_return_values=True",
-    #     )
+    def test_skip_return_values_overflow(self):
+        """From https://github.com/MarketSquare/robotframework-tidy/issues/386"""
+        configure = [
+            f"{self.FORMATTER_NAME}.widths=24,28,20",
+            f"{self.FORMATTER_NAME}.handle_too_long=compact_overflow",
+            f"{self.FORMATTER_NAME}.compact_overflow_limit=1",
+            f"{self.FORMATTER_NAME}.skip_return_values=True",
+        ]
+        self.compare(
+            source="skip_return_values_overflow.robot",
+            configure=configure,
+        )
 
     def test_templated_test_with_setting(self):
         """Tests with [Template]"""

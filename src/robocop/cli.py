@@ -6,6 +6,7 @@ from rich.console import Console
 
 from robocop import config
 from robocop.formatter.runner import RobocopFormatter
+from robocop.formatter.skip import SkipConfig
 from robocop.linter.reports import print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
@@ -190,6 +191,19 @@ def format_files(
     start_line: Annotated[int, typer.Option(show_default=False)] = None,
     end_line: Annotated[int, typer.Option(show_default=False)] = None,
     target_version: Annotated[config.TargetVersion, typer.Option(case_sensitive=False)] = None,
+    skip: Annotated[
+        list[str], typer.Option(show_default=False, help="Skip formatting of code black with the given type")
+    ] = None,
+    skip_sections: Annotated[
+        list[str], typer.Option(show_default=False, help="Skip formatting of selected sections")
+    ] = None,
+    skip_keyword_call: Annotated[
+        list[str], typer.Option(show_default=False, help="Skip formatting of keywords with the given name")
+    ] = None,
+    skip_keyword_call_pattern: Annotated[
+        list[str],
+        typer.Option(show_default=False, help="Skip formatting of keywords that matches with the given pattern"),
+    ] = None,
     ignore_git_dir: Annotated[bool, typer.Option()] = False,
     skip_gitignore: Annotated[bool, typer.Option()] = False,
     root: project_root_option = None,
@@ -203,10 +217,17 @@ def format_files(
         separator=separator,
         line_length=line_length,
     )
+    skip_config = SkipConfig.from_lists(
+        skip=skip,
+        keyword_call=skip_keyword_call,
+        keyword_call_pattern=skip_keyword_call_pattern,
+        sections=skip_sections,
+    )
     formatter_config = config.FormatterConfig(
         select=select,
         custom_formatters=custom_formatters,
         whitespace_config=whitespace_config,
+        skip_config=skip_config,
         configure=configure,
         overwrite=overwrite,
         output=output,
