@@ -19,6 +19,7 @@ from typing_extensions import Self
 
 from robocop import errors, files
 from robocop.formatter import formatters
+from robocop.formatter.skip import SkipConfig
 from robocop.formatter.utils import misc  # TODO merge with linter misc
 from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
 from robocop.linter.utils.misc import compile_rule_pattern
@@ -206,14 +207,14 @@ class FormatterConfig:
     configure: list[str] | None = field(default_factory=list)
     force_order: bool | None = False
     target_version: int | str | None = misc.ROBOT_VERSION.major
-    skip = None  # TODO
+    skip_config: SkipConfig = field(default_factory=SkipConfig)
     overwrite: bool | None = False
     show_diff: bool | None = False
     output: Path | None = None  # TODO
     color: bool | None = False
     check: bool | None = False
     reruns: int | None = 0  # TODO
-    start_line: int | None = None  # TODO it's startline/endline in cli
+    start_line: int | None = None
     end_line: int | None = None
     language: list[str] | None = field(default_factory=list)
     languages: Languages | None = None
@@ -234,7 +235,7 @@ class FormatterConfig:
         allow_version_mismatch = False
         self.load_languages()
         for formatter in self.selected_formatters():
-            for container in formatters.import_formatter(formatter, self.combined_configure, self.skip):
+            for container in formatters.import_formatter(formatter, self.combined_configure, self.skip_config):
                 if container.name in self.select or formatter in self.select:
                     enabled = True
                 elif "enabled" in container.args:
@@ -395,12 +396,13 @@ class Config:
                     setattr(self.linter, field.name, value)
         if overwrite_config.formatter:
             for field in dataclasses.fields(overwrite_config.formatter):
-                if field.name in ("whitespace_config",) or field.name.startswith("_"):
+                if field.name in ("whitespace_config", "skip_config") or field.name.startswith("_"):
                     continue
                 value = getattr(overwrite_config.formatter, field.name)
                 if value:
                     setattr(self.formatter, field.name, value)
             self.formatter.whitespace_config.overwrite(overwrite_config.formatter.whitespace_config)
+            self.formatter.skip_config.overwrite(overwrite_config.formatter.skip_config)
             self.formatter.language = self.language  # TODO
         self.file_filters.overwrite(overwrite_config.file_filters)
 

@@ -1,5 +1,3 @@
-import pytest
-
 from tests.formatter import FormatterAcceptanceTest
 
 
@@ -137,12 +135,14 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             select=[self.FORMATTER_NAME, "AlignVariablesSection"],
         )
 
-    # def test_ignore_comments(self):  TODO global skip
-    #     self.compare(
-    #         source="comments.robot",
-    #         expected="comments_skip_comments.robot",
-    #         configure=[f"{self.FORMATTER_NAME}.split_on_every_value=False --transform AlignVariablesSection --skip-comments"],
-    #     )
+    def test_ignore_comments(self):
+        self.compare(
+            source="comments.robot",
+            expected="comments_skip_comments.robot",
+            configure=[f"{self.FORMATTER_NAME}.split_on_every_value=False"],
+            select=[self.FORMATTER_NAME, "AlignVariablesSection"],
+            skip=["comments"],
+        )
 
     def test_split_settings(self):
         self.compare(
@@ -169,23 +169,22 @@ class TestSplitTooLongLine(FormatterAcceptanceTest):
             configure=configure,
         )
 
-    @pytest.mark.parametrize(
-        "skip_config",
-        [
-            # verify both local and global skip sections
-            ".skip_sections={section_names}",
-            # " --skip-sections={section_names}",  TODO global skip
-        ],
-    )
-    def test_skip_sections(self, skip_config):
+    def test_skip_sections(self):
         configure = [f"{self.FORMATTER_NAME}.skip_sections=variables"]
         self.compare(source="variables.robot", configure=configure, not_modified=True)
         self.compare(source="comments.robot", configure=configure, not_modified=True)
         configure = [f"{self.FORMATTER_NAME}.skip_sections=settings,testcases,keywords"]
         self.compare(source="settings.robot", configure=configure, not_modified=True)
-        skip_partial = skip_config.format(section_names="settings,testcases")
         configure = [f"{self.FORMATTER_NAME}.skip_sections=settings,testcases"]
         self.compare(source="settings.robot", expected="settings_skip_tests.robot", configure=configure)
+
+    def test_skip_sections_global(self):
+        self.compare(source="variables.robot", skip_sections=["variables"], not_modified=True)
+        self.compare(source="comments.robot", skip_sections=["variables"], not_modified=True)
+        self.compare(source="settings.robot", skip_sections=["settings", "testcases", "keywords"], not_modified=True)
+        self.compare(
+            source="settings.robot", expected="settings_skip_tests.robot", skip_sections=["settings", "testcases"]
+        )
 
     def test_split_on_single_value(self):
         configure = [f"{self.FORMATTER_NAME}.split_single_value=True", f"{self.FORMATTER_NAME}.line_length=80"]
