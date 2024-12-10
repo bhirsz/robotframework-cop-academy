@@ -110,4 +110,4 @@ output.xml
 report.html
 
 # Formatters temporary files
-formatters/actual
+actual/
