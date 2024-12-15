@@ -9,8 +9,8 @@ from robocop.linter.rules import Diagnostic
 
 class TestTimestampReport:
     @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
-    def test_timestamp_report(self, rule, previous_results):
-        report = TimestampReport()
+    def test_timestamp_report(self, rule, previous_results, config):
+        report = TimestampReport(config)
         issue = Diagnostic(
             rule=rule,
             source="some/path/file.robot",
@@ -30,8 +30,8 @@ class TestTimestampReport:
             ("format", "%Y-%m-%dT%H:%M:%S", r".*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})"),
         ],
     )
-    def test_timestamp_report_configure(self, name, value, expected):
-        self._configure_and_run(name, value, expected)
+    def test_timestamp_report_configure(self, name, value, expected, config):
+        self._configure_and_run(name, value, expected, config)
 
     @pytest.mark.parametrize(
         ("name", "value", "expected"),
@@ -40,14 +40,14 @@ class TestTimestampReport:
             ("BAD", "", "Provided param 'BAD' for report 'timestamp' does not exist"),
         ],
     )
-    def test_timestamp_configure_invalid(self, name, value, expected):
-        report = TimestampReport()
+    def test_timestamp_configure_invalid(self, name, value, expected, config):
+        report = TimestampReport(config)
         with pytest.raises(ConfigGeneralError) as err:
             report.configure(name, value)
         assert expected in str(err)
 
-    def test_invalid_timestamp_report(self):
-        report = TimestampReport()
+    def test_invalid_timestamp_report(self, config):
+        report = TimestampReport(config)
         report.configure("timezone", "BAD")
         with pytest.raises(ConfigGeneralError) as err:
             report.get_report()
@@ -59,12 +59,12 @@ class TestTimestampReport:
             ("format", "", r".*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})"),
         ],
     )
-    def test_timestamp_default_warning(self, name, value, expected):
+    def test_timestamp_default_warning(self, name, value, expected, config):
         with pytest.warns(UserWarning):
-            self._configure_and_run(name, value, expected)
+            self._configure_and_run(name, value, expected, config)
 
     @staticmethod
-    def _configure_and_run(name, value, expected):
-        report = TimestampReport()
+    def _configure_and_run(name, value, expected, config):
+        report = TimestampReport(config)
         report.configure(name, value)
         assert re.search(expected, report.get_report())

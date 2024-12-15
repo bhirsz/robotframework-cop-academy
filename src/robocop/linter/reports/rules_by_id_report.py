@@ -2,6 +2,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 import robocop.linter.reports
+from robocop.config import Config
 from robocop.linter.diagnostics import Diagnostic
 
 
@@ -20,11 +21,11 @@ class RulesByIdReport(robocop.linter.reports.ComparableReport):
         W0901 (keyword-after-return)        : 1
     """
 
-    def __init__(self, compare_runs):
+    def __init__(self, config: Config):
         self.name = "rules_by_id"
         self.description = "Groups detected issues by rule id and prints it ordered by most common"
         self.message_counter = defaultdict(int)
-        super().__init__(compare_runs)
+        super().__init__(config)
 
     def add_message(self, message: Diagnostic) -> None:
         self.message_counter[message.get_fullname()] += 1

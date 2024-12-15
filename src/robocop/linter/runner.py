@@ -27,9 +27,9 @@ class RobocopLinter:
         self.checkers: list[BaseChecker] = []
         self.rules: dict[str, Rule] = {}
         self.load_checkers()
-        self.reports: dict[str, reports.Report] = reports.get_reports(
-            self.config.linter.reports, self.config.linter.compare
-        )
+        self.reports: dict[str, reports.Report] = reports.get_reports(self.config)
+        # TODO: docs - reports can only be enabled / configured in cli / top level config / --config
+        # same with --format
 
     def load_checkers(self) -> None:  # TODO load builtin once and copy classes for each config
         """
@@ -89,7 +89,6 @@ class RobocopLinter:
                 )
                 continue
             diagnostics = self.run_check(model, str(source))
-            diagnostics.sort()
             issues_no += len(diagnostics)
             for diagnostic in diagnostics:
                 self.report(diagnostic)
@@ -138,25 +137,6 @@ class RobocopLinter:
     def report(self, diagnostic: Diagnostic) -> None:
         for report in self.reports.values():
             report.add_message(diagnostic)
-        # try:
-        #     # TODO: reimplement with Path
-        #     # TODO: lazy evaluation in case source_rel is not used
-        #     source_rel = os.path.relpath(os.path.expanduser(rule_msg.source), self.config_manager.root)
-        # except ValueError:
-        #     source_rel = rule_msg.source
-        print(
-            self.config.linter.issue_format.format(
-                source=diagnostic.source,
-                line=diagnostic.range.start.line,
-                col=diagnostic.range.start.character,
-                end_line=diagnostic.range.end.line,
-                end_col=diagnostic.range.end.character,
-                severity=diagnostic.severity.value,
-                rule_id=diagnostic.rule.rule_id,
-                desc=diagnostic.message,
-                name=diagnostic.rule.name,
-            )
-        )
 
     def configure_checkers_or_reports(self) -> None:
         """
@@ -211,5 +191,3 @@ class RobocopLinter:
 
 
 # should we rediscover checkers/rules for each source config?
-# nope, any custom rules etc should be loaded from cli or default config
-# then we can only enable/disable them in following configs

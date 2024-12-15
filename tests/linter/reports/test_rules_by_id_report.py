@@ -60,10 +60,11 @@ class TestRulesByIdReport:
         ],
     )
     def test_rules_by_id_report(
-        self, previous_results, compare_results, issues_names, expected, error_msg, warning_msg, info_msg
+        self, previous_results, compare_results, issues_names, expected, error_msg, warning_msg, info_msg, config
     ):
         issues_map = {"error-message": error_msg, "warning-message": warning_msg, "info-message": info_msg}
-        report = RulesByIdReport(compare_results)
+        config.linter.compare = compare_results
+        report = RulesByIdReport(config)
         for issue in issues_names:
             issue_def = issues_map[issue]
             msg = Diagnostic(
@@ -80,8 +81,9 @@ class TestRulesByIdReport:
         assert report.get_report(results_copy) == expected
 
     @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_persistent_save(self, compare_runs, error_msg, warning_msg, info_msg):
-        report = RulesByIdReport(compare_runs)
+    def test_persistent_save(self, compare_runs, error_msg, warning_msg, info_msg, config):
+        config.linter.compare = compare_runs
+        report = RulesByIdReport(config)
         for issue in (error_msg, warning_msg, info_msg, info_msg):
             msg = Diagnostic(
                 rule=issue,

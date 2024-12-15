@@ -17,7 +17,8 @@ class TestListReports:
             list_reports(enabled=True)
         out, _ = capsys.readouterr()
         first_line = out.split("\n")[0]
-        assert first_line == "No available reports that meet your search criteria."
+        assert first_line == "Available reports:"
+        assert "print_issues         - Collect and print rules messages (enabled - non-default)" in out
         assert "version              - Returns Robocop version (disabled)" not in out
 
     def test_list_reports_enabled_configured_single(self, empty_linter, capsys):

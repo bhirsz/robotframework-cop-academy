@@ -5,6 +5,7 @@ import pytz
 
 import robocop.linter.exceptions
 import robocop.linter.reports
+from robocop.config import Config
 
 
 class TimestampReport(robocop.linter.reports.Report):
@@ -53,11 +54,12 @@ class TimestampReport(robocop.linter.reports.Report):
 
     """
 
-    def __init__(self):
+    def __init__(self, config: Config):
         self.name = "timestamp"
         self.description = "Returns Robocop execution timestamp."
         self.timezone = "local"
         self.format = "%Y-%m-%d %H:%M:%S %z"
+        super().__init__(config)
 
     def configure(self, name, value) -> None:
         if name == "timezone":

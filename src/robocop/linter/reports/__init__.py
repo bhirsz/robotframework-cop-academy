@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import NoReturn
 
 import robocop.linter.exceptions
+from robocop.config import Config
 from robocop.linter.rules import RobocopImporter
 from robocop.linter.utils.misc import get_robocop_cache_directory
 
@@ -24,7 +25,11 @@ class Report:
     """
 
     DEFAULT = True
+    ENABLED = False
     INTERNAL = False
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
 
     def configure(self, name: str, value: str) -> None:
         raise robocop.linter.exceptions.ConfigGeneralError(
@@ -39,8 +44,9 @@ class Report:
 
 
 class ComparableReport(Report):
-    def __init__(self, compare_runs):
-        self.compare_runs = compare_runs
+    def __init__(self, config: Config) -> None:
+        self.compare_runs = config.linter.compare
+        super().__init__(config)
 
     def get_report(self, prev_results) -> NoReturn:
         raise NotImplementedError
@@ -49,7 +55,7 @@ class ComparableReport(Report):
         raise NotImplementedError
 
 
-def load_reports(compare_runs: bool) -> dict[str, type[Report]]:
+def load_reports(config: Config) -> dict[str, type[Report]]:
     """
     Load all valid reports.
     Report is considered valid if it inherits from `Report` class
@@ -62,34 +68,35 @@ def load_reports(compare_runs: bool) -> dict[str, type[Report]]:
         for report_class in classes:
             if not issubclass(report_class[1], Report):
                 continue
-            if issubclass(report_class[1], ComparableReport):
-                report = report_class[1](compare_runs)
-            else:
-                report = report_class[1]()
+            report = report_class[1](config)
             if not hasattr(report, "name") or not hasattr(report, "description"):
                 continue
             reports[report.name] = report
     return reports
 
 
-def get_reports(configured_reports: list[str], compare_runs: bool):
+def get_reports(config: Config):
     """
     Return dictionary with list of valid, enabled reports (listed in `configured_reports` set of str).
     If `configured_reports` contains `all` then all default reports are enabled.
     """
+    configured_reports = config.linter.reports
     if "None" in configured_reports:
         configured_reports = []
-    reports = load_reports(compare_runs)
+    reports = load_reports(config)
     enabled_reports = OrderedDict()
     for report in configured_reports:
         if report == "all":
             for name, report_class in reports.items():
-                if report_class.DEFAULT and name not in enabled_reports:
+                if report_class.DEFAULT:
                     enabled_reports[name] = report_class
         elif report not in reports:
             raise robocop.linter.exceptions.InvalidReportName(report, reports)
         elif report not in enabled_reports:
             enabled_reports[report] = reports[report]
+    for report, report_class in reports.items():
+        if report not in enabled_reports and report_class.ENABLED:
+            enabled_reports[report] = report_class
     return enabled_reports
 
 
@@ -105,7 +112,8 @@ def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
         only_enabled: if set to True/False, it will filter reports by enabled/disabled status
 
     """
-    all_public_reports = [report for report in load_reports(compare_runs=False).values() if not report.INTERNAL]
+    config = Config()
+    all_public_reports = [report for report in load_reports(config).values() if not report.INTERNAL]
     all_public_reports = sorted(all_public_reports, key=lambda x: x.name)
     configured_reports = {x.name for x in reports.values()}
     available_reports = ""

@@ -9,27 +9,27 @@ from robocop.linter.reports.sarif_report import SarifReport
 
 
 class TestSarifReport:
-    def test_configure_output_dir(self):
+    def test_configure_output_dir(self, config):
         output_dir = "path/to/dir"
-        report = SarifReport()
+        report = SarifReport(config)
         report.configure("output_dir", output_dir)
         assert report.output_dir == Path(output_dir)
 
-    def test_configure_filename(self):
+    def test_configure_filename(self, config):
         filename = ".sarif"
-        report = SarifReport()
+        report = SarifReport(config)
         report.configure("report_filename", filename)
         assert report.report_filename == filename
 
     @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_sarif_report(self, rule, rule2, compare_runs, tmp_path):
+    def test_sarif_report(self, rule, rule2, compare_runs, tmp_path, config):
         root = Path().resolve()
         rules = {m.rule_id: m for m in (rule, rule2)}
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
         source1 = str(root / source1_rel)
         source2 = str(root / source2_rel)
-        report = SarifReport()
+        report = SarifReport(config)
         report.configure("output_dir", tmp_path)
 
         issues = [
