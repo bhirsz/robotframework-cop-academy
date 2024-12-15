@@ -512,7 +512,7 @@ class ConfigManager:
             yield path, config
 
     def get_default_config(self, config_path: Path | None) -> Config:
-        """Get default config either from --config option or find it in the project root."""
+        """Get default config either from --config option or from the cli."""
         if config_path:
             configuration = files.read_toml_config(config_path)
             config = Config.from_toml(configuration, config_path)

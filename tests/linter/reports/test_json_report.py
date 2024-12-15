@@ -8,8 +8,8 @@ from robocop.linter.reports.json_report import JsonReport
 
 
 class TestJSONReport:
-    def test_json_report(self, rule):
-        report = JsonReport()
+    def test_json_report(self, rule, config):
+        report = JsonReport(config)
         issue = Diagnostic(
             rule=rule,
             source="some/path/file.robot",
@@ -32,28 +32,28 @@ class TestJSONReport:
             "description": "Some description",
         }
 
-    def test_configure_output_dir(self):
+    def test_configure_output_dir(self, config):
         output_dir = "path/to/dir"
-        report = JsonReport()
+        report = JsonReport(config)
         report.configure("output_dir", output_dir)
         assert report.output_dir == Path(output_dir)
 
-    def test_configure_filename(self):
+    def test_configure_filename(self, config):
         filename = ".robocop.json"
-        report = JsonReport()
+        report = JsonReport(config)
         report.configure("report_filename", filename)
         assert report.report_filename == filename
 
     @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
     @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_json_reports_saved_to_file(self, rule, rule2, compare_runs, previous_results, tmp_path):
+    def test_json_reports_saved_to_file(self, rule, rule2, compare_runs, previous_results, tmp_path, config):
         root = Path().resolve()
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
         source1 = str(root / source1_rel)
         source2 = str(root / source2_rel)
 
-        report = JsonReport()
+        report = JsonReport(config)
         report.configure("output_dir", tmp_path)
 
         issues = [

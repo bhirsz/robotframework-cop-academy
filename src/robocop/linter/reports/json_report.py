@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import robocop.linter.reports
+from robocop.config import Config
 from robocop.linter.diagnostics import Diagnostic
 
 
@@ -51,12 +52,13 @@ class JsonReport(robocop.linter.reports.Report):
 
     DEFAULT = False
 
-    def __init__(self):
+    def __init__(self, config: Config):
         self.name = "json_report"
         self.description = "Produces JSON file with found issues"
         self.output_dir = None
         self.report_filename = "robocop.json"
         self.issues = []
+        super().__init__(config)
 
     def add_message(self, message: Diagnostic) -> None:
         self.issues.append(self.message_to_json(message))

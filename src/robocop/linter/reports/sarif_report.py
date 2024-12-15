@@ -3,6 +3,7 @@ from pathlib import Path
 
 import robocop.linter.reports
 from robocop import __version__
+from robocop.config import Config
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL
 
@@ -29,12 +30,13 @@ class SarifReport(robocop.linter.reports.Report):
     SCHEMA_VERSION = "2.1.0"
     SCHEMA = f"https://json.schemastore.org/sarif-{SCHEMA_VERSION}.json"
 
-    def __init__(self):
+    def __init__(self, config: Config):
         self.name = "sarif"
         self.description = "Generate SARIF output file"
         self.output_dir = None
         self.report_filename = ".sarif.json"
         self.issues: list[Diagnostic] = []
+        super().__init__(config)
 
     def configure(self, name, value) -> None:
         if name == "output_dir":

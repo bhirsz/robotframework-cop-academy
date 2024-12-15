@@ -110,8 +110,9 @@ class TestFileStatReport:
             ),
         ],
     )
-    def test_file_stats_report(self, previous_results, files, files_with_issues, compare_runs, output, rule):
-        report = FileStatsReport(compare_runs)
+    def test_file_stats_report(self, previous_results, files, files_with_issues, compare_runs, output, rule, config):
+        config.linter.compare = compare_runs
+        report = FileStatsReport(config)
         report.files_count = files
         report.files_with_issues = files_with_issues
         if files_with_issues:
@@ -128,8 +129,9 @@ class TestFileStatReport:
         assert report.get_report(previous_results) == output
 
     @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_persistent_save(self, compare_runs, rule):
-        report = FileStatsReport(compare_runs)
+    def test_persistent_save(self, compare_runs, rule, config):
+        config.linter.compare = compare_runs
+        report = FileStatsReport(config)
         report.files_count += 1
         for source in ("a.robot", "b.robot"):
             issue = Diagnostic(

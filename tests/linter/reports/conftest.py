@@ -1,6 +1,12 @@
 import pytest
 
+from robocop.config import Config
 from robocop.linter.rules import Rule, RuleParam, RuleSeverity
+
+
+@pytest.fixture
+def config():
+    return Config()
 
 
 @pytest.fixture

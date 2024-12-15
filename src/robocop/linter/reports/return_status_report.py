@@ -1,4 +1,5 @@
 import robocop.linter.reports
+from robocop.config import Config
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.reports.rules_by_severity_report import RulesBySeverityReport
 
@@ -13,12 +14,13 @@ class ReturnStatusReport(robocop.linter.reports.Report):
 
     DEFAULT = False
 
-    def __init__(self):
+    def __init__(self, config: Config):
         self.name = "return_status"
         self.description = "Checks if number of specific issues exceed quality gate limits"
         self.return_status = 0
-        self.counter = RulesBySeverityReport(compare_runs=False)
+        self.counter = RulesBySeverityReport(config)
         self.quality_gate = {"E": 0, "W": 0, "I": -1}
+        super().__init__(config)
 
     def configure(self, name: str, value: str) -> None:
         if name not in ["quality_gate", "quality_gates"]:
