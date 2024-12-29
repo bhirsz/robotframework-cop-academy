@@ -31,6 +31,17 @@ def isolated_output():
     sys.stderr = old_stderr
 
 
+@contextlib.contextmanager
+def working_directory(path: Path):
+    """Change working directory and return to previous on exit"""
+    prev_cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
+
+
 def convert_to_output(stdout_bytes):
     return stdout_bytes.decode("utf-8", "replace").replace("\r\n", "\n")
 
@@ -90,7 +101,7 @@ class RuleAcceptance:
             paths = [test_data]
         else:
             paths = [test_data / src_file for src_file in src_files]
-        with isolated_output() as output:
+        with isolated_output() as output, working_directory(test_data):
             try:
                 with pytest.raises(click.exceptions.Exit):
                     check_files(
