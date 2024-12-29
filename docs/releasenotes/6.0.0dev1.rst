@@ -265,6 +265,23 @@ Thanks for this change it is easier to handle different types of outputs or even
 
 # TODO add examples & more docs after implementing all new types of output or silent mode
 
+Grouped output format
+---------------------
+
+New optional output format: ``grouped``. Issues are grouped and printed separately for each source file.
+It can be enabled by configuring ``print_issues`` report::
+
+    robocop check --configure print_issues.output_format=grouped
+
+Example output::
+
+    tests\linter\rules\tags\unnecessary_default_tags\test.robot:
+      3:1 0607 Tags defined in Default Tags are always overwritten (unnecessary-default-tags)
+      4:1 1003 Invalid number of empty lines between sections (1/2) (empty-lines-between-sections)
+
+    tests\linter\rules\tags\tag_already_set_in_test_tags\keyword_tag.robot:
+      3:1 0319 'Force Tags' is deprecated since Robot Framework version 6.0, use 'Test Tags' instead (deprecated-statement)
+
 Fixes
 =====
 
