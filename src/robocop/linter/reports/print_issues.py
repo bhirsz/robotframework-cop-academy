@@ -67,8 +67,36 @@ class PrintIssuesReport(robocop.linter.reports.Report):
                     )
                 )
 
+    def print_diagnostics_grouped(self) -> None:
+        """
+        Example output:
+
+            tests/suite.robot:
+              63:10 E0101 Issue description
+
+        """
+        cwd = Path.cwd()
+        grouped_format = "  {line}:{col} {rule_id} {desc} ({name})"
+        for source, diagnostics in self.diagn_by_source.items():
+            diagnostics.sort()
+            source_rel = Path(source).relative_to(cwd)
+            print(f"{source_rel}:")
+            for diagnostic in diagnostics:
+                print(
+                    grouped_format.format(
+                        line=diagnostic.range.start.line,
+                        col=diagnostic.range.start.character,
+                        rule_id=diagnostic.rule.rule_id,
+                        desc=diagnostic.message,
+                        name=diagnostic.rule.name,
+                    )
+                )
+            print()
+
     def get_report(self) -> None:
         if self.output_format == OutputFormat.SIMPLE:
             self.print_diagnostics_simple()
+        elif self.output_format == OutputFormat.GROUPED:
+            self.print_diagnostics_grouped()
         else:
             raise NotImplementedError(f"Output format {self.output_format} is not implemented")

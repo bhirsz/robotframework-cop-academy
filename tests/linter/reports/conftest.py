@@ -26,7 +26,7 @@ def rule2():
     class CustomRule(Rule):
         rule_id = "0902"
         name = "other-message"
-        message = "Some description. Example::\n"
+        message = "Some description. Example"
         severity = RuleSeverity.ERROR
 
     return CustomRule()
