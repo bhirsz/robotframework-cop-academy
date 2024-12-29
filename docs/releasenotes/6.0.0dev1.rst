@@ -108,6 +108,24 @@ Following options from Robotidy are now available in robocop under different nam
 Formatter ``--target-version`` can now only accept numbers. Previous configuration such as ``--target-version RF5``
 should be now ``--target-version 5``.
 
+Issue source is now relative by default
+----------------------------------------
+
+Relative path to source is now used by default when printing the linter issues.
+
+Previous output, if run from ``robot_project`` directory::
+
+    D:/code/robot_project/tests/test.robot:19:59 [W] 0601 Tag '${var} space' should not contain spaces (tag-with-space)
+
+New output::
+
+    robot_project/tests/test.robot:19:59 [W] 0601 Tag '${var} space' should not contain spaces (tag-with-space)
+
+Previous issue format keyword ``source_rel`` is deprecated and ``source`` is used instead. It is still possible to use
+ absolute paths in output by configuring issue format to ``source_abs``::
+
+    robocop check --issue-format "{source_abs}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+
 deprecated singular skip options in formatter (Robotidy)
 -----------------------------------------------
 
@@ -238,3 +256,11 @@ We will end up with the following files:
 
 This feature allow to apply different configuration (for example exclude specific rules in the directory) for all
 directories in your project.
+
+Print Issues report
+--------------------
+
+Reporting linter issues is now handled by ``print_issues`` report. It's internal report, enabled by default.
+Thanks for this change it is easier to handle different types of outputs or even completely silence linter output.
+
+# TODO add examples & more docs after implementing all new types of output or silent mode
