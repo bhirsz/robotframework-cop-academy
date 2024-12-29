@@ -1674,6 +1674,8 @@ class ExpressionsChecker(VisitorChecker):
         if normalized_name not in self.CONDITION_KEYWORDS:
             return
         condition_token = node.get_token(Token.ARGUMENT)
+        if not condition_token:
+            return
         self.check_condition(node.keyword, condition_token, condition_token.value)
         if normalized_name == "setvariableif":
             arguments = node.get_tokens(Token.ARGUMENT)

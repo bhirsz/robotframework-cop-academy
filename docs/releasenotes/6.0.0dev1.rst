@@ -264,3 +264,19 @@ Reporting linter issues is now handled by ``print_issues`` report. It's internal
 Thanks for this change it is easier to handle different types of outputs or even completely silence linter output.
 
 # TODO add examples & more docs after implementing all new types of output or silent mode
+
+Fixes
+=====
+
+Missing conditions cause parsing exception
+-------------------------------------------
+
+Missing condition caused Robocop to throw an exception when ``expression_can_be_simplified`` rule was enabled.
+
+Example of code that is now properly handled::
+
+    *** Keywords ***
+    Keyword
+        ${variable}    Set Variable If
+        IF
+        END
