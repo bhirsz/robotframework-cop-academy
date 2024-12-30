@@ -6,9 +6,9 @@ from typing import Any
 import click
 
 try:
+    import tomllib as toml
+except ImportError:  # Python < 3.11
     import tomli as toml
-except ImportError:  # from Python 3.11
-    import toml
 
 
 def load_toml_file(config_path: Path) -> dict[str, Any]:
