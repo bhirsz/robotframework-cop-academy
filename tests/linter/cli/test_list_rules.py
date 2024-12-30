@@ -80,18 +80,18 @@ def msg_0101_checker():
 
 
 @pytest.fixture
-def community_rule_checker():
+def non_default_rule_checker():
     class CustomRule(Rule):
         rule_id = "19999"
-        name = "community-rule"
+        name = "non-default-rule"
         message = "Some description"
         severity = RuleSeverity.WARNING
-        community_rule = True
+        enabled = False
 
-    class CommunityChecker(VisitorChecker):
-        community_rule: CustomRule
+    class NonDefaultChecker(VisitorChecker):
+        non_default_rule: CustomRule
 
-    checker = CommunityChecker()
+    checker = NonDefaultChecker()
     rule = CustomRule()
     checker.rules[rule.name] = rule
     checker.rules[rule.rule_id] = rule
@@ -177,9 +177,11 @@ def deprecated_rules_checker():
 
 
 class TestListingRules:
-    def test_list_rule(self, empty_linter, msg_0101_checker, community_rule_checker, deprecated_rules_checker, capsys):
+    def test_list_rule(
+        self, empty_linter, msg_0101_checker, non_default_rule_checker, deprecated_rules_checker, capsys
+    ):
         """List rules with default options."""
-        for checker in (msg_0101_checker, community_rule_checker, deprecated_rules_checker):
+        for checker in (msg_0101_checker, non_default_rule_checker, deprecated_rules_checker):
             empty_linter.register_checker(checker)
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules()
@@ -305,17 +307,17 @@ class TestListingRules:
         assert not_exp_msg not in out
 
     @pytest.mark.parametrize("config", [{"filter_pattern": "*"}, {"filter_category": RuleFilter.ALL}])
-    def test_list_rule_filtered_and_community(
-        self, config, empty_linter, msg_0101_checker, community_rule_checker, capsys
+    def test_list_rule_filtered_and_non_default(
+        self, config, empty_linter, msg_0101_checker, non_default_rule_checker, capsys
     ):
         empty_linter.register_checker(msg_0101_checker)
-        empty_linter.register_checker(community_rule_checker)
+        empty_linter.register_checker(non_default_rule_checker)
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=empty_linter)):
             list_rules(**config)
         out, _ = capsys.readouterr()
         assert (
             out == "Rule - 0101 [W]: some-message: Some description (enabled)\n"
-            "Rule - 19999 [W]: community-rule: Some description (enabled)\n\n"
+            "Rule - 19999 [W]: non-default-rule: Some description (disabled)\n\n"
             "Altogether 2 rules with following severity:\n"
             "    0 error rules,\n"
             "    2 warning rules,\n"

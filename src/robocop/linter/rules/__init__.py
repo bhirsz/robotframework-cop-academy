@@ -161,19 +161,15 @@ def filter_rules_by_pattern(rules: dict[str, Rule], pattern: str) -> list[Rule]:
 def filter_rules_by_category(rules: dict[str, Rule], category: RuleFilter) -> list[Rule]:
     """Return sorted list of Rules from rules dictionary, filtered by rule category."""
     if category == RuleFilter.DEFAULT:
-        rules_by_id = {rule.rule_id: rule for rule in rules.values() if not rule.community_rule and not rule.deprecated}
+        rules_by_id = {rule.rule_id: rule for rule in rules.values() if rule.enabled and not rule.deprecated}
     elif category == RuleFilter.ALL:
         rules_by_id = {rule.rule_id: rule for rule in rules.values() if not rule.deprecated}
     elif category in (RuleFilter.ENABLED, RuleFilter.DISABLED):
         rules_by_id = {
             rule.rule_id: rule
             for rule in rules.values()
-            if category.value.lower() in rule.get_enabled_status_desc()
-            and not rule.community_rule
-            and not rule.deprecated
+            if category.value.lower() in rule.get_enabled_status_desc() and not rule.deprecated
         }
-    elif category == RuleFilter.COMMUNITY:
-        rules_by_id = {rule.rule_id: rule for rule in rules.values() if rule.community_rule and not rule.deprecated}
     elif category == RuleFilter.DEPRECATED:
         rules_by_id = {rule.rule_id: rule for rule in rules.values() if rule.deprecated}
     else:
@@ -355,7 +351,6 @@ class Rule:
     enabled: bool = True
     deprecated: bool = False
     parameters: list[RuleParam] | None = None
-    community_rule = False  # FIXME to be removed
 
     def __init__(self):
         self.enabled = not self.deprecated and self.enabled
@@ -609,7 +604,6 @@ def is_checker(checker_class_def: tuple) -> bool:
 class RobocopImporter:
     def __init__(self, external_rules_paths=None):
         self.internal_checkers_dir = Path(__file__).parent
-        self.community_checkers_dir = self.internal_checkers_dir / "community_rules"
         self.external_rules_paths = external_rules_paths
         self.imported_modules = set()
         self.seen_modules = set()
@@ -618,31 +612,27 @@ class RobocopImporter:
 
     def get_initialized_checkers(self):
         # TODO: simplify. internal checkers can be static
-        yield from self._get_checkers_from_modules(self.get_internal_modules(), is_community=False)
-        yield from self._get_checkers_from_modules(self.get_community_modules(), is_community=True)
-        yield from self._get_checkers_from_modules(self.get_external_modules(), is_community=False)
+        yield from self._get_checkers_from_modules(self.get_internal_modules())
+        yield from self._get_checkers_from_modules(self.get_external_modules())
 
     def get_internal_modules(self):
         return self.modules_from_paths(list(self.internal_checkers_dir.iterdir()), recursive=False)
 
-    def get_community_modules(self):
-        return self.modules_from_paths([self.community_checkers_dir], recursive=True)
-
     def get_external_modules(self):
         return self.modules_from_paths([*self.external_rules_paths], recursive=True)
 
-    def _get_checkers_from_modules(self, modules, is_community):
+    def _get_checkers_from_modules(self, modules):
         for module in modules:
             if module in self.seen_modules:
                 continue
             for _, submodule in inspect.getmembers(module, inspect.ismodule):
                 if submodule not in self.seen_modules:
-                    yield from self._get_initialized_checkers_from_module(submodule, is_community)
-            yield from self._get_initialized_checkers_from_module(module, is_community)
+                    yield from self._get_initialized_checkers_from_module(submodule)
+            yield from self._get_initialized_checkers_from_module(module)
 
-    def _get_initialized_checkers_from_module(self, module, is_community):
+    def _get_initialized_checkers_from_module(self, module):
         self.seen_modules.add(module)
-        for checker_instance in self.get_checkers_from_module(module, is_community):
+        for checker_instance in self.get_checkers_from_module(module):
             if not self.is_checker_already_imported(checker_instance):
                 yield checker_instance
 
@@ -749,7 +739,7 @@ class RobocopImporter:
             rules[name] = rule_instance
         return rules
 
-    def get_checkers_from_module(self, module, is_community: bool) -> list:
+    def get_checkers_from_module(self, module) -> list:
         # FIXME do not inspect / enter external libs such as re..
         classes = inspect.getmembers(module, inspect.isclass)
         checkers = [checker[1]() for checker in classes if is_checker(checker)]
@@ -779,13 +769,6 @@ def get_builtin_rules() -> Generator[tuple[str, Rule], None, None]:
     # TODO: refactor
     robocop_importer = RobocopImporter()
     rule_modules = robocop_importer.get_internal_modules()
-    yield from robocop_importer.get_imported_rules(rule_modules)
-
-
-def get_community_rules() -> Generator[tuple[str, Rule], None, None]:
-    """Get only community rules definitions for documentation generation."""
-    robocop_importer = RobocopImporter()
-    rule_modules = robocop_importer.get_community_modules()
     yield from robocop_importer.get_imported_rules(rule_modules)
 
 
