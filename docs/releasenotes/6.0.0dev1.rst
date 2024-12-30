@@ -233,6 +233,17 @@ All other ``transform`` mentions were also deprecated, for example:
 - ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
 - ``Transformer`` class was renamed to ``Formatter``
 
+Community rules are now simply 'non-default' rules
+--------------------------------------------------
+
+We have introduced non-default, 'community' rules in effort to increase contributions from the community.
+We have however noticed that it does not make sense to split our rules into 'internal' and 'community' ones -
+the rules contributed from the users are often added as the default rules. For rules that should be optional it is
+enough to set them as non-default rules.
+
+For that reason we are deprecating term 'community' rules and all options related to it, such as filtering list of
+rules by community rules.
+
 New features
 =============
 
