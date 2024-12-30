@@ -47,7 +47,7 @@ class TestJSONReport:
     @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
     @pytest.mark.parametrize("compare_runs", [True, False])
     def test_json_reports_saved_to_file(self, rule, rule2, compare_runs, previous_results, tmp_path, config):
-        root = Path().resolve()
+        root = Path.cwd()
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
         source1 = str(root / source1_rel)

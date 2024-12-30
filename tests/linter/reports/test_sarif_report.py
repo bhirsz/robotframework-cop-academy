@@ -23,7 +23,7 @@ class TestSarifReport:
 
     @pytest.mark.parametrize("compare_runs", [True, False])
     def test_sarif_report(self, rule, rule2, compare_runs, tmp_path, config):
-        root = Path().resolve()
+        root = Path.cwd()
         rules = {m.rule_id: m for m in (rule, rule2)}
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"

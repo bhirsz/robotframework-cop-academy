@@ -10,7 +10,7 @@ from robocop.linter.reports.print_issues import PrintIssuesReport
 
 @pytest.fixture
 def issues(rule, rule2) -> list[Diagnostic]:
-    root = Path().resolve()
+    root = Path.cwd()
     source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
     source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
     source1 = str(root / source1_rel)
