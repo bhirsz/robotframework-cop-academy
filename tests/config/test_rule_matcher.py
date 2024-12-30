@@ -1,7 +1,7 @@
 import pytest
 
 from robocop.config import Config, LinterConfig
-from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
+from robocop.linter.rules import Rule, RuleSeverity
 from robocop.linter.runner import RuleMatcher
 
 
@@ -12,8 +12,7 @@ class CustomRule(Rule):
     severity = RuleSeverity.WARNING
 
 
-def get_message_with_id(rule_id):
-    rule_id = replace_severity_values(rule_id)
+def get_message_with_id(rule_id: str) -> CustomRule:
     custom_rule = CustomRule()
     custom_rule.rule_id = rule_id
     custom_rule.name = f"some-message-{rule_id}"
@@ -88,7 +87,7 @@ class TestIncludingExcluding:
         assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
     def test_both_selected_excluded(self):
-        linter_config = LinterConfig(select=["0101"], ignore=["W0101"])
+        linter_config = LinterConfig(select=["0101"], ignore=["0101"])
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
         msg = get_message_with_id("0101")

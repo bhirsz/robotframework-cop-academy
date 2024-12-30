@@ -38,7 +38,6 @@ from __future__ import annotations
 import ast
 import importlib.util
 import inspect
-import re
 from collections import defaultdict
 from collections.abc import Generator
 from enum import Enum
@@ -770,8 +769,3 @@ def get_builtin_rules() -> Generator[tuple[str, Rule], None, None]:
     robocop_importer = RobocopImporter()
     rule_modules = robocop_importer.get_internal_modules()
     yield from robocop_importer.get_imported_rules(rule_modules)
-
-
-def replace_severity_values(rule_name: str) -> str:
-    """Replace severity value (I, W, E) from the rule name."""
-    return re.sub("^([IWE])(?=[0-9]{4,})", "", rule_name)

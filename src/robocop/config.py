@@ -21,7 +21,7 @@ from robocop import errors, files
 from robocop.formatter import formatters
 from robocop.formatter.skip import SkipConfig
 from robocop.formatter.utils import misc  # TODO merge with linter misc
-from robocop.linter.rules import Rule, RuleSeverity, replace_severity_values
+from robocop.linter.rules import Rule, RuleSeverity
 from robocop.linter.utils.misc import compile_rule_pattern
 
 CONFIG_NAMES = frozenset(("robotidy.toml", "pyproject.toml"))
@@ -163,18 +163,16 @@ class LinterConfig:
         # TODO: with overwrite, it will not be called
         if self.select:
             for rule in self.select:
-                rule_without_sev = replace_severity_values(rule)
-                if "*" in rule_without_sev:
-                    self.include_rules_patterns.add(compile_rule_pattern(rule_without_sev))
+                if "*" in rule:
+                    self.include_rules_patterns.add(compile_rule_pattern(rule))
                 else:
-                    self.include_rules.add(rule_without_sev)
+                    self.include_rules.add(rule)
         if self.ignore:
             for rule in self.ignore:
-                rule_without_sev = replace_severity_values(rule)
-                if "*" in rule_without_sev:
-                    self.exclude_rules_patterns.add(compile_rule_pattern(rule_without_sev))
+                if "*" in rule:
+                    self.exclude_rules_patterns.add(compile_rule_pattern(rule))
                 else:
-                    self.exclude_rules.add(rule_without_sev)
+                    self.exclude_rules.add(rule)
 
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]
