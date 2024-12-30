@@ -8,7 +8,7 @@ from robocop.linter.reports.time_taken_report import TimeTakenReport
 class TestTimeTakenReport:
     @pytest.mark.parametrize("previous_results", [None, {}, {"time_taken": "10.541"}])
     @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_version_report(self, rule, compare_runs, previous_results, config):
+    def test_version_report(self, compare_runs, previous_results, config):
         mock_time = mock.Mock()
         mock_time.side_effect = [1.0, 4.541]
         config.linter.compare = compare_runs
@@ -20,10 +20,9 @@ class TestTimeTakenReport:
                 expected_message = "\nScan finished in 3.541s."
             assert report.get_report(previous_results) == expected_message
 
-    @pytest.mark.parametrize("previous_results", [None, {"time_taken": "10.541"}])  # previous is ignored in save
     @pytest.mark.parametrize("compare_runs", [True, False])  # saved even if compare is disabled
     @pytest.mark.parametrize(("get_report", "expected_time"), [(True, "2.000"), (False, "0.000")])
-    def test_persistent_save(self, previous_results, compare_runs, get_report, expected_time, config):
+    def test_persistent_save(self, compare_runs, get_report, expected_time, config):
         mock_time = mock.Mock()
         mock_time.side_effect = [1.0, 3.0]
         config.linter.compare = compare_runs

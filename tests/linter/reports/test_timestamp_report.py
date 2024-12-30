@@ -8,8 +8,7 @@ from robocop.linter.rules import Diagnostic
 
 
 class TestTimestampReport:
-    @pytest.mark.parametrize("previous_results", [None, {}, {"issue": 10}])
-    def test_timestamp_report(self, rule, previous_results, config):
+    def test_timestamp_report(self, rule, config):
         report = TimestampReport(config)
         issue = Diagnostic(
             rule=rule,

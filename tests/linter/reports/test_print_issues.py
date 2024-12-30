@@ -43,11 +43,11 @@ class TestPrintIssuesReport:
         tests\atest\rules\comments\ignored-data\test.robot:
           50:10 0101 Some description (some-message)
           50:10 0902 Some description. Example (other-message)
-        
+
         tests\atest\rules\misc\empty-return\test.robot:
           11:10 0902 Some description. Example (other-message)
           50:10 0101 Some description (some-message)
-        
+
         """)
             .lstrip()
             .replace("\\", os.path.sep)

@@ -13,7 +13,7 @@ class TestDescribeRule:
         Rule: duplicated-keyword (DUP02)
         Message: Multiple keywords with name '{name}' (first occurrence in line {first_occurrence_line})
         Severity: E
-        
+
         Multiple keywords with the same name in the file.
 
         Do not define keywords with the same name inside the same file. Name matching is case-insensitive and
@@ -23,10 +23,10 @@ class TestDescribeRule:
             *** Keywords ***
             Keyword
                 No Operation
-    
+
             keyword
                 No Operation
-    
+
             K_eywor d
                 No Operation
 
@@ -44,12 +44,12 @@ class TestDescribeRule:
         Severity: W
 
         It is possible to ignore lines that match regex pattern. Configure it using following option::
-        
+
             robocop --configure line-too-long:ignore_pattern:pattern
-        
+
         The default pattern is ``https?://\\S+`` that ignores the lines that look like an URL.
-        
-        
+
+
         Configurables:
             severity_threshold
             line_length = 120
