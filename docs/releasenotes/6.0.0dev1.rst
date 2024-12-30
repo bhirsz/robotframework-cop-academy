@@ -244,6 +244,20 @@ enough to set them as non-default rules.
 For that reason we are deprecating term 'community' rules and all options related to it, such as filtering list of
 rules by community rules.
 
+Rule severity is now separate from the rule id (#19)
+----------------------------------------------------
+
+Robocop previously allowed to select / ignore / configure rules using rule id with rule severity. For example::
+
+    robocop check --select W1010 --select 1011
+
+Since rule severity is configurable, it could be potentially confusing. Additionally it caused unindented issues when
+using rule id with non-numeric characters (for example ``ERR001`` could be interpreted as ``RR001`` instead).
+For those reasons it's not possible anymore to refer to rule using rule id with its severity. Use rule id without
+severity or rule name instead::
+
+    robocop check --select DOC01 --select missing-doc-test-case
+
 New features
 =============
 
