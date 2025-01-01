@@ -1,5 +1,7 @@
 """Lengths checkers"""
 
+from __future__ import annotations
+
 import re
 
 from robot.api import Token
@@ -79,9 +81,7 @@ class TooLongTestCaseRule(Rule):
 
 
 class TooManyCallsInTestCaseRule(Rule):
-    """
-    Redesign the test and move complex logic to separate keywords to increase readability.
-    """
+    """Redesign the test and move complex logic to separate keywords to increase readability."""
 
     name = "too-many-calls-in-test-case"
     rule_id = "LEN05"
@@ -120,7 +120,7 @@ class TooManyArgumentsRule(Rule):
 
 
 class LineTooLongRule(Rule):
-    """
+    r"""
     It is possible to ignore lines that match regex pattern. Configure it using following option::
 
         robocop --configure line-too-long:ignore_pattern:pattern
@@ -903,7 +903,8 @@ class TooManyArgumentsInLineChecker(VisitorChecker):
                     )
 
     @staticmethod
-    def first_non_sep(line: list[Token]) -> Token:
+    def first_non_sep(line: list[Token]) -> Token | None:
         for token in line:
             if token.type != Token.SEPARATOR:
                 return token
+        return None

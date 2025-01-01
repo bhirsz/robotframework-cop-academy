@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING
 from robot.api import Token
 from robot.parsing.model.blocks import CommentSection
 
-from robocop.linter.diagnostics import Diagnostic
-
 try:
     from robot.api.parsing import ModelVisitor
 except ImportError:
@@ -22,6 +20,8 @@ if TYPE_CHECKING:
     from robot.parsing import File
     from robot.parsing.model import KeywordSection, Statement, TestCaseSection
     from robot.parsing.model.statements import Comment, KeywordName, Node, TestCaseName
+
+    from robocop.linter.diagnostics import Diagnostic
 
 
 class DisablersInFile:  # pylint: disable=too-few-public-methods
@@ -177,7 +177,9 @@ class DisablersFinder(ModelVisitor):
 
     def is_rule_disabled(self, diagnostic: Diagnostic) -> bool:
         """
-        Check if given `rule_msg` is disabled. All takes precedence, then line disablers, then block disablers.
+        Check if given `rule_msg` is disabled.
+
+        'All' takes precedence, then line disablers, then block disablers.
         We're checking for both message id and name.
         """
         if not self.any_disabler:

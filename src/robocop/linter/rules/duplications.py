@@ -329,9 +329,9 @@ class DuplicationsChecker(VisitorChecker):
         self.check_duplicates(self.test_cases, self.duplicated_test_case)
         self.check_duplicates(self.keywords, self.duplicated_keyword)
         self.check_duplicates(self.variables, self.duplicated_variable)
-        self.check_duplicates(self.resources, self.duplicated_resource, True)
-        self.check_duplicates(self.metadata, self.duplicated_metadata, True)
-        self.check_duplicates(self.variable_imports, self.duplicated_variables_import, True)
+        self.check_duplicates(self.resources, self.duplicated_resource, underline_whole_line=True)
+        self.check_duplicates(self.metadata, self.duplicated_metadata, underline_whole_line=True)
+        self.check_duplicates(self.variable_imports, self.duplicated_variables_import, underline_whole_line=True)
         self.check_library_duplicates(self.libraries, self.duplicated_library)
 
     def check_duplicates(self, container, rule, underline_whole_line=False) -> None:

@@ -2,8 +2,8 @@
 Formatters are classes used to transform passed Robot Framework code model.
 
 To create your own formatter you need to create file with the same name as your formatter class. Your class
-need to inherit from ``ModelTransformer`` or ``ast.NodeTransformer`` class. Finally put name of your formatter in  # TODO only inherit from Transformer (our class)
-``TRANSFORMERS`` variable in this file.
+need to inherit from ``ModelTransformer`` or ``ast.NodeTransformer`` class. Finally put name of your formatter in
+``FORMATTERS`` variable in this file.
 
 If you don't want to run your formatter by default and only when calling robocop format with --transform YourFormatter
 then add ``ENABLED = False`` class attribute inside.
@@ -14,11 +14,9 @@ from __future__ import annotations
 import copy
 import inspect
 import pathlib
-import sys
 import textwrap
-from collections.abc import Iterable
-from dataclasses import dataclass, field
 from itertools import chain
+from typing import TYPE_CHECKING
 
 try:
     import rich_click as click
@@ -29,10 +27,12 @@ from robot.api.parsing import ModelTransformer
 from robot.errors import DataError
 from robot.utils.importer import Importer
 
-from robocop import errors
 from robocop.formatter.exceptions import ImportFormatterError, InvalidParameterError, InvalidParameterFormatError
 from robocop.formatter.skip import SKIP_OPTIONS, Skip, SkipConfig
 from robocop.formatter.utils import misc
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 FORMATTERS = [
     "AddMissingEnd",
@@ -84,10 +84,8 @@ class FormatConfig:
         self.duplicate_reported = False
 
     def convert_args(self, args):
-        """
-        Convert list of param=value arguments to dictionary.
-        """
-        converted = dict()
+        """Convert list of param=value arguments to dictionary."""
+        converted = {}
         for arg in args:
             try:
                 param, value = arg.split("=", maxsplit=1)
@@ -101,16 +99,13 @@ class FormatConfig:
         return converted
 
     def join_formatter_configs(self, formatter_config: FormatConfig):
-        """
-        Join 2 configurations i.e. from --transform, --load-formatters or --config.
-        """
-        if self.force_include and formatter_config.force_include:
-            if not self.duplicate_reported:
-                click.echo(
-                    f"Duplicated formatter '{self.name}' in the transform option. "
-                    f"It will be run only once with the configuration from the last transform."
-                )
-                self.duplicate_reported = True
+        """Join 2 configurations i.e. from --transform, --load-formatters or --config."""
+        if self.force_include and formatter_config.force_include and not self.duplicate_reported:
+            click.echo(
+                f"Duplicated formatter '{self.name}' in the transform option. "
+                f"It will be run only once with the configuration from the last transform."
+            )
+            self.duplicate_reported = True
         self.is_config_only = self.is_config_only and formatter_config.is_config_only
         self.force_include = self.force_include or formatter_config.force_include
         self.custom_formatter = self.custom_formatter or formatter_config.custom_formatter
@@ -121,9 +116,7 @@ class FormatConfig:
 
 
 class FormatConfigMap:
-    """
-    Collection of all formatters and their configs.
-    """
+    """Collection of all formatters and their configs."""
 
     def __init__(
         self,
@@ -132,7 +125,7 @@ class FormatConfigMap:
         config: list[FormatConfig],
     ):
         self.force_included_only = False
-        self.formatters: dict[str, FormatConfig] = dict()
+        self.formatters: dict[str, FormatConfig] = {}
         for tr in chain(transform, custom_formatters, config):
             self.add_formatter(tr)
 
@@ -149,12 +142,10 @@ class FormatConfigMap:
             name = str(name)
             if name in self.formatters:
                 return self.formatters[name].args
-        return dict()
+        return {}
 
     def formatter_should_be_included(self, name: str) -> bool:
-        """
-        Check whether --transform option was used. If it was, check if formatter name was used with --transform.
-        """
+        """Check whether --transform option was used. If it was, check if formatter name was used with --transform."""
         if not self.force_included_only:
             return True
         return self.formatter_is_force_included(name)
@@ -172,10 +163,12 @@ class FormatConfigMap:
             if default in self.formatters:
                 self.formatters[default].is_config_only = False
             else:
-                self.formatters[default] = FormatConfig(default, False, False, False)
+                self.formatters[default] = FormatConfig(
+                    default, force_include=False, custom_formatter=False, is_config=False
+                )
 
     def order_using_list(self, order: list[str]):
-        temp_formatters: dict[str, FormatConfig] = dict()
+        temp_formatters: dict[str, FormatConfig] = {}
         for name in order:
             if name in self.formatters:
                 temp_formatters[name] = self.formatters[name]
@@ -192,17 +185,6 @@ def convert_transform_config(value: str, param_name: str) -> FormatConfig:
     return FormatConfig(value, force_include=force_included, custom_formatter=custom_formatter, is_config=is_config)
 
 
-class FormatConfigParameter(click.ParamType):
-    """
-    Click parameter that holds the name of the formatter and optional configuration.
-    """
-
-    name = "transform"
-
-    def convert(self, value, param, ctx):
-        return convert_transform_config(value, param.name)
-
-
 class FormatterParameter:
     def __init__(self, name, default_value):
         self.name = name
@@ -215,9 +197,7 @@ class FormatterParameter:
 
 
 class FormatterContainer:
-    """
-    Stub for formatter container class that holds the formatter instance and its metadata.
-    """
+    """Stub for formatter container class that holds the formatter instance and its metadata."""
 
     def __init__(self, instance, argument_names, spec, args):
         self.instance = instance
@@ -250,7 +230,7 @@ class Formatter(ModelTransformer):
     def __init__(self, skip: Skip | None = None):
         self.formatting_config = None  # to make lint happy (we're injecting the configs)
         self.languages = None
-        self.formatters: dict = dict()
+        self.formatters: dict = {}
         self.disablers = None
         self.config_directory = None
         self.skip = skip
@@ -258,7 +238,7 @@ class Formatter(ModelTransformer):
 
 def get_formatter_short_name(name: str):
     """
-     Removes module path or file extension for better printing the errors.
+    Remove module path or file extension for better printing the errors.
 
     Examples:
        ShortName -> ShortName
@@ -270,9 +250,7 @@ def get_formatter_short_name(name: str):
 
 
 def get_absolute_path_to_formatter(name):
-    """
-    If the formatter is not default one, try to get absolute path to formatter to make it easier to import it.
-    """
+    """If the formatter is not default one, try to get absolute path to formatter to make it easier to import it."""
     if pathlib.Path(name).exists():
         return pathlib.Path(name).resolve()
     return name
@@ -280,14 +258,16 @@ def get_absolute_path_to_formatter(name):
 
 def load_formatters_from_module(module):
     classes = inspect.getmembers(module, inspect.isclass)
-    formatters = dict()
-    for name, formatter_class in classes:
-        if issubclass(formatter_class, (Formatter, ModelTransformer)) and formatter_class not in (
+    return {
+        name: formatter_class
+        for name, formatter_class in classes
+        if issubclass(formatter_class, (Formatter, ModelTransformer))
+        and formatter_class
+        not in (
             Formatter,
             ModelTransformer,
-        ):
-            formatters[name] = formatter_class
-    return formatters
+        )
+    }
 
 
 def order_formatters(formatters, module):
@@ -295,7 +275,7 @@ def order_formatters(formatters, module):
     formatters_list = getattr(module, "FORMATTERS", [])
     if not (formatters_list and isinstance(formatters_list, list)):
         return formatters
-    ordered_formatters = dict()
+    ordered_formatters = {}
     for name in formatters_list:
         if name not in formatters:
             raise ImportFormatterError(
@@ -335,8 +315,10 @@ def import_custom_formatter(
         else:
             formatters = load_formatters_from_module(imported)
             formatters = order_formatters(formatters, imported)
-            for name, formatter_class in formatters.items():
-                yield create_formatter_instance(formatter_class, name, formatter_args.get(name, {}), skip_config)
+            for formatter_name, formatter_class in formatters.items():
+                yield create_formatter_instance(
+                    formatter_class, formatter_name, formatter_args.get(formatter_name, {}), skip_config
+                )
     except DataError:
         similar_finder = misc.RecommendationFinder()
         similar = similar_finder.find_similar(short_name, FORMATTERS)
@@ -347,7 +329,7 @@ def import_custom_formatter(
 
 
 def create_formatter_instance(imported_class, short_name, args, skip_config: SkipConfig):
-    spec = IMPORTER._get_arg_spec(imported_class)
+    spec = IMPORTER._get_arg_spec(imported_class)  # noqa: SLF001
     handles_skip = getattr(imported_class, "HANDLES_SKIP", {})
     positional, named, argument_names = resolve_args(short_name, spec, args, skip_config, handles_skip=handles_skip)
     instance = imported_class(*positional, **named)
@@ -380,6 +362,7 @@ def resolve_argument_names(argument_names: list[str], handles_skip):
 def assert_handled_arguments(formatter, args: dict, argument_names):
     """
     Check if provided arguments are handled by given formatter.
+
     Raises InvalidParameterError if arguments does not match.
     """
     for arg in args:
@@ -395,11 +378,13 @@ def assert_handled_arguments(formatter, args: dict, argument_names):
 
 def get_skip_args_from_spec(spec):
     """
+    Retrieve skip-like options from the class signature.
+
     It is possible to override default skip value (such as skip_documentation
     from False to True in AlignKeywordsSection).
     This method iterate over spec and finds such overrides.
     """
-    defaults = dict()
+    defaults = {}
     for arg, value in spec.defaults.items():
         if arg in SKIP_OPTIONS:
             defaults[arg.replace("skip_", "")] = value
@@ -416,8 +401,7 @@ def get_skip_class(spec, skip_args, global_skip: SkipConfig):
 
 def resolve_args(formatter, spec, args, global_skip: SkipConfig, handles_skip):
     """
-    Use class definition to identify which arguments from configuration
-    should be used to invoke it.
+    Use class definition to identify which arguments from configuration should be used to invoke it.
 
     First we're splitting arguments into class arguments and skip arguments
     (those that are handled by Skip class).
@@ -433,9 +417,10 @@ def resolve_args(formatter, spec, args, global_skip: SkipConfig, handles_skip):
         named = dict(named)
         if "skip" in spec_args:
             named["skip"] = get_skip_class(spec, skip_args, global_skip)
-        return positional, named, argument_names
     except ValueError as err:
         raise InvalidParameterError(formatter, f" {err}") from None
+    else:
+        return positional, named, argument_names
 
 
 def can_run_in_robot_version(formatter, overwritten, target_version):
@@ -476,7 +461,7 @@ def load_formatters(
     formatters_config.update_with_defaults(FORMATTERS)
     if not force_order:
         formatters_config.order_using_list(FORMATTERS)
-    for name, formatter_config in formatters_config.formatters.items():
+    for name in formatters_config.formatters:
         if not allow_disabled and not formatters_config.formatter_should_be_included(name):
             continue
         for container in import_formatter(name, formatters_config, skip):

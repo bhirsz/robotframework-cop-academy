@@ -12,9 +12,7 @@ IGNORE_CHARS = {"(", "[", "{", "!", "?"}
 
 
 def cap_string_until_succeed(word: str):
-    """
-    Yield characters from the word and capitalize character until we are able to make char uppercase.
-    """
+    """Yield characters from the word and capitalize character until we are able to make char uppercase."""
     capitalize = True
     for char in word:
         if capitalize:
@@ -112,16 +110,16 @@ class RenameTestCases(Formatter):
                 "replace_pattern",
                 replace_pattern,
                 f"It should be a valid regex expression. Regex error: '{err.msg}'",
-            )
+            ) from None
         self.replace_to = "" if replace_to is None else replace_to
         self.capitalize_each_word = capitalize_each_word
 
     @skip_section_if_disabled
-    def visit_TestCaseSection(self, node):  # noqa
+    def visit_TestCaseSection(self, node):  # noqa: N802
         return self.generic_visit(node)
 
     @skip_if_disabled
-    def visit_TestCaseName(self, node):  # noqa
+    def visit_TestCaseName(self, node):  # noqa: N802
         token = node.get_token(Token.TESTCASE_NAME)
         if token.value:
             if self.capitalize_each_word:

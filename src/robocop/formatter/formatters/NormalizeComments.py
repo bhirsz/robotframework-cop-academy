@@ -48,10 +48,10 @@ class NormalizeComments(Formatter):
     def __init__(self, skip: Skip = None):
         super().__init__(skip=skip)
 
-    def visit_Comment(self, node):  # noqa
+    def visit_Comment(self, node):  # noqa: N802
         return self.handle_comments(node)
 
-    def visit_Statement(self, node):  # noqa
+    def visit_Statement(self, node):  # noqa: N802
         return self.handle_comments(node)
 
     def handle_comments(self, node):

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import typer
@@ -9,14 +8,17 @@ from robot.errors import DataError
 
 from robocop.config import Config, ConfigManager, RuleMatcher
 from robocop.linter import exceptions, reports, rules
-from robocop.linter.diagnostics import Diagnostic
+from robocop.linter.reports import save_reports_result_to_cache
 from robocop.linter.rules import Rule
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from robot.parsing import File
 
+    from robocop.linter.diagnostics import Diagnostic
     from robocop.linter.rules import BaseChecker, Rule  # TODO: Check if circular import will not happen
 
 
@@ -56,7 +58,7 @@ class RobocopLinter:
 
     def any_rule_enabled(self, checker: type[BaseChecker], rule_matcher: RuleMatcher) -> bool:
         any_enabled = False
-        for name, rule in checker.rules.items():
+        for rule in checker.rules.values():
             rule.enabled = rule_matcher.is_rule_enabled(rule)
             if rule.enabled:
                 any_enabled = True
@@ -146,9 +148,11 @@ class RobocopLinter:
         ``rule_name``.
         """
         for config in self.config.linter.configure:
-            # TODO: applying configuration change original rule/report. We should have way of restoring it for multiple configurations (or store separately)
+            # TODO: applying configuration change original rule/report. We should have way of restoring it for
+            #  multiple configurations (or store separately)
             # TODO: should be validated in Config class, here only applying values
-            # TODO: there could be rules and reports containers that accept config and apply, instead of doing it in the runner
+            # TODO: there could be rules and reports containers that accept config and apply,
+            #  instead of doing it in the runner
             try:  # TODO: replace severity values
                 name, param_and_value = config.split(".", maxsplit=1)
                 param, value = param_and_value.split("=", maxsplit=1)

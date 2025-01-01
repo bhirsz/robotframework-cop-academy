@@ -1,5 +1,6 @@
 from enum import Enum
 from pathlib import Path
+from typing import NoReturn
 
 import robocop.linter.reports
 from robocop.config import Config
@@ -12,7 +13,7 @@ class OutputFormat(Enum):
     GROUPED = "grouped"
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value) -> NoReturn:
         choices = [choice.value for choice in cls.__members__.values()]
         raise ValueError(f"{value} is not a valid {cls.__name__}, please choose from {choices}") from None
 
@@ -69,6 +70,8 @@ class PrintIssuesReport(robocop.linter.reports.Report):
 
     def print_diagnostics_grouped(self) -> None:
         """
+        Print diagnostics in grouped format.
+
         Example output:
 
             tests/suite.robot:

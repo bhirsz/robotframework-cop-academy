@@ -112,10 +112,7 @@ class NestedForLoopRule(Rule):
 
 
 class IfCanBeUsedRule(Rule):
-    """
-    Starting from Robot Framework 4.0 ``Run Keyword If`` and ``Run Keyword Unless`` can be replaced by IF block.
-
-    """
+    """Starting from Robot Framework 4.0 ``Run Keyword If`` and ``Run Keyword Unless`` can be replaced by IF block."""
 
     name = "if-can-be-used"
     rule_id = "0908"
@@ -152,7 +149,10 @@ class InconsistentAssignmentRule(Rule):
 
     name = "inconsistent-assignment"
     rule_id = "0909"
-    message = "The assignment sign is not consistent within the file. Expected '{expected_sign}' but got '{actual_sign}' instead"
+    message = (
+        "The assignment sign is not consistent within the file. "
+        "Expected '{expected_sign}' but got '{actual_sign}' instead"
+    )
     severity = RuleSeverity.WARNING
     parameters = [
         RuleParam(
@@ -194,7 +194,10 @@ class InconsistentAssignmentInVariablesRule(Rule):
 
     name = "inconsistent-assignment-in-variables"
     rule_id = "0910"
-    message = "The assignment sign is not consistent inside the variables section. Expected '{expected_sign}' but got '{actual_sign}' instead"
+    message = (
+        "The assignment sign is not consistent inside the variables section. "
+        "Expected '{expected_sign}' but got '{actual_sign}' instead"
+    )
     severity = RuleSeverity.WARNING
     parameters = [
         RuleParam(
@@ -270,10 +273,7 @@ class EmptyVariableRule(Rule):
 
 
 class CanBeResourceFileRule(Rule):
-    """
-    If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension.
-
-    """
+    """If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension."""
 
     name = "can-be-resource-file"
     rule_id = "0913"
@@ -717,7 +717,10 @@ class TestCaseSectionOutOfOrderRule(Rule):
 
     name = "test-case-section-out-of-order"
     rule_id = "0927"
-    message = "'{section_name}' is in wrong place of Test Case. Recommended order of elements in Test Cases: {recommended_order}"
+    message = (
+        "'{section_name}' is in wrong place of Test Case. "
+        "Recommended order of elements in Test Cases: {recommended_order}"
+    )
     severity = RuleSeverity.WARNING
     parameters = [
         RuleParam(
@@ -1284,7 +1287,7 @@ class SectionVariablesCollector(ast.NodeVisitor):
         var_token = node.get_token(Token.VARIABLE)
         variable_match = search_variable(var_token.value, ignore_errors=True)
         normalized = normalize_robot_name(variable_match.base)
-        self.section_variables[normalized] = CachedVariable(variable_match.name, var_token, False)
+        self.section_variables[normalized] = CachedVariable(variable_match.name, var_token, is_used=False)
 
 
 class UnusedVariablesChecker(VisitorChecker):
@@ -1368,7 +1371,7 @@ class UnusedVariablesChecker(VisitorChecker):
         )
 
     def add_argument(self, argument, normalized_name, token) -> None:
-        self.arguments[normalized_name] = CachedVariable(argument, token, False)
+        self.arguments[normalized_name] = CachedVariable(argument, token, is_used=False)
 
     def parse_arguments(self, node) -> None:
         """Store arguments from [Arguments]. Ignore @{args} and &{kwargs}, strip default values."""
@@ -1398,7 +1401,7 @@ class UnusedVariablesChecker(VisitorChecker):
 
     def visit_If(self, node):  # noqa: N802
         if node.header.errors:
-            return node
+            return
         for token in node.header.get_tokens(Token.ARGUMENT):
             self.find_not_nested_variable(token.value, is_var=False)
         self.variables.append({})
@@ -1461,7 +1464,7 @@ class UnusedVariablesChecker(VisitorChecker):
 
     def visit_While(self, node):  # noqa: N802
         if node.header.errors:
-            return node
+            return
         self.in_loop = True
         self.used_in_scope = set()
         for token in node.header.get_tokens(Token.ARGUMENT):
@@ -1475,7 +1478,7 @@ class UnusedVariablesChecker(VisitorChecker):
 
     def visit_For(self, node):  # noqa: N802
         if getattr(node.header, "errors", None):
-            return node
+            return
         self.in_loop = True
         self.used_in_scope = set()
         self.ignore_overwriting = True
@@ -1499,7 +1502,7 @@ class UnusedVariablesChecker(VisitorChecker):
 
     def visit_Try(self, node):  # noqa: N802
         if node.errors or node.header.errors:
-            return node
+            return
         self.variables.append({})
         if self.try_assign(node) is not None:
             error_var = node.header.get_token(Token.VARIABLE)
@@ -1561,16 +1564,16 @@ class UnusedVariablesChecker(VisitorChecker):
                     base_name = self.search_by_removing_attr_access(normalized, variable_scope)
                     if base_name is not None:
                         variable_scope[base_name].is_used = True
-                        self.variables[-1][normalized] = CachedVariable(variable_match.name, token, True)
+                        self.variables[-1][normalized] = CachedVariable(variable_match.name, token, is_used=True)
                         return
         if self.in_loop:
             variable = CachedVariable(variable_match.name, token, is_used)
         else:
-            variable = CachedVariable(variable_match.name, token, False)
+            variable = CachedVariable(variable_match.name, token, is_used=False)
         self.variables[-1][normalized] = variable
 
     def find_not_nested_variable(self, value, is_var) -> None:
-        """
+        r"""
         Find and process not nested variable.
 
         Search `value` string until there is ${variable} without other variables inside. Unescaped escaped syntax

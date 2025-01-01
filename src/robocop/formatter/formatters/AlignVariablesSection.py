@@ -46,7 +46,9 @@ class AlignVariablesSection(Formatter):
     To align all columns set ``up_to_column`` to 0.
     """
 
-    def __init__(self, up_to_column: int = 2, skip_types: str = "", min_width: int = None, fixed_width: int = None):
+    def __init__(
+        self, up_to_column: int = 2, skip_types: str = "", min_width: int | None = None, fixed_width: int | None = None
+    ):
         super().__init__()
         self.up_to_column = up_to_column - 1
         self.min_width = min_width
@@ -75,7 +77,7 @@ class AlignVariablesSection(Formatter):
         return node.name[0] not in self.skip_types
 
     @skip_section_if_disabled
-    def visit_VariableSection(self, node):  # noqa
+    def visit_VariableSection(self, node):  # noqa: N802
         statements = []
         for child in node.body:
             if self.disablers.is_node_disabled("AlignVariablesSection", child):

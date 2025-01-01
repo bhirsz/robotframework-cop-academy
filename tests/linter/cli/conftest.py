@@ -16,5 +16,4 @@ def empty_linter() -> RobocopLinter:
 @pytest.fixture(scope="session")
 def loaded_linter() -> RobocopLinter:
     config_manager = ConfigManager()
-    runner = RobocopLinter(config_manager)
-    return runner
+    return RobocopLinter(config_manager)

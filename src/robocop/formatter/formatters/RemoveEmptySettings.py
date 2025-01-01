@@ -57,10 +57,10 @@ class RemoveEmptySettings(Formatter):
         }
 
     @skip_section_if_disabled
-    def visit_Section(self, node):  # noqa
+    def visit_Section(self, node):  # noqa: N802
         return self.generic_visit(node)
 
-    def visit_Statement(self, node):  # noqa
+    def visit_Statement(self, node):  # noqa: N802
         # when not setting type or setting type but not empty
         if node.type not in Token.SETTING_TOKENS or len(node.data_tokens) != 1:
             return node
@@ -85,7 +85,7 @@ class RemoveEmptySettings(Formatter):
             ]
         return node
 
-    def visit_File(self, node):  # noqa
+    def visit_File(self, node):  # noqa: N802
         if self.work_mode == "overwrite_ok":
             self.overwritten_settings = self.find_overwritten_settings(node)
         self.generic_visit(node)
@@ -106,17 +106,17 @@ class FindSuiteSettings(ast.NodeVisitor):
         if len(node.data_tokens) != 1:
             self.suite_settings.add(overwritten_type)
 
-    def visit_TestSetup(self, node):  # noqa
+    def visit_TestSetup(self, node):  # noqa: N802
         self.check_setting(node, Token.SETUP)
 
-    def visit_TestTeardown(self, node):  # noqa
+    def visit_TestTeardown(self, node):  # noqa: N802
         self.check_setting(node, Token.TEARDOWN)
 
-    def visit_TestTemplate(self, node):  # noqa
+    def visit_TestTemplate(self, node):  # noqa: N802
         self.check_setting(node, Token.TEMPLATE)
 
-    def visit_TestTimeout(self, node):  # noqa
+    def visit_TestTimeout(self, node):  # noqa: N802
         self.check_setting(node, Token.TIMEOUT)
 
-    def visit_DefaultTags(self, node):  # noqa
+    def visit_DefaultTags(self, node):  # noqa: N802
         self.check_setting(node, Token.TAGS)

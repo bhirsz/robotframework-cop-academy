@@ -347,7 +347,8 @@ class TestListingRules:
     #         "Visit https://robocop.readthedocs.io/en/stable/rules_list.html page for detailed documentation.\n"
     #     )
 
-    # def test_list_configurables_filtered(self, empty_linter, msg_0101_checker_config, msg_0102_0204_checker_config, capsys):  # TODO
+    # def test_list_configurables_filtered(self, empty_linter, msg_0101_checker_config, msg_0102_0204_checker_config,
+    # capsys):  # TODO
     #     empty_linter.config.list_configurables = "another-message"
     #     add_empty_checker(empty_linter, msg_0102_0204_checker_config, exclude=True)
     #     add_empty_checker(empty_linter, msg_0101_checker_config)
@@ -362,7 +363,8 @@ class TestListingRules:
     #     assert all(msg not in out for msg in not_exp_msg)
     #     assert exp_msg in out
 
-    # def test_list_configurables_mixed(self, empty_linter, msg_0101_checker, msg_0102_0204_checker_config, capsys):  # TODO
+    # def test_list_configurables_mixed(self, empty_linter, msg_0101_checker, msg_0102_0204_checker_config,
+    # capsys):  # TODO
     #     empty_linter.config.list_configurables = robocop.config.translate_pattern("*")
     #     add_empty_checker(empty_linter, msg_0102_0204_checker_config, exclude=True)
     #     add_empty_checker(empty_linter, msg_0101_checker)
@@ -377,7 +379,8 @@ class TestListingRules:
     #     assert not_exp_msg not in out
     #     assert all(msg in out for msg in exp_msg)
 
-    # def test_list_configurables_no_config(self, empty_linter, msg_0101_checker_config, msg_0102_0204_checker_config, capsys):  # TODO
+    # def test_list_configurables_no_config(self, empty_linter, msg_0101_checker_config, msg_0102_0204_checker_config,
+    # capsys):  # TODO
     #     empty_linter.config.list_configurables = robocop.config.translate_pattern("*")
     #     add_empty_checker(empty_linter, msg_0102_0204_checker_config, exclude=True)
     #     add_empty_checker(empty_linter, msg_0101_checker_config)

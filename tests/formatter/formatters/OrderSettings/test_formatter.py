@@ -14,7 +14,7 @@ class TestOrderSettings(FormatterAcceptanceTest):
         self.compare(source="test.robot", expected=expected)
 
     @pytest.mark.parametrize(
-        "keyword_before, keyword_after, test_before, test_after, expected",
+        ("keyword_before", "keyword_after", "test_before", "test_after", "expected"),
         [
             (
                 "documentation,tags,arguments,timeout,setup",

@@ -7,7 +7,7 @@ from robocop.linter.diagnostics import Diagnostic
 
 
 class JsonReport(robocop.linter.reports.Report):
-    """
+    r"""
     **Report name**: ``json_report``
 
     Report that returns a list of found issues in a JSON format. The output file will be generated
@@ -25,7 +25,7 @@ class JsonReport(robocop.linter.reports.Report):
 
         [
             {
-                "source": "C:\\robot_tests\\keywords.robot",
+                "source": "C:\robot_tests\keywords.robot",
                 "line": 1,
                 "end_line": 1,
                 "column": 1,

@@ -49,19 +49,19 @@ class AddMissingEnd(Formatter):
         return (node, *outside)
 
     @skip_section_if_disabled
-    def visit_Section(self, node):  # noqa
+    def visit_Section(self, node):  # noqa: N802
         return self.generic_visit(node)
 
     @skip_if_disabled
-    def visit_For(self, node):  # noqa
+    def visit_For(self, node):  # noqa: N802
         return self.fix_block(node, Token.FOR)
 
     @skip_if_disabled
-    def visit_While(self, node):  # noqa
+    def visit_While(self, node):  # noqa: N802
         return self.fix_block(node, Token.WHILE)
 
     @skip_if_disabled
-    def visit_Try(self, node):  # noqa
+    def visit_Try(self, node):  # noqa: N802
         self.generic_visit(node)
         if node.type != Token.TRY:
             return node
@@ -78,7 +78,7 @@ class AddMissingEnd(Formatter):
         return (node, *outside)
 
     @skip_if_disabled
-    def visit_If(self, node):  # noqa
+    def visit_If(self, node):  # noqa: N802
         self.generic_visit(node)
         if node.type != Token.IF:
             return node

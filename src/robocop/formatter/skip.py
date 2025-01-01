@@ -50,7 +50,7 @@ class SkipConfig:
         sections: list[list] | None,
         keyword_call: list[list] | None,
         keyword_call_pattern: list[list] | None,
-    ):
+    ) -> SkipConfig:
         """
         Create instance of class from list-type arguments.
 
@@ -66,16 +66,16 @@ class SkipConfig:
             keyword_call_pattern = set(keyword_call_pattern)
         return cls(skip=skip, sections=sections, keyword_call=keyword_call, keyword_call_pattern=keyword_call_pattern)
 
-    def overwrite(self, other: Self) -> None:  # TODO refactor with config to not duplicate overwrite
+    def overwrite(self, other: SkipConfig) -> None:  # TODO refactor with config to not duplicate overwrite
         """
         Overwrite options loaded from configuration or default options with config from cli.
 
         If other has value set to None, it was never set and can be ignored.
         """
-        for field in fields(other):
-            value = getattr(other, field.name)
+        for skip_field in fields(other):
+            value = getattr(other, skip_field.name)
             if value is not None:
-                setattr(self, field.name, value)
+                setattr(self, skip_field.name, value)
 
     def update_with_str_config(self, **kwargs):
         for name, value in kwargs.items():
@@ -123,10 +123,7 @@ class Skip:
         normalized = normalize_name(node.keyword)
         if normalized in self.keyword_call_names:
             return True
-        for pattern in self.keyword_call_pattern:
-            if pattern.search(node.keyword):
-                return True
-        return False
+        return any(pattern.search(node.keyword) for pattern in self.keyword_call_pattern)
 
     def setting(self, name):
         if not self.skip_settings:

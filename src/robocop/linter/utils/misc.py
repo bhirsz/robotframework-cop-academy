@@ -31,16 +31,20 @@ if TYPE_CHECKING:
     from robot.parsing.model import File, Keyword, Section, VariableSection
     from robot.parsing.model.statements import KeywordCall, Node, TestTemplate, Var
 
+    from robocop.linter.diagnostics import Diagnostic
+
 ROBOT_VERSION = Version(RF_VERSION)
 ROBOT_WITH_LANG = Version("6.0")
 ROBOCOP_RULES_URL = "https://robocop.readthedocs.io/en/{version}/rules_list.html"
 
 
-ReturnClasses = namedtuple("ReturnClasses", ["return_class", "return_setting_class"])
+ReturnClasses = namedtuple("ReturnClasses", ["return_class", "return_setting_class"])  # noqa: PYI024
 
 
 def get_return_classes() -> ReturnClasses:
     """
+    Import return classes depending on the Robot version and return it as mapping.
+
     Robot Framework change model names for [Return] and RETURN depending on the RF version. To achieve backward
     compatibility we need to define mapping.
     """
@@ -108,24 +112,24 @@ def token_col(node: type[Node], *token_type) -> int:
     return token.col_offset + 1
 
 
-def issues_to_lsp_diagnostic(issues: list[Message]) -> list[dict]:
+def issues_to_lsp_diagnostic(issues: list[Diagnostic]) -> list[dict]:
     return [
         {
             "range": {
                 "start": {
-                    "line": max(0, issue.line - 1),
-                    "character": max(0, issue.col - 1),
+                    "line": max(0, issue.range.start.line - 1),
+                    "character": max(0, issue.range.start.line - 1),
                 },
                 "end": {
-                    "line": max(0, issue.end_line - 1),
-                    "character": max(0, issue.end_col - 1),
+                    "line": max(0, issue.range.end.line - 1),
+                    "character": max(0, issue.range.end.character - 1),
                 },
             },
             "severity": issue.severity.diag_severity(),
-            "code": issue.rule_id,
+            "code": issue.rule.rule_id,
             "source": "robocop",
-            "message": issue.desc,
-            "codeDescription": {"href": f"{ROBOCOP_RULES_URL.format(version=__version__)}#{issue.name}"},
+            "message": issue.rule.message,
+            "codeDescription": {"href": f"{ROBOCOP_RULES_URL.format(version=__version__)}#{issue.rule.name}"},
         }
         for issue in issues
     ]
@@ -212,6 +216,7 @@ class RecommendationFinder:
     def _calculate_cutoff(string: str, min_cutoff: float = 0.5, max_cutoff: float = 0.85, step: float = 0.03) -> float:
         """
         Calculate cutoff for difflib string matching.
+
         The longer the string the bigger required cutoff.
         """
         cutoff = min_cutoff + len(string) * step
@@ -220,7 +225,9 @@ class RecommendationFinder:
     @staticmethod
     def normalize(name: str) -> str:
         """
-        Return tuple where first element is string created from sorted words in name,
+        Normalize name.
+
+        Returns tuple where first element is string created from sorted words in name,
         and second element is name without `-` and `_`.
         """
         norm = re.split("[-_ ]+", name)
@@ -233,6 +240,8 @@ class RecommendationFinder:
 
     def get_normalized_candidates(self, candidates: list[str] | dict) -> defaultdict[str, list]:
         """
+        Find all possible variations of the name after normalization.
+
         Thanks for normalizing and sorting we can find cases like this-is, thisis, this-is1 instead of is-this.
         Normalized names form dictionary that point to original names - we're using list because several names can
         have one common normalized name.

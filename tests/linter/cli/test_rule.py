@@ -38,7 +38,7 @@ class TestDescribeRule:
         with patch("robocop.cli.RobocopLinter", MagicMock(return_value=loaded_linter)):
             describe_rule("line-too-long")
         out, _ = capsys.readouterr()
-        expected = textwrap.dedent("""
+        expected = textwrap.dedent(r"""
         Rule: line-too-long (LEN08)
         Message: Line is too long ({line_length}/{allowed_length})
         Severity: W
@@ -55,7 +55,7 @@ class TestDescribeRule:
             line_length = 120
                 type: int
                 info: number of characters allowed in line
-            ignore_pattern = re.compile('https?://\\\\S+')
+            ignore_pattern = re.compile('https?://\\S+')
                 type: pattern_type
                 info: ignore lines that contain configured pattern
 
