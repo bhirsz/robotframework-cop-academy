@@ -58,7 +58,7 @@ class SmartSortKeywords(Formatter):
         self.iou = ignore_other_underscore
 
     @skip_section_if_disabled
-    def visit_KeywordSection(self, node):  # noqa
+    def visit_KeywordSection(self, node):  # noqa: N802
         before, after = self.leave_only_keywords(node)
         empty_lines = self.pop_empty_lines(node)
         node.body.sort(key=self.sort_function)

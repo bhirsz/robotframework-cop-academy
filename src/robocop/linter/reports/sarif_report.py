@@ -56,10 +56,10 @@ class SarifReport(robocop.linter.reports.Report):
             "id": rule.rule_id,
             "name": rule.name,
             "helpUri": f"{ROBOCOP_RULES_URL.format(version=__version__)}#{rule.name}",
-            "shortDescription": {"text": rule.msg},
-            "fullDescription": {"text": rule.docs},
+            "shortDescription": {"text": rule.message},
+            "fullDescription": {"text": rule.__doc__},
             "defaultConfiguration": {"level": self.map_severity_to_level(rule.default_severity)},
-            "help": {"text": rule.docs, "markdown": rule.docs},
+            "help": {"text": rule.__doc__, "markdown": rule.__doc__},
         }
 
     def add_message(self, message: Diagnostic) -> None:

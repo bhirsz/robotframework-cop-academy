@@ -3,19 +3,21 @@ from __future__ import annotations
 import os
 import sys
 from difflib import unified_diff
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from rich import console
 from robot.api import get_model
 from robot.errors import DataError
 
-from robocop.config import Config, ConfigManager
 from robocop.formatter import disablers  # TODO compare robocop vs robotidy disablers, if we can merge something
 from robocop.formatter.utils import misc
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from robot.parsing import File
+
+    from robocop.config import Config, ConfigManager
 
 
 console = console.Console()
@@ -75,9 +77,7 @@ class RobocopFormatter:
         return self.formatting_result(all_files, changed_files, skipped_files, stdin)
 
     def formatting_result(self, all_files: int, changed_files: int, skipped_files: int, stdin: bool) -> int:
-        """
-        Print formatting summary and return status code.
-        """
+        """Print formatting summary and return status code."""
         if not stdin:
             all_files = all_files - changed_files - skipped_files
             all_files_plurar = "" if all_files == 1 else "s"
@@ -153,8 +153,8 @@ class RobocopFormatter:
     def output_diff(self, path: Path, old_model: misc.StatementLinesCollector, new_model: misc.StatementLinesCollector):
         if not self.config.formatter.show_diff:
             return
-        old = [l + "\n" for l in old_model.text.splitlines()]
-        new = [l + "\n" for l in new_model.text.splitlines()]
+        old = [line + "\n" for line in old_model.text.splitlines()]
+        new = [line + "\n" for line in new_model.text.splitlines()]
         lines = list(unified_diff(old, new, fromfile=f"{path}\tbefore", tofile=f"{path}\tafter"))
         if not lines:
             return

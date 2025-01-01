@@ -53,7 +53,10 @@ class TagWithOrAndRule(Rule):
 
     name = "tag-with-or-and"
     rule_id = "0602"
-    message = "Tag '{tag}' with reserved word OR/AND. Hint: make sure to include this tag using lowercase name to avoid issues"
+    message = (
+        "Tag '{tag}' with reserved word OR/AND. "
+        "Hint: make sure to include this tag using lowercase name to avoid issues"
+    )
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
 
@@ -227,7 +230,10 @@ class CouldBeKeywordTagsRule(Rule):
 
     name = "could-be-keyword-tags"
     rule_id = "0610"
-    message = "All keywords in suite share these tags: '{tags}'. You can define them in 'Keyword Tags' in suite settings instead"
+    message = (
+        "All keywords in suite share these tags: '{tags}'. "
+        "You can define them in 'Keyword Tags' in suite settings instead"
+    )
     severity = RuleSeverity.INFO
     version = ">=6"
     added_in_version = "3.3.0"

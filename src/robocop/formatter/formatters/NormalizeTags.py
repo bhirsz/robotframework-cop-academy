@@ -9,6 +9,7 @@ from robocop.formatter.utils import variable_matcher
 class NormalizeTags(Formatter):
     """
     Normalize tag names by normalizing case and removing duplicates.
+
     Example usage:
 
     ```
@@ -52,16 +53,16 @@ class NormalizeTags(Formatter):
             )
 
     @skip_section_if_disabled
-    def visit_Section(self, node):  # noqa
+    def visit_Section(self, node):  # noqa: N802
         return self.generic_visit(node)
 
-    def visit_Tags(self, node):  # noqa
+    def visit_Tags(self, node):  # noqa: N802
         return self.normalize_tags(node, indent=True)
 
-    def visit_DefaultTags(self, node):  # noqa
+    def visit_DefaultTags(self, node):  # noqa: N802
         return self.normalize_tags(node)
 
-    visit_TestTags = visit_ForceTags = visit_DefaultTags
+    visit_TestTags = visit_ForceTags = visit_DefaultTags  # noqa: N815
 
     def normalize_tags(self, node, indent=False):
         if self.disablers.is_node_disabled("NormalizeTags", node, full_match=False):

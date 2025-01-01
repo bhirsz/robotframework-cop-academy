@@ -45,7 +45,9 @@ class FileType(Enum):
 
 class FileTypeChecker(ast.NodeVisitor):
     """
-    Check if file contains import statements. If the import is in list of files to be scanned, update its type
+    Check if file contains import statements.
+
+    If the import is in list of files to be scanned, update its type
     from GENERAL to RESOURCE.
     """
 
@@ -56,7 +58,9 @@ class FileTypeChecker(ast.NodeVisitor):
 
     def visit_ResourceImport(self, node: ResourceImport) -> None:  # noqa: N802
         """
-        Check all imports in scanned file. If one of our scanned file is imported somewhere else
+        Check all imports in scanned file.
+
+        If one of our scanned file is imported somewhere else
         it means this file is resource type
         """
         path_normalized = normalize_robot_path(node.name, Path(self.source).parent, self.exec_dir)

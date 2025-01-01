@@ -87,7 +87,7 @@ class RuleAcceptance:
         test_on_version: str | list[str] | None = None,
         issue_format: str = "default",
         language: list[str] | None = None,
-        deprecated: bool = False,
+        # deprecated: bool = False, TODO
         **kwargs,
     ):
         if not self.enabled_in_version(test_on_version):

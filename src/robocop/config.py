@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import re
-from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -31,7 +29,8 @@ DEFAULT_EXCLUDE = frozenset((".direnv", ".eggs", ".git", ".svn", ".hg", ".nox", 
 DEFAULT_ISSUE_FORMAT = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
 if TYPE_CHECKING:
-    import pathspec
+    import re
+    from collections.abc import Generator
 
 
 class RuleMatcher:
@@ -73,10 +72,10 @@ class ConfigContainer:
 
         If other has value set to None, it was never set and can be ignored.
         """
-        for field in dataclasses.fields(other):
-            value = getattr(other, field.name)
+        for config_field in dataclasses.fields(other):
+            value = getattr(other, config_field.name)
             if value is not None:
-                setattr(self, field.name, value)
+                setattr(self, config_field.name, value)
 
 
 @dataclass
@@ -275,13 +274,8 @@ class FormatterConfig:
 
         Custom formatters are put last.
         """
-        selected = []
-        for formatter in formatters.FORMATTERS:
-            if formatter in self.select:
-                selected.append(formatter)
-        for formatter in self.select:
-            if formatter not in selected:
-                selected.append(formatter)
+        selected = [formatter for formatter in formatters.FORMATTERS if formatter in self.select]
+        selected.extend([formatter for formatter in self.select if formatter not in selected])
         return selected
 
     def _parse_configure(self, configure: str) -> tuple[str, str, str]:
@@ -344,10 +338,7 @@ class FileFiltersOptions(ConfigContainer):
         include_paths = self.include
         if self.extend_include:
             include_paths.extend(self.extend_include)
-        for pattern in include_paths:
-            if path.match(pattern):
-                return True
-        return False
+        return any(path.match(pattern) for pattern in include_paths)
 
 
 @dataclass
@@ -364,7 +355,9 @@ class Config:
     @classmethod
     def from_toml(cls, config: dict, config_path: Path) -> Config:
         """
-        Load configuration from toml dict. If there is parent configuration, use it to overwrite loaded configuration.
+        Load configuration from toml dict.
+
+        If there is parent configuration, use it to overwrite loaded configuration.
         """
         # TODO: validate all key and types
         parsed_config = {"config_source": str(config_path)}
@@ -381,24 +374,29 @@ class Config:
     def overwrite_from_config(self, overwrite_config: Config | None) -> None:
         if not overwrite_config:
             return
-        for field in dataclasses.fields(overwrite_config):
-            if field.name in ("linter", "formatter", "file_filters", "config_source"):  # TODO Use field metadata maybe
+        for config_field in dataclasses.fields(overwrite_config):
+            if config_field.name in (
+                "linter",
+                "formatter",
+                "file_filters",
+                "config_source",
+            ):  # TODO Use field metadata maybe
                 continue
-            value = getattr(overwrite_config, field.name)
+            value = getattr(overwrite_config, config_field.name)
             if value:
-                setattr(self, field.name, value)
+                setattr(self, config_field.name, value)
         if overwrite_config.linter:
-            for field in dataclasses.fields(overwrite_config.linter):
-                value = getattr(overwrite_config.linter, field.name)
+            for config_field in dataclasses.fields(overwrite_config.linter):
+                value = getattr(overwrite_config.linter, config_field.name)
                 if value:
-                    setattr(self.linter, field.name, value)
+                    setattr(self.linter, config_field.name, value)
         if overwrite_config.formatter:
-            for field in dataclasses.fields(overwrite_config.formatter):
-                if field.name in ("whitespace_config", "skip_config") or field.name.startswith("_"):
+            for config_field in dataclasses.fields(overwrite_config.formatter):
+                if config_field.name in ("whitespace_config", "skip_config") or config_field.name.startswith("_"):
                     continue
-                value = getattr(overwrite_config.formatter, field.name)
+                value = getattr(overwrite_config.formatter, config_field.name)
                 if value:
-                    setattr(self.formatter, field.name, value)
+                    setattr(self.formatter, config_field.name, value)
             self.formatter.whitespace_config.overwrite(overwrite_config.formatter.whitespace_config)
             self.formatter.skip_config.overwrite(overwrite_config.formatter.skip_config)
             self.formatter.language = self.language  # TODO
@@ -445,14 +443,14 @@ class GitIgnoreResolver:
         if path.is_file():
             path = path.parent
         gitignores = []
-        for path in [path, *path.parents]:
-            if path in self.cached_ignores:
-                gitignores.append(self.cached_ignores[path])
-            elif (gitignore_path := path / ".gitignore").is_file():
+        for parent_path in [path, *path.parents]:
+            if parent_path in self.cached_ignores:
+                gitignores.append(self.cached_ignores[parent_path])
+            elif (gitignore_path := parent_path / ".gitignore").is_file():
                 gitignore = self.read_gitignore(gitignore_path)
-                self.cached_ignores[path] = (path, gitignore)
-                gitignores.append((path, gitignore))
-            if (path / ".git").is_dir():
+                self.cached_ignores[parent_path] = (parent_path, gitignore)
+                gitignores.append((parent_path, gitignore))
+            if (parent_path / ".git").is_dir():
                 break
         return gitignores
 
@@ -468,9 +466,9 @@ class ConfigManager:
         self,
         sources: list[str] | None = None,
         config: Path | None = None,
-        root: str | None = None,
+        root: str | None = None,  # noqa: ARG002  TODO
         ignore_git_dir: bool = False,
-        skip_gitignore: bool = False,
+        skip_gitignore: bool = False,  # noqa: ARG002  TODO
         overwrite_config: Config | None = None,
     ):
         """
@@ -506,8 +504,7 @@ class ConfigManager:
             sources = self.sources if self.sources else self.default_config.sources
             ignore_file_filters = bool(sources)
             self.resolve_paths(sources, gitignores=None, ignore_file_filters=ignore_file_filters)
-        for path, config in self._paths.items():
-            yield path, config
+        yield from self._paths.items()
 
     def get_default_config(self, config_path: Path | None) -> Config:
         """Get default config either from --config option or from the cli."""
@@ -521,9 +518,7 @@ class ConfigManager:
         return config
 
     def find_closest_config(self, source: Path) -> Config:
-        """
-        Look in the directory and its parents for the closest valid configuration file.
-        """
+        """Look in the directory and its parents for the closest valid configuration file."""
         # we always look for configuration in parent directory, unless we hit the top already
         if (self.ignore_git_dir or not (source / ".git").is_dir()) and source.parents:
             source = source.parent

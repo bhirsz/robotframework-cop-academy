@@ -71,7 +71,7 @@ def overwrite_config() -> Config:
 def get_sources_and_configs(config_dir: Path, **kwargs) -> dict[Path, Config]:
     with working_directory(config_dir):
         config_manager = ConfigManager(**kwargs)
-        return {path: config for path, config in config_manager.paths}
+        return dict(config_manager.paths)
 
 
 class TestConfigFinder:

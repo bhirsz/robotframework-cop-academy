@@ -69,7 +69,8 @@ class TestAlignKeywordsSection(FormatterAcceptanceTest):
             expected="skip_settings.robot",
             configure=[f"{self.FORMATTER_NAME}.skip_settings=True"],
         )
-        # self.compare(source="settings.robot", expected="skip_settings.robot", config=" --skip-settings") TODO implement global skip options
+        #  TODO implement global skip options
+        # self.compare(source="settings.robot", expected="skip_settings.robot", config=" --skip-settings")
 
     def test_compact_overflow_first_line(self):
         configure = [

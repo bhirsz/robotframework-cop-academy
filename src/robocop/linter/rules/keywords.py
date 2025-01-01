@@ -62,7 +62,8 @@ class NotAllowedKeywordRule(Rule):
 
     For example::
 
-        > robocop -i not-allowed-keyword -c not-allowed-keyword:keywords:click_using_javascript  # TODO: update all examples
+        # TODO: update all examples
+        > robocop -i not-allowed-keyword -c not-allowed-keyword:keywords:click_using_javascript
 
         *** Keywords ***
         Keyword With Obsolete Implementation

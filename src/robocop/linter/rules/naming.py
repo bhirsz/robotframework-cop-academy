@@ -467,7 +467,7 @@ class BddWithoutKeywordCallRule(Rule):
 
 class DeprecatedStatementRule(Rule):
     """
-    This rule detects any piece of code that is marked as deprecated but still works in RF.
+    Detects any piece of code that is marked as deprecated but still works in RF.
 
     For example, ``Run Keyword`` and ``Continue For Loop`` keywords or ``[Return]`` setting.
 
@@ -527,7 +527,10 @@ class DeprecatedWithNameRule(Rule):
 
     name = "deprecated-with-name"
     rule_id = "0321"
-    message = "'WITH NAME' alias marker is deprecated since Robot Framework 6.0 version and will be removed in the future release. Use 'AS' instead"
+    message = (
+        "'WITH NAME' alias marker is deprecated since Robot Framework 6.0 version and will be removed in the "
+        "future release. Use 'AS' instead"
+    )
     severity = RuleSeverity.WARNING
     version = ">=6.0"
     added_in_version = "2.5.0"
@@ -542,7 +545,10 @@ class DeprecatedSingularHeaderRule(Rule):
 
     name = "deprecated-singular-header"
     rule_id = "0322"
-    message = "'{singular_header}' singular header form is deprecated since RF 6.0 and will be removed in the future releases. Use '{plural_header}' instead"
+    message = (
+        "'{singular_header}' singular header form is deprecated since RF 6.0 and will be removed in the future "
+        "releases. Use '{plural_header}' instead"
+    )
     severity = RuleSeverity.WARNING
     version = ">=6.0"
     added_in_version = "2.6.0"
@@ -608,7 +614,10 @@ class InvalidSectionRule(Rule):
 
     name = "invalid-section"
     rule_id = "0325"
-    message = "Invalid section '{invalid_section}'. Consider using --language parameter if the file is defined with different language"
+    message = (
+        "Invalid section '{invalid_section}'. "
+        "Consider using --language parameter if the file is defined with different language"
+    )
     severity = RuleSeverity.ERROR
     version = ">=6.1"
     added_in_version = "3.2.0"
@@ -755,14 +764,14 @@ class InvalidCharactersInNameChecker(VisitorChecker):
                 )
             start_pos = variable[1]
 
-        for iter in self.not_allowed_char_in_name.pattern.finditer(node_name, start_pos):
+        for not_allowed_char in self.not_allowed_char_in_name.pattern.finditer(node_name, start_pos):
             self.report(
                 self.not_allowed_char_in_name,
-                character=iter.group(),
+                character=not_allowed_char.group(),
                 block_name=f"'{node.name}' {name_of_node}",
                 node=node,
-                col=node.col_offset + iter.start(0) + 1,
-                end_col=node.col_offset + iter.end(0) + 1,
+                col=node.col_offset + not_allowed_char.start(0) + 1,
+                end_col=node.col_offset + not_allowed_char.end(0) + 1,
             )
 
     def visit_TestCaseName(self, node) -> None:  # noqa: N802
@@ -1329,7 +1338,7 @@ class SimilarVariableChecker(VisitorChecker):
             )
 
     def find_not_nested_variable(self, token, value, is_var: bool, offset: int = 0) -> None:
-        """
+        r"""
         Find and process not nested variable.
 
         Search `value` string until there is ${variable} without other variables inside.

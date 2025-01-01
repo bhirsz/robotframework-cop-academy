@@ -166,9 +166,7 @@ class EmptyLineAfterSectionRule(Rule):
 
 
 class TooManyTrailingBlankLinesRule(Rule):
-    """
-    There should be exactly one blank line at the end of the file
-    """
+    """There should be exactly one blank line at the end of the file."""
 
     name = "too-many-trailing-blank-lines"
     rule_id = "1010"

@@ -8,7 +8,7 @@ class TestRuleAcceptance(RuleAcceptance):
     def test_rule(self):
         self.check_rule(src_files=["test.robot"], expected_file="expected_output.txt")
 
-    # TODO: we also need to ensure that --threshold E translates to RuleSeverity.Error (there should be ut for it already)
+    # TODO: we also need to ensure that --threshold E translates to RuleSeverity.Error (there should be ut for it)
     @pytest.mark.parametrize("filter_threshold", [None, RuleSeverity.ERROR, RuleSeverity.WARNING])
     def test_severity_threshold(self, filter_threshold):
         if filter_threshold == RuleSeverity.ERROR:

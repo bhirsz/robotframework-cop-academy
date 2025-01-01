@@ -39,28 +39,22 @@ import ast
 import importlib.util
 import inspect
 from collections import defaultdict
-from collections.abc import Generator
 from enum import Enum
 from functools import total_ordering
 from importlib import import_module
 from inspect import isclass
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, NoReturn, Optional
+from typing import TYPE_CHECKING, Any, Callable, NoReturn
 
-from jinja2 import Template
 from robot.utils import FileReader
 
 from robocop.linter import exceptions
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.exceptions import (
     InvalidExternalCheckerError,
-    RuleNotFoundError,
-    RuleParamNotFoundError,
-    RuleReportsNotFoundError,
 )
 from robocop.linter.utils import ROBOT_VERSION
-from robocop.linter.utils.misc import str2bool
 from robocop.linter.utils.version_matching import VersionSpecifier
 
 try:
@@ -69,11 +63,10 @@ except ImportError:
     from robot.parsing.model.visitor import ModelVisitor
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     from re import Pattern
 
     from robot.parsing import File
-    from robot.parsing.model import Block, Statement
-    from robot.parsing.model.statements import Node
 
     from robocop.linter.runner import RobocopLinter
 
@@ -210,7 +203,7 @@ class RuleParam:
         return self._value
 
     @value.setter
-    def value(self, value):
+    def value(self, value) -> None:
         self.raw_value = value  # useful for docs/printing
         try:
             self._value = self.converter(value)
@@ -255,7 +248,7 @@ class SeverityThreshold:
         return self.thresholds
 
     @value.setter
-    def value(self, value):
+    def value(self, value) -> None:
         self.set_thresholds(value)
 
     @staticmethod
@@ -316,6 +309,7 @@ class SeverityThreshold:
         for _, threshold in self.thresholds:
             if self.check_condition(value, threshold):
                 return threshold
+        return None
 
     def __str__(self):
         return self.name
@@ -394,6 +388,7 @@ class Rule:
     def __getattr__(self, name: str):
         if name in self.config:  # TODO: handle configuration files
             return self.config[name].value
+        raise ValueError
         # TODO handle missing
 
     @property
@@ -571,7 +566,7 @@ class ProjectChecker(VisitorChecker):
 
 
 class RawFileChecker(BaseChecker):
-    def scan_file(self, ast_model, filename, in_memory_content, templated=False) -> list[Diagnostic]:
+    def scan_file(self, ast_model, filename, in_memory_content, templated=False) -> list[Diagnostic]:  # noqa: ARG002
         self.issues: list[Diagnostic] = []
         self.source = filename
         self.templated_suite = templated
@@ -620,7 +615,7 @@ class RobocopImporter:
     def get_external_modules(self):
         return self.modules_from_paths([*self.external_rules_paths], recursive=True)
 
-    def _get_checkers_from_modules(self, modules):
+    def _get_checkers_from_modules(self, modules):  # noqa: ANN202
         for module in modules:
             if module in self.seen_modules:
                 continue
@@ -629,7 +624,7 @@ class RobocopImporter:
                     yield from self._get_initialized_checkers_from_module(submodule)
             yield from self._get_initialized_checkers_from_module(module)
 
-    def _get_initialized_checkers_from_module(self, module):
+    def _get_initialized_checkers_from_module(self, module):  # noqa: ANN202
         self.seen_modules.add(module)
         for checker_instance in self.get_checkers_from_module(module):
             if not self.is_checker_already_imported(checker_instance):
@@ -691,7 +686,7 @@ class RobocopImporter:
                 for n in st.names:
                     yield n.name
 
-    def _iter_imports(self, file_path: Path):
+    def _iter_imports(self, file_path: Path):  # noqa: ANN202
         """Discover Python imports in the file using ast module."""
         try:
             parsed = ast.parse(file_path.read_bytes())
@@ -729,7 +724,7 @@ class RobocopImporter:
         for name, rule_class in rule_types.items():
             if isinstance(rule_class, str):  # if from future import annotations was used
                 try:  # TODO improve, without exception
-                    rule_class = getattr(module, rule_class)  # TODO check other_module.MyRule imports
+                    rule_class = getattr(module, rule_class)
                 except AttributeError:
                     continue
             if not (isclass(rule_class) and issubclass(rule_class, Rule)):

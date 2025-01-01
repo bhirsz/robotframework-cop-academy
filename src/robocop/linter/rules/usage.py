@@ -163,9 +163,9 @@ class UnusedKeywords(ProjectChecker):
 
     def mark_used_keywords(self, node: type[Node], name_token_type: str) -> None:
         for keyword in iterate_keyword_names(node, name_token_type):
-            self.mark_used_keyword(keyword.value, keyword)
+            self.mark_used_keyword(keyword.value)
 
-    def mark_used_keyword(self, name: str, keyword: Token) -> None:
+    def mark_used_keyword(self, name: str) -> None:
         if not name:
             return
         normalized_name = normalize_robot_name(name)
@@ -182,8 +182,7 @@ class UnusedKeywords(ProjectChecker):
     def visit_Template(self, node: type[Node]) -> None:  # noqa: N802
         # allow / disallow param
         if node.value:
-            name_token = node.get_token(Token.NAME)
-            self.mark_used_keyword(node.value, name_token)
+            self.mark_used_keyword(node.value)
         self.generic_visit(node)
 
     visit_TestTemplate = visit_Template  # noqa: N815

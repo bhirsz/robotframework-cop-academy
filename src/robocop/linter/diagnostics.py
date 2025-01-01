@@ -76,7 +76,7 @@ class Diagnostic:
         return Range(start=start, end=end)
 
     def __lt__(self, other: Diagnostic) -> bool:
-        """Used to sort diagnostics for displaying purposes."""
+        """Sort diagnostics for displaying purposes."""
         return (self.range.start.line, self.range.start.character, self.rule.rule_id) < (
             other.range.start.line,
             other.range.start.character,

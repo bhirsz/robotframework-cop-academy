@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from robocop import __version__
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.reports.sarif_report import SarifReport
@@ -21,9 +19,8 @@ class TestSarifReport:
         report.configure("report_filename", filename)
         assert report.report_filename == filename
 
-    @pytest.mark.parametrize("compare_runs", [True, False])
-    def test_sarif_report(self, rule, rule2, compare_runs, tmp_path, config):
-        root = Path().resolve()
+    def test_sarif_report(self, rule, rule2, tmp_path, config):
+        root = Path.cwd()
         rules = {m.rule_id: m for m in (rule, rule2)}
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
@@ -85,10 +82,10 @@ class TestSarifReport:
                                     "id": r.rule_id,
                                     "name": r.name,
                                     "helpUri": f"https://robocop.readthedocs.io/en/{__version__}/rules_list.html#{r.name}",
-                                    "shortDescription": {"text": r.msg},
-                                    "fullDescription": {"text": r.docs},
+                                    "shortDescription": {"text": r.message},
+                                    "fullDescription": {"text": r.__doc__},
                                     "defaultConfiguration": {"level": r.default_severity.name.lower()},
-                                    "help": {"text": r.docs, "markdown": r.docs},
+                                    "help": {"text": r.__doc__, "markdown": r.__doc__},
                                 }
                                 for r in (rule, rule2)
                             ],

@@ -77,10 +77,12 @@ class TestIncludingExcluding:
     )
     def test_only_ignored_patterns(self, patterns, selected, ignored):
         """
+        Configure with patterns to be ignored.
+
         Test data contains rules with rule id's "0101", "0105", "0204", "0405", "0405"
         and rule names created using `some-message-{rule_id}` pattern
         """
-        linter_config = LinterConfig(ignore=ignored)
+        linter_config = LinterConfig(ignore=patterns)
         config = Config(linter=linter_config)
         rule_matcher = RuleMatcher(config)
         assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)

@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import json
 from collections import OrderedDict
-from inspect import isclass
 from pathlib import Path
 from typing import NoReturn
 
@@ -18,6 +17,7 @@ ROBOCOP_CACHE_FILE = ".robocop_cache"
 class Report:
     """
     Base class for report class.
+
     Override `configure` method if you want to allow report configuration.
     Override `add_message`` if your report processes the Robocop issues.
 
@@ -31,7 +31,7 @@ class Report:
     def __init__(self, config: Config) -> None:
         self.config = config
 
-    def configure(self, name: str, value: str) -> None:
+    def configure(self, name: str, value: str) -> None:  # noqa: ARG002
         raise robocop.linter.exceptions.ConfigGeneralError(
             f"Provided param '{name}' for report '{self.name}' does not exist"
         )
@@ -39,7 +39,7 @@ class Report:
     def add_message(self, *args) -> None:
         pass
 
-    def get_report(self, *args) -> None:
+    def get_report(self, *args) -> None:  # noqa: ARG002
         return None
 
 
@@ -58,6 +58,7 @@ class ComparableReport(Report):
 def load_reports(config: Config) -> dict[str, type[Report]]:
     """
     Load all valid reports.
+
     Report is considered valid if it inherits from `Report` class
     and contains both `name` and `description` attributes.
     """
@@ -78,6 +79,7 @@ def load_reports(config: Config) -> dict[str, type[Report]]:
 def get_reports(config: Config):
     """
     Return dictionary with list of valid, enabled reports (listed in `configured_reports` set of str).
+
     If `configured_reports` contains `all` then all default reports are enabled.
     """
     configured_reports = config.linter.reports

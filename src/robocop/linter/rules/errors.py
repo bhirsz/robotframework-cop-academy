@@ -281,9 +281,7 @@ class InvalidSettingInResourceRule(Rule):
 
 
 class UnsupportedSettingInIniFileRule(Rule):
-    """
-    Settings ``Default Tags`` and ``Test Template`` are not supported in initialization files.
-    """
+    """Settings ``Default Tags`` and ``Test Template`` are not supported in initialization files."""
 
     name = "unsupported-setting-in-init-file"
     rule_id = "ERR17"

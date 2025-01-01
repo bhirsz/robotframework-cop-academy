@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import functools
 import re
-from typing import Dict, List, Optional
 
 from robot.api.parsing import Comment, CommentSection, ModelVisitor, Token
 
@@ -9,12 +10,14 @@ ALL_FORMATTERS = "all"
 
 def skip_if_disabled(func):
     """
+    Skip node if it is disabled.
+
     Do not transform node if it's not within passed ``start_line`` and ``end_line`` or
     it does match any ``# robotidy: off`` disabler
     """
 
     @functools.wraps(func)
-    def wrapper(self, node, *args, **kwargs):
+    def wrapper(self, node, *args, **kwargs):  # noqa: ANN202
         class_name = self.__class__.__name__
         if self.disablers.is_node_disabled(class_name, node):
             return node
@@ -37,12 +40,14 @@ def get_section_name_from_header_type(node):
 
 def skip_section_if_disabled(func):
     """
-    Does the same checks as ``skip_if_disabled`` and additionally checks
-    if the section header does not contain disabler
+    Skip section if it is disabled.
+
+    Does the same checks as ``skip_if_disabled`` and additionally checks if the section header does not contain
+    disabler.
     """
 
     @functools.wraps(func)
-    def wrapper(self, node, *args, **kwargs):
+    def wrapper(self, node, *args, **kwargs):  # noqa: ANN202
         class_name = self.__class__.__name__
         if self.disablers.is_node_disabled(class_name, node):
             return node
@@ -66,7 +71,7 @@ def is_line_start(node):
 
 
 class DisablersInFile:
-    def __init__(self, start_line: Optional[int], end_line: Optional[int], file_end: Optional[int] = None):
+    def __init__(self, start_line: int | None, end_line: int | None, file_end: int | None = None):
         self.start_line = start_line
         self.end_line = end_line
         self.file_end = file_end
@@ -169,7 +174,7 @@ class RegisterDisablers(ModelVisitor):
         self.end_line = end_line
         self.disablers = DisablersInFile(start_line, end_line)
         self.disabler_pattern = re.compile(r"\s*#\s?robotidy:\s?(?P<disabler>on|off) ?=?(?P<formatters>[\w,\s]*)")
-        self.disablers_in_scope: List[Dict[str, int]] = []
+        self.disablers_in_scope: list[dict[str, int]] = []
         self.file_level_disablers = False
 
     def is_disabled_in_file(self, formatter_name: str = ALL_FORMATTERS):
@@ -187,7 +192,7 @@ class RegisterDisablers(ModelVisitor):
                 continue
             self.disablers.add_disabler(formatter_name, start_line, end_line, self.file_level_disablers)
 
-    def visit_File(self, node):  # noqa
+    def visit_File(self, node):  # noqa: N802
         self.file_level_disablers = False
         self.disablers = DisablersInFile(self.start_line, self.end_line, node.end_lineno)
         self.disablers.parse_global_disablers()
@@ -198,13 +203,13 @@ class RegisterDisablers(ModelVisitor):
         self.disablers.sort_disablers()
 
     @staticmethod
-    def get_disabler_formatters(match) -> List[str]:
+    def get_disabler_formatters(match) -> list[str]:
         if not match.group("formatters") or "=" not in match.group(0):  # robotidy: off or robotidy: off comment
             return [ALL_FORMATTERS]
         # robotidy: off=Formatter1, Formatter2
         return [formatter.strip() for formatter in match.group("formatters").split(",") if formatter.strip()]
 
-    def visit_SectionHeader(self, node):  # noqa
+    def visit_SectionHeader(self, node):  # noqa: N802
         for comment in node.get_tokens(Token.COMMENT):
             disabler = self.get_disabler(comment)
             if not disabler or disabler.group("disabler") != "off":
@@ -215,12 +220,12 @@ class RegisterDisablers(ModelVisitor):
             break
         return self.generic_visit(node)
 
-    def visit_TestCase(self, node):  # noqa
+    def visit_TestCase(self, node):  # noqa: N802
         self.disablers_in_scope.append({ALL_FORMATTERS: 0})
         self.generic_visit(node)
         self.close_disabler(node.end_lineno)
 
-    def visit_Try(self, node):  # noqa
+    def visit_Try(self, node):  # noqa: N802
         self.generic_visit(node.header)
         self.disablers_in_scope.append({ALL_FORMATTERS: 0})
         for statement in node.body:
@@ -236,9 +241,9 @@ class RegisterDisablers(ModelVisitor):
             self.close_disabler(end_line=end_line)
             tail = tail.next
 
-    visit_Keyword = visit_Section = visit_For = visit_ForLoop = visit_If = visit_While = visit_TestCase
+    visit_Keyword = visit_Section = visit_For = visit_ForLoop = visit_If = visit_While = visit_TestCase  # noqa: N815
 
-    def visit_Statement(self, node):  # noqa
+    def visit_Statement(self, node):  # noqa: N802
         if isinstance(node, Comment):
             comment = node.get_token(Token.COMMENT)
             disabler = self.get_disabler(comment)

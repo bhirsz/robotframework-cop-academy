@@ -13,7 +13,6 @@ from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, 
 from robocop.linter.utils import ROBOT_VERSION
 
 if TYPE_CHECKING:
-    from robot.api import Token
     from robot.parsing.model import Keyword, Statement, TestCase
     from robot.parsing.model.statements import Comment
 
@@ -23,7 +22,7 @@ def regex(value):
     try:
         return re.compile(converted)
     except re.error as regex_err:
-        raise ValueError(f"Regex error: {regex_err}")
+        raise ValueError(f"Regex error: {regex_err}") from None
 
 
 class ToDoInCommentRule(Rule):

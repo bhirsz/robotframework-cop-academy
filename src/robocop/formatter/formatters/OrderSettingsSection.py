@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 
 from robot.api.parsing import Comment, EmptyLine, LibraryImport, Token
@@ -41,11 +43,11 @@ class OrderSettingsSection(Formatter):
     def __init__(
         self,
         new_lines_between_groups: int = 1,
-        group_order: str = None,
-        documentation_order: str = None,
+        group_order: str | None = None,
+        documentation_order: str | None = None,
         imports_order: str = "preserved",
-        settings_order: str = None,
-        tags_order: str = None,
+        settings_order: str | None = None,
+        tags_order: str | None = None,
     ):
         super().__init__()
         self.last_section = None
@@ -127,15 +129,16 @@ class OrderSettingsSection(Formatter):
                 self.__class__.__name__,
                 "order",
                 order,
-                f"Custom order should be provided in comma separated list with valid group names:\n{sorted(mapping.keys())}",
-            )
+                f"Custom order should be provided in comma separated list with valid group names:\n"
+                f"{sorted(mapping.keys())}",
+            ) from None
 
-    def visit_File(self, node):  # noqa
+    def visit_File(self, node):  # noqa: N802
         self.last_section = node.sections[-1] if node.sections else None
         return self.generic_visit(node)
 
     @skip_section_if_disabled
-    def visit_SettingSection(self, node):  # noqa
+    def visit_SettingSection(self, node):  # noqa: N802
         if not node.body:
             return None
         if node is self.last_section and not isinstance(node.body[-1], EmptyLine):

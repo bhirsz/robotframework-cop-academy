@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from robot.parsing import Token
-
 from robocop.linter.utils.misc import normalize_robot_name
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from robot.parsing import Token
     from robot.parsing.model import Keyword
 
 
@@ -82,6 +83,7 @@ def skip_leading_tokens(tokens: list[Token], break_token: str) -> list[Token]:
     for index, token in enumerate(tokens):
         if token.type == break_token:
             return tokens[index:]
+    return tokens
 
 
 def is_token_value_in_tokens(value: str, tokens: list[Token]) -> bool:
@@ -91,6 +93,7 @@ def is_token_value_in_tokens(value: str, tokens: list[Token]) -> bool:
 def split_on_token_value(tokens: list[Token], value: str, resolve: int) -> tuple[list[Token], list[Token], list[Token]]:
     """
     Split list of tokens into three lists based on token value.
+
     Returns tokens before found token, found token + `resolve` number of tokens, remaining tokens.
     """
     for index, token in enumerate(tokens):
