@@ -52,7 +52,7 @@ class MissingDocTestCaseRule(Rule):
 
     The rule by default ignores templated test cases but it can be configured with::
 
-        robocop --configure missing-doc-test-case:ignore_templated:False
+        robocop check --configure missing-doc-test-case.ignore_templated=False
 
     Possible values are: ``Yes`` / ``1`` / ``True`` (default) or ``No`` / ``False`` / ``0``.
 
