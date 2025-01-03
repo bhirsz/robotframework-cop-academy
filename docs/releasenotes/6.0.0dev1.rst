@@ -269,6 +269,20 @@ severity or rule name instead::
 
     robocop check --select DOC01 --select missing-doc-test-case
 
+Rules changes (#30)
+-------------------
+
+We have reviewed all the rules to improve rule ids, names, documentation, messages and overall design.
+It would be too much to list of all changes, but we will list all changes that have impact on the users.
+
+Comments rules are now grouped under 'COM' rules:
+
+- ``0701`` became ``COM01``
+- ``0702`` became ``COM02``
+- ``0703`` became ``COM03`` and message is now ``Comment starts from the second character in the line``
+- ``0704`` became ``COM04``
+- ``0705`` became ``COM05``
+
 New features
 =============
 
