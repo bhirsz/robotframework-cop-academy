@@ -7,7 +7,6 @@ from typing import Optional
 
 from robot.api import Token
 from robot.errors import VariableError
-from robot.libraries import STDLIBS
 from robot.parsing.model.blocks import Keyword, TestCase, TestCaseSection
 from robot.parsing.model.statements import Arguments, KeywordCall, Teardown
 from robot.utils import unescape
@@ -209,25 +208,6 @@ class InconsistentAssignmentInVariablesRule(Rule):
             "'equal_sign' ('=') or space_and_equal_sign (' =')",
         )
     ]
-    added_in_version = "1.7.0"
-
-
-class WrongImportOrderRule(Rule):
-    """
-
-    Example of rule violation::
-
-        *** Settings ***
-        Library    Collections
-        Library    CustomLibrary
-        Library    OperatingSystem  # BuiltIn library defined after custom CustomLibrary
-
-    """
-
-    name = "wrong-import-order"
-    rule_id = "0911"
-    message = "BuiltIn library import '{builtin_import}' should be placed before '{custom_import}'"
-    severity = RuleSeverity.WARNING
     added_in_version = "1.7.0"
 
 
@@ -672,24 +652,6 @@ class MisplacedNegativeConditionRule(Rule):
     added_in_version = "4.0.0"
 
 
-class BuiltinImportsNotSortedRule(Rule):
-    """
-
-    Example of rule violation::
-
-        *** Settings ***
-        Library    OperatingSystem
-        Library    Collections  # BuiltIn libraries imported not in alphabetical order
-
-    """
-
-    name = "builtin-imports-not-sorted"
-    rule_id = "0926"
-    message = "BuiltIn library import '{builtin_import}' should be placed before '{previous_builtin_import}'"
-    severity = RuleSeverity.WARNING
-    added_in_version = "5.2.0"
-
-
 class TestCaseSectionOutOfOrderRule(Rule):
     """
 
@@ -972,58 +934,6 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
         auto_detector = AssignmentTypeDetector()
         auto_detector.visit(node)
         return auto_detector
-
-
-class SettingsOrderChecker(VisitorChecker):
-    """
-    Checker for settings order.
-
-    BuiltIn libraries imports should always be placed before other libraries imports.
-    """
-
-    wrong_import_order: WrongImportOrderRule
-    builtin_imports_not_sorted: BuiltinImportsNotSortedRule
-
-    def __init__(self):
-        self.libraries = []
-        super().__init__()
-
-    def visit_File(self, node) -> None:  # noqa: N802
-        self.libraries = []
-        self.generic_visit(node)
-        first_non_builtin = None
-        previous_builtin = None
-        for library in self.libraries:
-            if first_non_builtin is None:
-                if library.name not in STDLIBS:
-                    first_non_builtin = library.name
-            elif library.name in STDLIBS:
-                lib_name = library.get_token(Token.NAME)
-                self.report(
-                    self.wrong_import_order,
-                    builtin_import=library.name,
-                    custom_import=first_non_builtin,
-                    node=library,
-                    col=lib_name.col_offset + 1,
-                    end_col=lib_name.end_col_offset + 1,
-                )
-            if library.name in STDLIBS:
-                if previous_builtin is not None and library.name < previous_builtin.name:
-                    lib_name = library.get_token(Token.NAME)
-                    self.report(
-                        self.builtin_imports_not_sorted,
-                        builtin_import=library.name,
-                        previous_builtin_import=previous_builtin.name,
-                        node=library,
-                        col=lib_name.col_offset + 1,
-                        end_col=lib_name.end_col_offset + 1,
-                    )
-                previous_builtin = library
-
-    def visit_LibraryImport(self, node) -> None:  # noqa: N802
-        if not node.name:
-            return
-        self.libraries.append(node)
 
 
 class EmptyVariableChecker(VisitorChecker):
