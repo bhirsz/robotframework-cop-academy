@@ -17,12 +17,15 @@ if TYPE_CHECKING:
 
 class TagWithSpaceRule(Rule):
     """
+    Tag with space.
+
+    When including or excluding tags, it may leads to unexpected behavior. It's recommended to use short tag names
+    without spaces.
 
     Example of rule violation::
 
         Test
-            [Tags]  ${tag with space}
-
+            [Tags]  tag with space    ${tag with space}
 
     """
 
@@ -35,11 +38,12 @@ class TagWithSpaceRule(Rule):
 
 class TagWithOrAndRule(Rule):
     """
+    ``OR`` or ``AND`` keyword found in the tag.
 
     ``OR`` and ``AND`` words are used to combine tags when selecting tests to be run in Robot Framework. Using
     following configuration::
 
-        robot --include tagANDtag2
+        robocop check --include tagANDtag2
 
     Robot Framework will only execute tests that contain ``tag`` and ``tag2``. That's why it's best to avoid ``AND``
     and ``OR`` in tag names. See
@@ -53,16 +57,14 @@ class TagWithOrAndRule(Rule):
 
     name = "tag-with-or-and"
     rule_id = "0602"
-    message = (
-        "Tag '{tag}' with reserved word OR/AND. "
-        "Hint: make sure to include this tag using lowercase name to avoid issues"
-    )
+    message = "Tag '{tag}' with reserved word OR/AND"
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
 
 
 class TagWithReservedWordRule(Rule):
     """
+    Tag is prefixed with reserved work ``robot:``.
 
     ``robot:`` prefix is used by Robot Framework special tags. More details
     `here <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#reserved-tags>`_.
@@ -92,6 +94,7 @@ class TagWithReservedWordRule(Rule):
 
 class CouldBeTestTagsRule(Rule):
     """
+    All tests share the same tags which can be moved to ``Test Tags`` setting.
 
     Example::
 
@@ -121,6 +124,7 @@ class CouldBeTestTagsRule(Rule):
 
 class TagAlreadySetInTestTagsRule(Rule):
     """
+    Tag is already set in the ``Test Tags`` setting.
 
     Avoid repeating the same tags in tests when the tag is already declared in ``Test Tags`` or ``Force Tags``.
     Example of rule violation::
@@ -147,6 +151,7 @@ class TagAlreadySetInTestTagsRule(Rule):
 
 class UnnecessaryDefaultTagsRule(Rule):
     """
+    ``Default Tags`` setting is always overwritten and is unnecessary.
 
     Example of rule violation::
 
@@ -175,6 +180,7 @@ class UnnecessaryDefaultTagsRule(Rule):
 
 class EmptyTagsRule(Rule):
     """
+    ``[Tags]`` setting without any value.
 
     If you want to use empty ``[Tags]`` (for example to overwrite ``Default Tags``) then use ``NONE`` value
     to be explicit.
@@ -190,6 +196,7 @@ class EmptyTagsRule(Rule):
 
 class DuplicatedTagsRule(Rule):
     """
+    Duplicated tags found.
 
     Tags are free text, but they are normalized so that they are converted to lowercase and all spaces are removed.
     Only first tag is used, other occurrences are ignored.
@@ -211,6 +218,7 @@ class DuplicatedTagsRule(Rule):
 
 class CouldBeKeywordTagsRule(Rule):
     """
+    All keywords share the same tags which can be moved to ``Keyword Tags`` setting.
 
     Example::
 
@@ -241,6 +249,7 @@ class CouldBeKeywordTagsRule(Rule):
 
 class TagAlreadySetInKeywordTagsRule(Rule):
     """
+    Tag is already set in the ``Test Keyword`` setting.
 
     Avoid repeating the same tags in keywords when the tag is already declared in ``Keyword Tags``.
     Example of rule violation::
