@@ -108,8 +108,8 @@ Following options from Robotidy are now available in robocop under different nam
 Formatter ``--target-version`` can now only accept numbers. Previous configuration such as ``--target-version RF5``
 should be now ``--target-version 5``.
 
-Issue source is now relative by default
-----------------------------------------
+Issue source is now relative by default (#38)
+---------------------------------------------
 
 Relative path to source is now used by default when printing the linter issues.
 
@@ -126,8 +126,19 @@ Previous issue format keyword ``source_rel`` is deprecated and ``source`` is use
 
     robocop check --issue-format "{source_abs}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
+Replace --output option with text_file report (#16)
+---------------------------------------------------
+
+As part of the improved and safer design, linter option ``--output`` is now deprecated.
+
+Instead, ``text_file`` report can be used::
+
+     robocop check --reports text_file --configure text_file.output_path=output/robocop.txt
+
+``text_file`` report supports only ``simple`` issue output format.
+
 deprecated singular skip options in formatter (Robotidy)
------------------------------------------------
+--------------------------------------------------------
 
 Robotidy offered multiple options to skip formatting of different statement types, if the formatter allows it::
 

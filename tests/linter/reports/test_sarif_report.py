@@ -4,6 +4,7 @@ from pathlib import Path
 from robocop import __version__
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.reports.sarif_report import SarifReport
+from tests.linter.reports import generate_issues
 
 
 class TestSarifReport:
@@ -24,28 +25,10 @@ class TestSarifReport:
         rules = {m.rule_id: m for m in (rule, rule2)}
         source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
         source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
-        source1 = str(root / source1_rel)
-        source2 = str(root / source2_rel)
         report = SarifReport(config)
         report.configure("output_dir", tmp_path)
 
-        issues = [
-            Diagnostic(
-                rule=r,
-                source=source,
-                node=None,
-                lineno=line,
-                col=col,
-                end_lineno=end_line,
-                end_col=end_col,
-            )
-            for r, source, line, end_line, col, end_col in [
-                (rule, source1, 50, None, 10, None),
-                (rule2, source1, 50, 51, 10, None),
-                (rule, source2, 50, None, 10, 12),
-                (rule2, source2, 11, 15, 10, 15),
-            ]
-        ]
+        issues = generate_issues(rule, rule2)
 
         def get_expected_result(diagnostic: Diagnostic, level, source):
             return {
