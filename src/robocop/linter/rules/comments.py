@@ -17,12 +17,15 @@ if TYPE_CHECKING:
     from robot.parsing.model.statements import Comment
 
 
-def regex(value):
-    converted = rf"{value}"
+def regex(value: str) -> re.Pattern:
     try:
-        return re.compile(converted)
+        return re.compile(value)
     except re.error as regex_err:
         raise ValueError(f"Regex error: {regex_err}") from None
+
+
+def lower_csv(value: str) -> list[str]:
+    return value.lower().split(",")
 
 
 class ToDoInCommentRule(Rule):
@@ -36,9 +39,9 @@ class ToDoInCommentRule(Rule):
         # TODO: Refactor this code
         # fixme
 
-    Configuration example:: FIXME: update examples
+    Configuration example::
 
-        robocop --configure "todo-in-comment:markers:todo,Remove me,Fix this!"
+        robocop check --configure "todo-in-comment.markers=todo,Remove me,Fix this!"
 
     """
 
@@ -51,7 +54,8 @@ class ToDoInCommentRule(Rule):
         RuleParam(
             name="markers",
             default="todo,fixme",
-            converter=str,
+            converter=lower_csv,
+            show_type="comma separated value",
             desc="List of case-insensitive markers that violate the rule in comments.",
         )
     ]
@@ -61,6 +65,16 @@ class MissingSpaceAfterCommentRule(Rule):
     """
     No space after the ``#`` character and comment body.
 
+    Comments usually starts from the new line, or after 2 spaces in the same line. '#' characters denotes start of the
+    comment, followed by the space and comment body::
+
+        # stand-alone comment
+        Keyword Call  # inline comment
+        ### block comments are fine ###
+
+    Deviating from this pattern may lead to inconsistent or less readable comment format.
+
+    It is possible to configure block comments syntax that should be ignored.
     Configured regex for block comment should take into account the first character is ``#``.
 
     Example::
@@ -71,17 +85,17 @@ class MissingSpaceAfterCommentRule(Rule):
 
     Configuration example::
 
-        robocop --configure missing-space-after-comment:block:^#[*]+
+        robocop check --configure missing-space-after-comment.block=^#[*]+
 
-        Allows commenting like:
+    Allows commenting like:
 
-            #*****
-            #
-            # Important topics here!
-            #
-            #*****
-            or
-            #* Headers *#
+        #*****
+        #
+        # Important topics here!
+        #
+        #*****
+        or
+        #* Headers *#
 
     """
 
@@ -97,8 +111,9 @@ class InvalidCommentRule(Rule):
     """
     Invalid comment.
 
-    In Robot Framework 3.2.2 comments that started from second character in the cell were not recognized as
-    comments.
+    In Robot Framework 3.2.2 comments that started from second character in the line were not recognized as
+    comments. '#' characters needs to be in first or any other than second character in the line to be recognized
+    as a comment.
 
     Example::
 
@@ -110,10 +125,7 @@ class InvalidCommentRule(Rule):
 
     name = "invalid-comment"
     rule_id = "COM03"
-    message = (
-        "Invalid comment. '#' needs to be first character in the cell. "
-        "For block comments you can use '*** Comments ***' section"
-    )
+    message = "Comment starts from the second character in the line"
     severity = RuleSeverity.ERROR
     version = "<4.0"
     added_in_version = "1.0.0"
@@ -175,23 +187,6 @@ class CommentChecker(VisitorChecker):
     missing_space_after_comment: MissingSpaceAfterCommentRule
     invalid_comment: InvalidCommentRule
 
-    def __init__(self):
-        self._markers = None
-        self._block = None
-        super().__init__()
-
-    @property
-    def markers(self):
-        if not self._markers:
-            self._markers = self.todo_in_comment.markers.lower().split(",")  # TODO: should be handled by param parser
-        return self._markers
-
-    @property
-    def block(self):
-        if not self._block:
-            self._block = self.missing_space_after_comment.block
-        return self._block
-
     def visit_Comment(self, node: Comment) -> None:  # noqa: N802
         self.find_comments(node)
 
@@ -236,7 +231,7 @@ class CommentChecker(VisitorChecker):
 
     def check_comment_content(self, token: Token, content: str) -> None:
         low_content = content.lower()
-        for violation in [marker for marker in self.markers if marker in low_content]:
+        for violation in [marker for marker in self.todo_in_comment.markers if marker in low_content]:
             index = low_content.find(violation)
             self.report(
                 self.todo_in_comment,
@@ -253,7 +248,7 @@ class CommentChecker(VisitorChecker):
             )
 
     def is_block_comment(self, comment: str) -> bool:
-        return comment == "#" or self.block.match(comment) is not None
+        return comment == "#" or self.missing_space_after_comment.block.match(comment) is not None
 
 
 class IgnoredDataChecker(RawFileChecker):
@@ -305,7 +300,7 @@ class IgnoredDataChecker(RawFileChecker):
         self.report(self.ignored_data, lineno=lineno, col=1, end_col=len(line))
         return True
 
-    def detect_bom(self, source: str) -> bool:
+    def detect_bom(self, source: str):
         with open(source, "rb") as raw_file:
             first_four = raw_file.read(4)
             self.is_bom = any(first_four.startswith(bom_marker) for bom_marker in IgnoredDataChecker.BOM)
