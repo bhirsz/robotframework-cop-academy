@@ -176,7 +176,6 @@ class LinterConfig:
     # exec_dir: str  # it will not be passed, but generated
     # extend_ignore: set[str]
     # reports: list[str]
-    #         self.output = None
     #         self.recursive = True  TODO do we need it anymore?
     #         self.persistent = False  TODO maybe better name, ie cache-results
 

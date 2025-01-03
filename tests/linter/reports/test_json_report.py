@@ -3,6 +3,7 @@ from pathlib import Path
 
 from robocop.linter.diagnostics import Diagnostic
 from robocop.linter.reports.json_report import JsonReport
+from tests.linter.reports import generate_issues
 
 
 class TestJSONReport:
@@ -43,32 +44,9 @@ class TestJSONReport:
         assert report.report_filename == filename
 
     def test_json_reports_saved_to_file(self, rule, rule2, tmp_path, config):
-        root = Path.cwd()
-        source1_rel = "tests/atest/rules/comments/ignored-data/test.robot"
-        source2_rel = "tests/atest/rules/misc/empty-return/test.robot"
-        source1 = str(root / source1_rel)
-        source2 = str(root / source2_rel)
-
+        issues = generate_issues(rule, rule2)
         report = JsonReport(config)
         report.configure("output_dir", tmp_path)
-
-        issues = [
-            Diagnostic(
-                rule=r,
-                source=source,
-                node=None,
-                lineno=line,
-                col=col,
-                end_lineno=end_line,
-                end_col=end_col,
-            )
-            for r, source, line, end_line, col, end_col in [
-                (rule, source1, 50, None, 10, None),
-                (rule2, source1, 50, 51, 10, None),
-                (rule, source2, 50, None, 10, 12),
-                (rule2, source2, 11, 15, 10, 15),
-            ]
-        ]
 
         expected_report = [JsonReport.message_to_json(issue) for issue in issues]
         for issue in issues:
