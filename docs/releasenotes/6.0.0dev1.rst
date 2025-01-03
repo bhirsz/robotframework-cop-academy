@@ -304,6 +304,13 @@ Comments rules are now grouped under 'COM' group:
 - ``0704`` became ``COM04``
 - ``0705`` became ``COM05``
 
+Import related rules are now grouped under 'IMP' group:
+
+- ``0911`` became ``IMP01`` (``wrong-import-order``)
+- ``0926`` became ``IMP02`` (``builtin-imports-not-sorted``)
+- ``10101`` became ``IMP03`` (``non-builtin-imports-not-sorted``)
+- ``10102`` became ``IMP04`` (``resources-imports-not-sorted``)
+
 New features
 =============
 
