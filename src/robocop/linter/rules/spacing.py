@@ -745,7 +745,7 @@ class EmptyLinesChecker(VisitorChecker):
         self.verify_consecutive_empty_lines(node.body, check_trailing=True)
         self.generic_visit(node)
 
-    visit_ForLoop = visit_While = visit_Try = visit_If = visit_For  # noqa: N815
+    visit_ForLoop = visit_While = visit_Try = visit_If = visit_Group = visit_For  # noqa: N815
 
     def visit_File(self, node: File) -> None:  # noqa: N802
         for section in node.sections:
@@ -984,7 +984,7 @@ class UnevenIndentChecker(VisitorChecker):
                 self.visit(child)
         self.visit_Statement(node.end)
 
-    visit_While = visit_ForLoop = visit_For  # noqa: N815
+    visit_While = visit_ForLoop = visit_Group = visit_For  # noqa: N815
 
     def get_common_if_indent(self, node) -> None:
         indents = count_indents(node)
