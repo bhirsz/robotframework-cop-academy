@@ -306,17 +306,16 @@ Documentation rules are now grouped under 'DOC' group:
 
 Tags rules are now grouped under 'TAG' group:
 
-- ``0601`` became ``TAG01``
-- ``0602`` became ``TAG02`` and message is now ``Tag '{tag}' with reserved word OR/AND.``
-- ``0603`` became ``TAG03``
-- ``0604`` became ``TAG04``
-- ``0605`` became ``TAG05``
-- ``0606`` became ``TAG06``
-- ``0607`` became ``TAG07``
-- ``0608`` became ``TAG08``
-- ``0609`` became ``TAG09``
-- ``0610`` became ``TAG10``
-- ``0611`` became ``TAG11``
+- ``0601`` became ``TAG01`` (``tag-with-space``)
+- ``0602`` became ``TAG02`` (``tag-with-or-and``)
+- ``0603`` became ``TAG03`` (``tag-with-reserved-word``)
+- ``0605`` became ``TAG05`` (``could-be-test-tags``)
+- ``0606`` became ``TAG06`` (``tag-already-set-in-test-tags``)
+- ``0607`` became ``TAG07`` (``unnecessary-default-tags``)
+- ``0608`` became ``TAG08`` (``empty-tags``)
+- ``0609`` became ``TAG09`` (``duplicated-tags``)
+- ``0610`` became ``TAG10`` (``could-be-keyword-tags``)
+- ``0611`` became ``TAG11`` (``tag-already-set-in-keyword-tags``)
 
 Comments rules are now grouped under 'COM' group:
 
