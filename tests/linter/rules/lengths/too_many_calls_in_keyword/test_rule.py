@@ -3,7 +3,10 @@ from tests.linter.utils import RuleAcceptance
 
 class TestRuleAcceptance(RuleAcceptance):
     def test_rule(self):
-        self.check_rule(src_files=["test.robot"], expected_file="expected_output.txt")
+        self.check_rule(src_files=["test.robot"], expected_file="expected_output.txt", test_on_version="<7.2")
+
+    def test_with_groups(self):
+        self.check_rule(src_files=["groups.robot"], expected_file="expected_output_groups.txt", test_on_version=">=7.2")
 
     def test_severity(self):
         self.check_rule(
