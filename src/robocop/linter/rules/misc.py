@@ -738,6 +738,208 @@ class KeywordSectionOutOfOrderRule(Rule):
     added_in_version = "5.3.0"
 
 
+class NoGlobalVariableRule(Rule):
+    """
+    Setting or updating global variables in a test/keyword often leads to hard-to-understand
+    code. In most cases, you're better off using local variables.
+
+    Changes in global variables during a test are hard to track because you must remember what's
+    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
+    up your understanding of what the code should be doing.
+
+    Local variables don't suffer from this issue because they are always created in the
+    keyword/test you're looking at.
+
+    In this example, the keyword changes the global variable. This will cause the test to fail.
+    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
+    remember the seemingly unrelated keyword::
+
+        *** Variables ***
+        ${hello}    Hello, world!
+
+        *** Test Cases ***
+        My Amazing Test
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            Set Global Variable    ${hello}    Goodnight, moon!
+
+    Using the VAR-syntax::
+
+        *** Variables ***
+        ${hello}    Hello, world!
+
+        *** Test Cases ***
+        My Amazing Test
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            VAR    ${hello}    Goodnight, moon!    scope=GLOBAL
+
+    In some specific situations, global variables are a great tool. But most of the time, it
+    makes code needlessly hard to understand.
+    """
+
+    name = "no-global-variable"
+    rule_id = "0929"
+    message = "Don't set global variables outside the variables section"
+    severity = RuleSeverity.WARNING
+    added_in_version = "5.6.0"
+
+
+class NoSuiteVariableRule(Rule):
+    """
+    Using suite variables in a test/keyword often leads to hard-to-understand code. In most
+    cases, you're better off using local variables.
+
+    Changes in suite variables during a test are hard to track because you must remember what's
+    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
+    up your understanding of what the code should be doing.
+
+    Local variables don't suffer from this issue because they are always created in the
+    keyword/test you're looking at.
+
+    In this example, the keyword changes the suite variable. This will cause the test to fail.
+    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
+    remember the seemingly unrelated keyword::
+
+        *** Test Cases ***
+        My Amazing Test
+            Set Suite Variable    ${hello}    Hello, world!
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            Set Suite Variable    ${hello}    Goodnight, moon!
+
+    Using the VAR-syntax::
+
+        *** Test Cases ***
+        My Amazing Test
+            VAR    ${hello}    Hello, world!    scope=SUITE
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            VAR    ${hello}    Goodnight, moon!    scope=SUITE
+
+    In some specific situations, suite variables are a great tool. But most of the time, it
+    makes code needlessly hard to understand.
+    """
+
+    name = "no-suite-variable"
+    rule_id = "0930"
+    message = "Don't use suite variables"
+    severity = RuleSeverity.WARNING
+    added_in_version = "5.6.0"
+
+
+class NoTestVariableRule(Rule):
+    """
+    Using test/task variables in a test/keyword often leads to hard-to-understand code. In most
+    cases, you're better off using local variables.
+
+    Changes in test/task variables during a test are hard to track because you must remember what's
+    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
+    up your understanding of what the code should be doing.
+
+    Local variables don't suffer from this issue because they are always created in the
+    keyword/test you're looking at.
+
+    In this example, the keyword changes the test/task variable. This will cause the test to fail.
+    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
+    remember the seemingly unrelated keyword::
+
+        *** Test Cases ***
+        My Amazing Test
+            Set Test Variable    ${hello}    Hello, world!
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            Set Test Variable    ${hello}    Goodnight, moon!
+
+    Using the VAR-syntax::
+
+        *** Test Cases ***
+        My Amazing Test
+            VAR    ${hello}    Hello, world!    scope=TEST
+            Do A Thing
+            Should Be Equal    ${hello}    Hello, world!
+
+        *** Keywords ***
+        Do A Thing
+            VAR    ${hello}    Goodnight, moon!    scope=TEST
+
+    In some specific situations, test/task variables are a great tool. But most of the time, it
+    makes code needlessly hard to understand.
+    """
+
+    name = "no-test-variable"
+    rule_id = "0931"
+    message = "Don't use test/task variables"
+    severity = RuleSeverity.WARNING
+    added_in_version = "5.6.0"
+
+
+class UndefinedArgumentDefaultRule(Rule):
+    """
+    Keyword arguments can define a default value. Every time you call the keyword, you can
+    optionally overwrite this default.
+
+    When you use an argument default, you should be as clear as possible. This improves the
+    readability of your code. The syntax ``${argument}=`` is unclear unless you happen to know
+    that it is technically equivalent to ``${argument}=${EMPTY}``. To prevent people from
+    misreading your keyword arguments, explicitly state that the value is empty using the
+    built-in ``${EMPTY}`` variable.
+
+    Example of a rule violation::
+
+        *** Keywords ***
+        My Amazing Keyword
+            [Arguments]    ${argument_name}=
+    """
+
+    name = "undefined-argument-default"
+    rule_id = "0932"
+    message = "Undefined argument default, use {arg_name}=${{EMPTY}} instead"
+    severity = RuleSeverity.ERROR
+    added_in_version = "5.7.0"
+
+
+class UndefinedArgumentValueRule(Rule):
+    r"""
+    When calling a keyword, it can accept named arguments.
+
+    When you call a keyword, you should be as clear as possible. This improves the
+    readability of your code. The syntax ``argument=`` is unclear unless you happen to know
+    that it is technically equivalent to ``argument=${EMPTY}``. To prevent people from
+    misreading your keyword arguments, explicitly state that the value is empty using the
+    built-in ``${EMPTY}`` variable.
+
+    If your argument is falsly flagged by this rule, escape the ``=`` character in your argument
+    value by like so: ``\=``.
+
+    Example of a rule violation::
+
+        My Amazing Keyword    argument_name=
+
+    """
+
+    name = "undefined-argument-value"
+    rule_id = "0933"
+    message = "Undefined argument value, use {arg_name}=${{EMPTY}} instead"
+    severity = RuleSeverity.ERROR
+    added_in_version = "5.7.0"
+
+
 class ReturnChecker(VisitorChecker):
     """Checker for [Return] and Return From Keyword violations."""
 
@@ -1708,3 +1910,127 @@ class TestAndKeywordOrderChecker(VisitorChecker):
                 max_order_indicator = this_node_expected_order
 
     visit_Keyword = visit_TestCase = check_order  # noqa: N815
+
+
+class NonLocalVariableChecker(VisitorChecker):
+    no_global_variable: NoGlobalVariableRule
+    no_suite_variable: NoSuiteVariableRule
+    no_test_variable: NoTestVariableRule
+
+    non_local_variable_keywords = {
+        "setglobalvariable",
+        "setsuitevariable",
+        "settestvariable",
+        "settaskvariable",
+    }
+
+    def visit_KeywordCall(self, node: KeywordCall):  # noqa: N802
+        keyword_token = node.get_token(Token.KEYWORD)
+        if not keyword_token:
+            return
+
+        keyword_name = normalize_robot_name(keyword_token.value, remove_prefix="builtin.")
+        if keyword_name not in self.non_local_variable_keywords:
+            return
+
+        if keyword_name == "setglobalvariable":
+            self._report(self.no_global_variable, keyword_token)
+            return
+
+        if keyword_name == "setsuitevariable":
+            self._report(self.no_suite_variable, keyword_token)
+            return
+
+        if keyword_name in ["settestvariable", "settaskvariable"]:
+            self._report(self.no_test_variable, keyword_token)
+            return
+
+    def visit_Var(self, node):  # noqa: N802
+        """Visit VAR syntax introduced in Robot Framework 7. Is ignored in Robot < 7"""
+        if not node.scope:
+            return
+
+        scope = node.scope.upper()
+        if scope == "LOCAL":
+            return
+
+        option_token = node.get_token(Token.OPTION)
+
+        if scope == "GLOBAL":
+            self._report(self.no_global_variable, option_token)
+            return
+
+        if scope in ["SUITE", "SUITES"]:
+            self._report(self.no_suite_variable, option_token)
+            return
+
+        if scope in ["TEST", "TASK"]:
+            self._report(self.no_test_variable, option_token)
+            return
+
+        # Unexpected scope, or variable-defined scope
+
+    def _report(self, rule: Rule, node) -> None:
+        self.report(
+            rule,
+            node=node,
+            lineno=node.lineno,
+            col=node.col_offset + 1,
+            end_col=node.col_offset + len(node.value) + 1,
+        )
+
+
+class UndefinedArgumentDefaultChecker(VisitorChecker):
+    undefined_argument_default: UndefinedArgumentDefaultRule
+    undefined_argument_value: UndefinedArgumentValueRule
+
+    def visit_Arguments(self, node: Arguments):  # noqa: N802
+        for token in node.get_tokens(Token.ARGUMENT):
+            arg = token.value
+
+            # From the Robot User Guide:
+            # "The syntax for default values is space sensitive. Spaces before
+            # the `=` sign are not allowed."
+            if "}=" not in arg:
+                # has no default
+                continue
+
+            arg_name, default_val = arg.split("}=", maxsplit=1)
+
+            if default_val == "":
+                self.report(
+                    self.undefined_argument_default,
+                    node=token,
+                    lineno=token.lineno,
+                    col=token.col_offset + 1,
+                    end_col=token.col_offset + len(token.value) + 1,
+                    arg_name=arg_name + "}",
+                )
+
+    def visit_KeywordCall(self, node: KeywordCall):  # noqa: N802
+        for token in node.get_tokens(Token.ARGUMENT):
+            arg = token.value
+
+            if "=" not in arg or arg.startswith("="):
+                # Is a positional arg
+                continue
+
+            arg_name, default_val = arg.split("=", maxsplit=1)
+            if arg_name.endswith("\\"):
+                # `=` is escaped
+                continue
+
+            if default_val != "":
+                # Has a value
+                continue
+
+            # Falsly triggers if a positional argument ends with `=`
+            # The language server has the same behavior
+            self.report(
+                self.undefined_argument_value,
+                node=token,
+                lineno=token.lineno,
+                col=token.col_offset + 1,
+                end_col=token.col_offset + len(token.value) + 1,
+                arg_name=arg_name,
+            )
