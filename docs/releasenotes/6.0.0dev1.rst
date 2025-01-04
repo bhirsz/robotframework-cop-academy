@@ -1,8 +1,8 @@
 :orphan:
 
-==============
-Robocop2 6.0
-==============
+=============
+Robocop 6.0
+=============
 
 Robocop 6.0 is major release of both Robocop and Robotidy (!) tools.
 
@@ -275,12 +275,34 @@ Rules changes (#30)
 We have reviewed all the rules to improve rule ids, names, documentation, messages and overall design.
 It would be too much to list of all changes, but we will list all changes that have impact on the users.
 
+**Renamed messages**
+
+Multiple rules messages were updated to avoid words such as ``should be`` or suggestions for fixes and to simply
+state what's the actual issue. For example ``bad-block-indent`` message:
+
+``Indent expected. Provide 2 or more spaces of indentation for statements inside block``
+
+became:
+
+``Not enough indentation inside block``
+
+The goal was to have clear and shorter messages. Actual issue is well described thanks to the rule documentation
+and new output format (which displays source around the issue).
+
+**Rule id changes**
+
+Previous rule ids consistent of group id and unique rule number. For example ``0201`` - ``02`` was documentation group
+id while ``01`` was unique rule number. This naming scheme wasn't clear and made it harder to categorize rule on first
+glance. That's why we have switched to alphanumeric group names (for example ``DOC`` instead of ``02``).
+Various groups are also additionally split into smaller sub-groups. This change leads to backward incompatible
+changes to all rule ids.
+
 Documentation rules are now grouped under 'DOC' group:
 
-- ``0201`` became ``DOC01``
-- ``0202`` became ``DOC02``
-- ``0203`` became ``DOC03``
-- ``0204`` became ``DOC04``
+- ``0201`` became ``DOC01`` (``missing-doc-keyword``)
+- ``0202`` became ``DOC02`` (``missing-doc-test-case``)
+- ``0203`` became ``DOC03`` (``missing-doc-suite``)
+- ``0204`` became ``DOC04`` (``missing-doc-resource-file``)
 
 Tags rules are now grouped under 'TAG' group:
 
@@ -298,11 +320,11 @@ Tags rules are now grouped under 'TAG' group:
 
 Comments rules are now grouped under 'COM' group:
 
-- ``0701`` became ``COM01``
-- ``0702`` became ``COM02``
-- ``0703`` became ``COM03`` and message is now ``Comment starts from the second character in the line``
-- ``0704`` became ``COM04``
-- ``0705`` became ``COM05``
+- ``0701`` became ``COM01`` (``todo-in-comment``)
+- ``0702`` became ``COM02`` (``missing-space-after-comment``)
+- ``0703`` became ``COM03`` (``invalid-comment``)
+- ``0704`` became ``COM04`` (``ignored-data``)
+- ``0705`` became ``COM05`` (``bom-encoding-in-file``)
 
 Import related rules are now grouped under 'IMP' group:
 
@@ -310,6 +332,26 @@ Import related rules are now grouped under 'IMP' group:
 - ``0926`` became ``IMP02`` (``builtin-imports-not-sorted``)
 - ``10101`` became ``IMP03`` (``non-builtin-imports-not-sorted``)
 - ``10102`` became ``IMP04`` (``resources-imports-not-sorted``)
+
+Spacing and whitespace related rules are now grouped under `SPC` group:
+
+- ``1001`` became ``SPC01`` (``trailing-whitespace``)
+- ``1002`` became ``SPC02`` (``missing-trailing-blank-line``)
+- ``1003`` became ``SPC03`` (``empty-lines-between-sections``)
+- ``1004`` became ``SPC04`` (``empty-lines-between-test-cases``)
+- ``1005`` became ``SPC05`` (``empty-lines-between-keywords``)
+- ``1006`` became ``SPC06`` (``mixed-tabs-and-spaces``)
+- ``1008`` became ``SPC08`` (``bad-indent``)
+- ``1009`` became ``SPC09`` (``empty-line-after-section``)
+- ``1010`` became ``SPC10`` (``too-many-trailing-blank-lines``)
+- ``1011`` became ``SPC11`` (``misaligned-continuation``)
+- ``1012`` became ``SPC12`` (``consecutive-empty-lines``)
+- ``1013`` became ``SPC13`` (``empty-lines-in-statement``)
+- ``1014`` became ``SPC14`` (``variable-should-be-left-aligned`` -> ``variable-not-left-aligned``)
+- ``1015`` became ``SPC15`` (``misaligned-continuation-row``)
+- ``1016`` became ``SPC16`` (``suite-setting-should-be-left-aligned`` -> ``suite-setting-not-left-aligned``)
+- ``1017`` became ``SPC17`` (``bad-block-indent``)
+- ``1018`` became ``SPC18`` (``first-argument-in-new-line``)
 
 New features
 =============

@@ -32,24 +32,73 @@ if TYPE_CHECKING:
 
 
 class TrailingWhitespaceRule(Rule):
+    r"""
+    Trailing whitespace at the end of line.
+
+    Invisible, unnecessary whitespace can be confusing.
+
+    Incorrect code example::
+
+        *** Keywords ***  \n
+        Validate Result\n
+        [Arguments]    ${variable}\n
+            Should Be True    ${variable}    \n
+
+    Correct code::
+
+        *** Keywords ***\n
+        Validate Result\n
+        [Arguments]    ${variable}\n
+            Should Be True    ${variable}\n
+
+    """
+
     name = "trailing-whitespace"
-    rule_id = "1001"
+    rule_id = "SPC01"
     message = "Trailing whitespace at the end of line"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
 
 class MissingTrailingBlankLineRule(Rule):
+    """Missing trailing blank line at the end of file."""
+
     name = "missing-trailing-blank-line"
-    rule_id = "1002"
+    rule_id = "SPC02"
     message = "Missing trailing blank line at the end of file"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
 
 class EmptyLinesBetweenSectionsRule(Rule):
+    """
+    Invalid number of empty lines between sections.
+
+    Ensure there is the same number of empty lines between sections for consistency and readability.
+
+    Incorrect code example::
+
+        *** Settings ***
+        Suite Documentation    Only one empty line after this section.
+
+        *** Keywords ***
+        Keyword Definition
+            No Operation
+
+    Correct code::
+
+        *** Settings ***
+        Suite Documentation    Only one empty line after this section.
+
+
+        *** Keywords ***
+        Keyword Definition
+            No Operation
+
+    """
+
     name = "empty-lines-between-sections"
-    rule_id = "1003"
+    rule_id = "SPC03"
     message = "Invalid number of empty lines between sections ({empty_lines}/{allowed_empty_lines})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -64,8 +113,34 @@ class EmptyLinesBetweenSectionsRule(Rule):
 
 
 class EmptyLinesBetweenTestCasesRule(Rule):
+    """
+    Invalid number of empty lines between test cases.
+
+    Ensure there is the same number of empty lines between test cases for consistency and readability.
+
+    Incorrect code example::
+
+        *** Test Cases ***
+        First test case
+            No Operation
+
+
+        Second test case
+            No Operation
+
+    Correct code::
+
+        *** Test Cases ***
+        First test case
+            No Operation
+
+        Second test case
+            No Operation
+
+    """
+
     name = "empty-lines-between-test-cases"
-    rule_id = "1004"
+    rule_id = "SPC04"
     message = "Invalid number of empty lines between test cases ({empty_lines}/{allowed_empty_lines})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -80,8 +155,34 @@ class EmptyLinesBetweenTestCasesRule(Rule):
 
 
 class EmptyLinesBetweenKeywordsRule(Rule):
+    """
+    Invalid number of empty lines between keywords.
+
+    Ensure there is the same number of empty lines between keywords for consistency and readability.
+
+    Incorrect code example::
+
+        *** Keywords ***
+        First Keyword
+            No Operation
+
+
+        Second Keyword
+            No Operation
+
+    Correct code::
+
+        *** Keywords ***
+        First Keyword
+            No Operation
+
+        Second Keyword
+            No Operation
+
+    """
+
     name = "empty-lines-between-keywords"
-    rule_id = "1005"
+    rule_id = "SPC05"
     message = "Invalid number of empty lines between keywords ({empty_lines}/{allowed_empty_lines})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -96,8 +197,14 @@ class EmptyLinesBetweenKeywordsRule(Rule):
 
 
 class MixedTabsAndSpacesRule(Rule):
+    """
+    Mixed tabs and spaces in file.
+
+    File contains both spaces and tabs. Use only one type of separators - preferably spaces.
+    """
+
     name = "mixed-tabs-and-spaces"
-    rule_id = "1006"
+    rule_id = "SPC06"
     message = "Inconsistent use of tabs and spaces in file"
     severity = RuleSeverity.WARNING
     added_in_version = "1.1.0"
@@ -107,23 +214,32 @@ class BadIndentRule(Rule):
     """
     Line is misaligned or indent is invalid.
 
-    This rule reports warning if the line is misaligned in the current block. Example of rule violation::
+    This rule reports warning if the line is misaligned in the current block.
+    The correct indentation is determined by the most common indentation in the current block.
+    It is possible to switch for more strict mode using ``indent`` parameter (default ``-1``).
+
+    Incorrect code example::
 
         *** Keywords ***
         Keyword
             Keyword Call
-             Misaligned Keyword Call  # line is over-intended by one space
+             Misaligned Keyword Call
             IF    $condition    RETURN
-           Keyword Call  # line is under-intended by two spaces
+           Keyword Call
 
-    The correct indentation is determined by the most common indentation in the current block. Although,
-    it allows for more flexible indentation by specifying the ``indent`` parameter for checking if the
-    indentation is the multiple of ``indent`` spaces (default -1, which makes this parameter being ignored).
+    Correct code::
+
+        *** Keywords ***
+        Keyword
+            Keyword Call
+            Misaligned Keyword Call
+            IF    $condition    RETURN
+            Keyword Call
 
     """
 
     name = "bad-indent"
-    rule_id = "1008"
+    rule_id = "SPC08"
     message = "{bad_indent_msg}"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -139,18 +255,25 @@ class BadIndentRule(Rule):
 
 class EmptyLineAfterSectionRule(Rule):
     """
-    Empty lines after the section header are not allowed by default. Example of rule violation::
+    Too many empty lines after section header.
+
+    Empty lines after the section header are not allowed by default.
+
+    Incorrect code example::
 
          *** Test Cases ***
 
-         Resource  file.resource
+         Test case name
 
-    It can be configured using ``empty_lines`` parameter.
+    Correct code::
+
+         *** Test Cases ***
+         Test case name
 
     """
 
     name = "empty-line-after-section"
-    rule_id = "1009"
+    rule_id = "SPC09"
     message = "Too many empty lines after '{section_name}' section header ({empty_lines}/{allowed_empty_lines})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -166,10 +289,14 @@ class EmptyLineAfterSectionRule(Rule):
 
 
 class TooManyTrailingBlankLinesRule(Rule):
-    """There should be exactly one blank line at the end of the file."""
+    """
+    Too many blank lines at the end of file.
+
+    There should be exactly one blank line at the end of the file.
+    """
 
     name = "too-many-trailing-blank-lines"
-    rule_id = "1010"
+    rule_id = "SPC10"
     message = "Too many blank lines at the end of file"
     severity = RuleSeverity.WARNING
     added_in_version = "1.4.0"
@@ -177,7 +304,9 @@ class TooManyTrailingBlankLinesRule(Rule):
 
 class MisalignedContinuationRule(Rule):
     """
-    Example of rule violation::
+    Misaligned continuation marker.
+
+    Incorrect code example::
 
             Default Tags       default tag 1    default tag 2    default tag 3
         ...                default tag 4    default tag 5
@@ -187,25 +316,36 @@ class MisalignedContinuationRule(Rule):
                 Do X    first argument    second argument    third argument
               ...    fourth argument    fifth argument    sixth argument
 
+    Correct code::
+
+        Default Tags       default tag 1    default tag 2    default tag 3
+        ...                default tag 4    default tag 5
+
+            *** Test Cases ***
+            Example
+                Do X    first argument    second argument    third argument
+                ...    fourth argument    fifth argument    sixth argument
 
     """
 
     name = "misaligned-continuation"
-    rule_id = "1011"
-    message = "Continuation marker should be aligned with starting row"
+    rule_id = "SPC11"
+    message = "Continuation marker is not aligned with starting row"
     severity = RuleSeverity.WARNING
     added_in_version = "1.6.0"
 
 
 class ConsecutiveEmptyLinesRule(Rule):
     """
-    Example of rule violation::
+    Too many consecutive empty lines.
+
+    Incorrect code example::
 
         *** Variables ***
         ${VAR}    value
 
 
-        ${VAR2}    value  # previous line will be reported with 2/1 consecutive lines
+        ${VAR2}    value
 
 
         *** Keywords ***
@@ -213,13 +353,24 @@ class ConsecutiveEmptyLinesRule(Rule):
             Step 1
 
 
-            Step 2  # previous line will be reported with 2/1 consecutive lines
+            Step 2
 
+    Correct code::
+
+        *** Variables ***
+        ${VAR}    value
+        ${VAR2}    value
+
+
+        *** Keywords ***
+        Keyword
+            Step 1
+            Step 2  # 1 empty line is also fine, but no more
 
     """
 
     name = "consecutive-empty-lines"
-    rule_id = "1012"
+    rule_id = "SPC12"
     message = "Too many consecutive empty lines ({empty_lines}/{allowed_empty_lines})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -238,37 +389,56 @@ class ConsecutiveEmptyLinesRule(Rule):
 
 class EmptyLinesInStatementRule(Rule):
     """
-    Example of rule violation::
+    Multi line statement with empty lines.
+
+    Avoid using empty lines between continuation markers in multi line statement.
+
+    Incorrect code example::
 
          Keyword
          ...  1
          # empty line in-between multiline statement
          ...  2
 
+         ...  3
+
+    Correct code::
+
+         Keyword
+         ...  1
+         ...  2
+         ...  3
 
     """
 
     name = "empty-lines-in-statement"
-    rule_id = "1013"
+    rule_id = "SPC13"
     message = "Multi-line statement with empty lines"
     severity = RuleSeverity.WARNING
     added_in_version = "1.8.0"
 
 
-class VariableShouldBeLeftAlignedRule(Rule):
+class VariableNotLeftAlignedRule(Rule):
     """
-    Example of rule violation::
+    Variable in ``*** Variables ***`` section should be left aligned.
+
+    Incorrect code example::
 
         *** Variables ***
          ${VAR}  1
           ${VAR2}  2
 
+    Correct code::
+
+        *** Variables ***
+        ${VAR}  1
+        ${VAR2}  2
 
     """
 
-    name = "variable-should-be-left-aligned"
-    rule_id = "1014"
-    message = "Variable in Variable section should be left aligned"
+    name = "variable-not-left-aligned"
+    rule_id = "SPC14"
+    message = "Variable in Variables section is not left aligned"
     severity = RuleSeverity.ERROR
     version = ">=4.0"
     added_in_version = "1.8.0"
@@ -276,7 +446,9 @@ class VariableShouldBeLeftAlignedRule(Rule):
 
 class MisalignedContinuationRowRule(Rule):
     """
-    Example of rule violation::
+    Continuation marker should be aligned with the previous one.
+
+    Incorrect code example::
 
         *** Variable ***
         ${VAR}    This is a long string.
@@ -289,11 +461,24 @@ class MisalignedContinuationRowRule(Rule):
             ...    arg1
             ...   arg2  # misaligned
 
+    Correct code::
+
+        *** Variable ***
+        ${VAR}    This is a long string.
+        ...       It has multiple sentences.
+        ...       And this line is misaligned with previous one.
+
+        *** Test Cases ***
+        My Test
+            My Keyword
+            ...    arg1
+            ...    arg2  # misaligned
+
     """
 
     name = "misaligned-continuation-row"
-    rule_id = "1015"
-    message = "Each next continuation line should be aligned with the previous one"
+    rule_id = "SPC15"
+    message = "Continuation line is not aligned with the previous one"
     severity = RuleSeverity.WARNING
     parameters = [
         RuleParam(name="ignore_docs", default=True, converter=str2bool, show_type="bool", desc="Ignore documentation"),
@@ -304,21 +489,29 @@ class MisalignedContinuationRowRule(Rule):
     added_in_version = "1.11.0"
 
 
-class SuiteSettingShouldBeLeftAlignedRule(Rule):
+class SuiteSettingNotLeftAlignedRule(Rule):
     """
-    Example of rule violation::
+    Settings in ``*** Settings ***`` section should be left aligned.
+
+    Incorrect code example::
 
         *** Settings ***
             Library  Collections
-            Resource  data.resource
+        Resource  data.resource
             Variables  vars.robot
 
+    Correct code::
+
+        *** Settings ***
+        Library  Collections
+        Resource  data.resource
+        Variables  vars.robot
 
     """
 
-    name = "suite-setting-should-be-left-aligned"
-    rule_id = "1016"
-    message = "Setting in Settings section should be left aligned"
+    name = "suite-setting-not-left-aligned"
+    rule_id = "SPC16"
+    message = "Setting in Settings section is not left aligned"
     severity = RuleSeverity.ERROR
     version = ">=4.0"
     added_in_version = "2.4.0"
@@ -326,8 +519,12 @@ class SuiteSettingShouldBeLeftAlignedRule(Rule):
 
 class BadBlockIndentRule(Rule):
     """
-    If the indentation is less than two spaces than current block parent element
-    (such as ``FOR``/``IF``/``WHILE``/``TRY`` header) the indentation is invalid and the rule reports an error::
+    Not enough indentation.
+
+    Reports occurrences where indentation is less than two spaces than current block parent element (such as
+    ``FOR``/``IF``/``WHILE``/``TRY`` header).
+
+    Incorrect code example::
 
         *** Keywords ***
         Some Keyword
@@ -337,18 +534,30 @@ class BadBlockIndentRule(Rule):
         # bad comment
             END
 
+    Correct code::
+
+        *** Keywords ***
+        Some Keyword
+            FOR  ${elem}  IN  ${list}
+                Log  ${elem}  # this is fine
+                Log  stuff    # this is bad indent
+                # bad comment
+            END
+
     """
 
     name = "bad-block-indent"
-    rule_id = "1017"
-    message = "Indent expected. Provide 2 or more spaces of indentation for statements inside block"
+    rule_id = "SPC17"
+    message = "Not enough indentation inside block"
     severity = RuleSeverity.ERROR
     added_in_version = "3.0.0"
 
 
 class FirstArgumentInNewLineRule(Rule):
     """
-    Example of rule violation::
+    First argument is not in the same level as ``[Arguments]`` setting.
+
+    Incorrect code example::
 
         *** Keywords ***
         Custom Keyword With Five Required Arguments
@@ -356,12 +565,18 @@ class FirstArgumentInNewLineRule(Rule):
         ...    ${name}
         ...    ${surname}
 
+    Correct code::
+
+        *** Keywords ***
+        Custom Keyword With Five Required Arguments
+        [Arguments]    ${name}
+        ...    ${surname}
 
     """
 
     name = "first-argument-in-new-line"
-    rule_id = "1018"
-    message = "First argument: '{argument_name}' should be placed on the same line as [Arguments] setting"
+    rule_id = "SPC18"
+    message = "First argument: '{argument_name}' is not placed on the same line as [Arguments] setting"
     severity = RuleSeverity.WARNING
     added_in_version = "5.3.0"
 
@@ -972,8 +1187,8 @@ class MisalignedContinuation(VisitorChecker, ModelVisitor):
 class LeftAlignedChecker(VisitorChecker):
     """Checker for left align."""
 
-    variable_should_be_left_aligned: VariableShouldBeLeftAlignedRule
-    suite_setting_should_be_left_aligned: SuiteSettingShouldBeLeftAlignedRule
+    variable_not_left_aligned: VariableNotLeftAlignedRule
+    suite_setting_not_left_aligned: SuiteSettingNotLeftAlignedRule
 
     suite_settings = {
         "documentation": "Documentation",
@@ -1001,7 +1216,7 @@ class LeftAlignedChecker(VisitorChecker):
                     pos = len(token.value) - len(token.value.lstrip()) + 1
                 else:
                     pos = child.get_token(Token.ARGUMENT).col_offset + 1
-                self.report(self.variable_should_be_left_aligned, lineno=token.lineno, col=1, end_col=pos)
+                self.report(self.variable_not_left_aligned, lineno=token.lineno, col=1, end_col=pos)
 
     def visit_SettingSection(self, node) -> None:  # noqa: N802
         for child in node.body:
@@ -1018,7 +1233,7 @@ class LeftAlignedChecker(VisitorChecker):
             setting_cand = node.get_token(Token.COMMENT)
             if setting_cand and setting_cand.value.replace(" ", "").lower() in self.suite_settings:
                 self.report(
-                    self.suite_setting_should_be_left_aligned,
+                    self.suite_setting_not_left_aligned,
                     node=setting_cand,
                     col=setting_cand.col_offset + 1,
                     end_col=setting_cand.end_col_offset + 1,
@@ -1029,7 +1244,7 @@ class LeftAlignedChecker(VisitorChecker):
                 if suite_sett_cand.startswith(setting):
                     indent = len(setting_error) - len(setting_error.lstrip())
                     self.report(
-                        self.suite_setting_should_be_left_aligned,
+                        self.suite_setting_not_left_aligned,
                         node=node,
                         col=indent + 1,
                     )
