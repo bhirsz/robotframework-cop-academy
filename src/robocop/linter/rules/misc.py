@@ -21,7 +21,16 @@ try:
 except ImportError:
     InlineIfHeader, Break, Continue = None, None, None
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker, arguments, variables
+from robocop.linter.rules import (
+    Rule,
+    RuleParam,
+    RuleSeverity,
+    SeverityThreshold,
+    VisitorChecker,
+    arguments,
+    deprecated,
+    variables,
+)
 from robocop.linter.utils import (  # FIXME: import as module
     ROBOT_VERSION,
     AssignmentTypeDetector,
@@ -104,17 +113,6 @@ class NestedForLoopRule(Rule):
     severity = RuleSeverity.ERROR
     version = "<4.0"
     added_in_version = "1.0.0"
-
-
-class IfCanBeUsedRule(Rule):
-    """Starting from Robot Framework 4.0 ``Run Keyword If`` and ``Run Keyword Unless`` can be replaced by IF block."""
-
-    name = "if-can-be-used"
-    rule_id = "0908"
-    message = "'{run_keyword}' can be replaced with IF block since Robot Framework 4.0"
-    severity = RuleSeverity.INFO
-    version = "==4.*"
-    added_in_version = "1.4.0"
 
 
 class InconsistentAssignmentRule(Rule):
@@ -694,7 +692,7 @@ class IfBlockCanBeUsed(VisitorChecker):
     Run Keyword variants (Run Keyword If, Run Keyword Unless) can be replaced with IF in RF 4.0
     """
 
-    if_can_be_used: IfCanBeUsedRule
+    if_can_be_used: deprecated.IfCanBeUsedRule
     run_keyword_variants = {"runkeywordif", "runkeywordunless"}
 
     def visit_KeywordCall(self, node) -> None:  # noqa: N802

@@ -374,6 +374,15 @@ Argument related rules are now grouped under 'ARG' group:
 - ``0933`` became ``ARG04`` (``undefined-argument-value``)
 - ``0407`` became ``ARG05`` (``invalid-argument``)
 
+Deprecated syntax or code replacement recommendations are now grouped under 'DEPR' group:
+
+- ``0908`` became ``DEPR01`` (``if-can-be-used``)
+- ``0319`` became ``DEPR02`` (``deprecated-statement``)
+- ``0321`` became ``DEPR03`` (``deprecated-with-name``)
+- ``0322`` became ``DEPR04`` (``deprecated-singular-header``)
+- ``0327`` became ``DEPR05`` (``replace-set-variable-with-var``)
+- ``0328`` became ``DEPR06`` (``replace-create-with-var``)
+
 New features
 =============
 

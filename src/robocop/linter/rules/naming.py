@@ -14,7 +14,7 @@ from robot.parsing.model.blocks import TestCaseSection
 from robot.parsing.model.statements import Arguments
 from robot.variables.search import search_variable
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker, variables
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker, deprecated, variables
 from robocop.linter.utils import (
     ROBOT_VERSION,
     find_robot_vars,
@@ -384,21 +384,6 @@ class BddWithoutKeywordCallRule(Rule):
     added_in_version = "1.11.0"
 
 
-class DeprecatedStatementRule(Rule):
-    """
-    Detects any piece of code that is marked as deprecated but still works in RF.
-
-    For example, ``Run Keyword`` and ``Continue For Loop`` keywords or ``[Return]`` setting.
-
-    """
-
-    name = "deprecated-statement"
-    rule_id = "0319"
-    message = "'{statement_name}' is deprecated since Robot Framework version {version}, use '{alternative}' instead"
-    severity = RuleSeverity.WARNING
-    added_in_version = "2.0.0"
-
-
 class NotAllowedCharInFilenameRule(Rule):
     r"""
     Reports not allowed pattern found in Suite names. By default, it's a dot (`.`).
@@ -425,52 +410,6 @@ class NotAllowedCharInFilenameRule(Rule):
         ),
     ]
     added_in_version = "2.1.0"
-
-
-class DeprecatedWithNameRule(Rule):
-    """
-    ``WITH NAME`` marker that is used when giving an alias to an imported library is going to be renamed to ``AS``.
-    The motivation is to be consistent with Python that uses ``as`` for similar purpose.
-
-    Code with the deprecated marker::
-
-        *** Settings ***
-        Library    Collections    WITH NAME    AliasedName
-
-    Code with the supported marker::
-
-        *** Settings ***
-        Library    Collections    AS    AliasedName
-
-    """
-
-    name = "deprecated-with-name"
-    rule_id = "0321"
-    message = (
-        "'WITH NAME' alias marker is deprecated since Robot Framework 6.0 version and will be removed in the "
-        "future release. Use 'AS' instead"
-    )
-    severity = RuleSeverity.WARNING
-    version = ">=6.0"
-    added_in_version = "2.5.0"
-
-
-class DeprecatedSingularHeaderRule(Rule):
-    """
-    Robot Framework 6.0 starts deprecation period for singular headers forms. The rationale behind this change
-    is available at https://github.com/robotframework/robotframework/issues/4431
-
-    """
-
-    name = "deprecated-singular-header"
-    rule_id = "0322"
-    message = (
-        "'{singular_header}' singular header form is deprecated since RF 6.0 and will be removed in the future "
-        "releases. Use '{plural_header}' instead"
-    )
-    severity = RuleSeverity.WARNING
-    version = ">=6.0"
-    added_in_version = "2.6.0"
 
 
 class InvalidSectionRule(Rule):
@@ -513,71 +452,6 @@ class MixedTaskTestSettingsRule(Rule):
     message = "Use {task_or_test}-related setting '{setting}' if {tasks_or_tests} section is used"
     severity = RuleSeverity.WARNING
     added_in_version = "3.3.0"
-
-
-class ReplaceSetVariableWithVarRule(Rule):
-    """
-    Starting from Robot Framework 7.0, it is possible to create variables inside tests and user keywords using the
-    VAR syntax. The VAR syntax is recommended over previously existing keywords.
-
-    Example with Set Variable keywords::
-
-      *** Keywords ***
-      Set Variables To Different Scopes
-          Set Local Variable    ${local}    value
-          Set Test Variable    ${TEST_VAR}    value
-          Set Task Variable    ${TASK_VAR}    value
-          Set Suite Variable    ${SUITE_VAR}    value
-          Set Global Variable    ${GLOBAL_VAR}    value
-
-    Can be now rewritten to::
-
-      *** Keywords ***
-      Set Variables To Different Scopes
-          VAR    ${local}    value
-          VAR    ${TEST_VAR}    value    scope=TEST
-          VAR    ${TASK_VAR}    value    scope=TASK
-          VAR    ${SUITE_VAR}    value    scope=SUITE
-          VAR    ${GLOBAL_VAR}    value    scope=GLOBAL
-
-    """
-
-    name = "replace-set-variable-with-var"
-    rule_id = "0327"
-    message = "{set_variable_keyword} can be replaced with VAR"
-    severity = RuleSeverity.INFO
-    version = ">=7.0"
-    added_in_version = "5.0.0"
-
-
-class ReplaceCreateWithVarRule(Rule):
-    """
-    Starting from Robot Framework 7.0, it is possible to create variables inside tests and user keywords using the
-    VAR syntax. The VAR syntax is recommended over previously existing keywords.
-
-    Example with Create keywords::
-
-      *** Keywords ***
-      Create Variables
-          @{list}    Create List    a  b
-          &{dict}    Create Dictionary    key=value
-
-    Can be now rewritten to::
-
-      *** Keywords ***
-      Create Variables
-          VAR    @{list}    a  b
-          VAR    &{dict}    key=value
-
-
-    """
-
-    name = "replace-create-with-var"
-    rule_id = "0328"
-    message = "{create_keyword} can be replaced with VAR"
-    severity = RuleSeverity.INFO
-    version = ">=7.0"
-    added_in_version = "5.0.0"
 
 
 SET_VARIABLE_VARIANTS = {
@@ -1285,11 +1159,11 @@ class SimilarVariableChecker(VisitorChecker):
 class DeprecatedStatementChecker(VisitorChecker):
     """Checker for deprecated statements."""
 
-    deprecated_statement: DeprecatedStatementRule
-    deprecated_with_name: DeprecatedWithNameRule
-    deprecated_singular_header: DeprecatedSingularHeaderRule
-    replace_set_variable_with_var: ReplaceSetVariableWithVarRule
-    replace_create_with_var: ReplaceCreateWithVarRule
+    deprecated_statement: deprecated.DeprecatedStatementRule
+    deprecated_with_name: deprecated.DeprecatedWithNameRule
+    deprecated_singular_header: deprecated.DeprecatedSingularHeaderRule
+    replace_set_variable_with_var: deprecated.ReplaceSetVariableWithVarRule
+    replace_create_with_var: deprecated.ReplaceCreateWithVarRule
 
     deprecated_keywords = {
         "runkeywordunless": (5, "IF"),
