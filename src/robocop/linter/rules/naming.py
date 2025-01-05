@@ -14,7 +14,7 @@ from robot.parsing.model.blocks import TestCaseSection
 from robot.parsing.model.statements import Arguments
 from robot.variables.search import search_variable
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker, variables
 from robocop.linter.utils import (
     ROBOT_VERSION,
     find_robot_vars,
@@ -247,35 +247,6 @@ class SectionVariableNotUppercaseRule(Rule):
     added_in_version = "1.4.0"
 
 
-class NonLocalVariablesShouldBeUppercaseRule(Rule):
-    """
-    Good |:white_check_mark:|
-
-    ..  code-block:: none
-
-        Set Task Variable    ${MY_VAR}           1
-        Set Suite Variable   ${MY VAR}           1
-        Set Test Variable    ${MY_VAR}           1
-        Set Global Variable  ${MY VAR${nested}}  1
-
-    Bad |:x:|
-
-    ..  code-block:: none
-
-        Set Task Variable    ${my_var}           1
-        Set Suite Variable   ${My Var}           1
-        Set Test Variable    ${myvar}            1
-        Set Global Variable  ${my_var${NESTED}}  1
-
-    """
-
-    name = "non-local-variables-should-be-uppercase"
-    rule_id = "0310"
-    message = "Test, suite and global variables should be uppercase"
-    severity = RuleSeverity.WARNING
-    added_in_version = "1.4.0"
-
-
 class ElseNotUpperCaseRule(Rule):
     """
     Good |:white_check_mark:| ::
@@ -382,58 +353,6 @@ class DuplicatedLibraryAliasRule(Rule):
     rule_id = "0315"
     message = "Library alias should not be the same as original name"
     severity = RuleSeverity.WARNING
-    added_in_version = "1.10.0"
-
-
-class PossibleVariableOverwritingRule(Rule):
-    """
-    Following assignments overwrite the same variable::
-
-        *** Keywords ***
-        Retrieve Usernames
-            ${username}      Get Username       id=1
-            ${User Name}     Get Username       id=2
-            ${user_name}     Get Username       id=3
-
-    Use consistent variable naming guidelines to avoid unintended variable overwriting.
-    Remember that variable names in Robot Framework are case-insensitive and
-    underscores and whitespaces are ignored.
-
-    """
-
-    name = "possible-variable-overwriting"
-    rule_id = "0316"
-    message = (
-        "Variable '{variable_name}' may overwrite similar variable inside '{block_name}' {block_type}. "
-        "Note that variables are case-insensitive, and also spaces and underscores are ignored."
-    )
-    severity = RuleSeverity.INFO
-    added_in_version = "1.10.0"
-
-
-class HyphenInVariableNameRule(Rule):
-    """
-    Robot Framework supports evaluation of Python code inside ${ } brackets. For example:
-
-    ..  code-block: none
-
-        ${var2}  Set Variable  ${${var}-${var2}}
-
-    That's why there is a possibility that hyphen in name is not recognized as part of the name but as a minus sign.
-    Better to use underscore instead:
-
-    ..  code-block: none
-
-        ${var2}  Set Variable  ${${var}_${var2}}
-
-    """
-
-    name = "hyphen-in-variable-name"
-    rule_id = "0317"
-    message = (
-        "Use underscore in variable name '{variable_name}' instead of hyphens to avoid treating them like minus sign"
-    )
-    severity = RuleSeverity.INFO
     added_in_version = "1.10.0"
 
 
@@ -554,49 +473,6 @@ class DeprecatedSingularHeaderRule(Rule):
     added_in_version = "2.6.0"
 
 
-class InconsistentVariableNameRule(Rule):
-    """
-    Variable names are case-insensitive and ignore underscores and spaces. It is possible to
-    write the variable in multiple ways and it will be a valid Robot Framework code. However,
-    it makes it harder to maintain the code that does not follow the consistent naming.
-
-    Example::
-
-        *** Keywords ***
-        Check If User Is Admin
-            [Arguments]    ${username}
-            ${role}    Get User Role     ${username}
-            IF    '${ROLE}' == 'Admin'   # inconsistent name with ${role}
-                Log    ${Username} is an admin  # inconsistent name with ${username}
-            ELSE
-                Log    ${user name} is not an admin  # inconsistent name
-            END
-
-    """
-
-    name = "inconsistent-variable-name"
-    rule_id = "0323"
-    message = "Variable '{name}' has inconsistent naming. First used as '{first_use}'"
-    severity = RuleSeverity.WARNING
-    added_in_version = "3.2.0"
-
-
-class OverwritingReservedVariableRule(Rule):
-    """
-    Overwriting reserved variables may bring unexpected results.
-    For example, overwriting variable with name ``${LOG_LEVEL}`` can break Robot Framework logging.
-    See the full list of reserved variables at
-    `Robot Framework User Guide <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#automatic-variables>`_
-
-    """
-
-    name = "overwriting-reserved-variable"
-    rule_id = "0324"
-    message = "{var_or_arg} '{variable_name}' overwrites reserved variable '{reserved_variable}'"
-    severity = RuleSeverity.WARNING
-    added_in_version = "3.2.0"
-
-
 class InvalidSectionRule(Rule):
     """
     Robot Framework 6.1 detects unrecognized sections based on the language defined for the specific files.
@@ -663,7 +539,6 @@ class ReplaceSetVariableWithVarRule(Rule):
           VAR    ${TASK_VAR}    value    scope=TASK
           VAR    ${SUITE_VAR}    value    scope=SUITE
           VAR    ${GLOBAL_VAR}    value    scope=GLOBAL
-
 
     """
 
@@ -741,9 +616,9 @@ class InvalidCharactersInNameChecker(VisitorChecker):
         Skips embedded variables from keyword name
         """
         node_name = node.name
-        variables = find_robot_vars(node_name) if is_keyword else []
+        robot_vars = find_robot_vars(node_name) if is_keyword else []
         start_pos = 0
-        for variable in variables:
+        for variable in robot_vars:
             # Loop and skip variables:
             # Search pattern from start_pos to variable starting position
             # example `Keyword With ${em.bedded} Two ${second.Argument} Argument``
@@ -1068,9 +943,9 @@ class VariableNamingChecker(VisitorChecker):
     """Checker for variable naming violations."""
 
     section_variable_not_uppercase: SectionVariableNotUppercaseRule
-    non_local_variables_should_be_uppercase: NonLocalVariablesShouldBeUppercaseRule
-    hyphen_in_variable_name: HyphenInVariableNameRule
-    overwriting_reserved_variable: OverwritingReservedVariableRule
+    non_local_variables_should_be_uppercase: variables.NonLocalVariablesShouldBeUppercaseRule
+    hyphen_in_variable_name: variables.HyphenInVariableNameRule
+    overwriting_reserved_variable: variables.OverwritingReservedVariableRule
 
     RESERVED_VARIABLES = {  # TODO could be part of the rule class
         "testname": "${TEST_NAME}",
@@ -1217,8 +1092,8 @@ class VariableNamingChecker(VisitorChecker):
 class SimilarVariableChecker(VisitorChecker):
     """Checker for finding same variables with similar names."""
 
-    possible_variable_overwriting: PossibleVariableOverwritingRule
-    inconsistent_variable_name: InconsistentVariableNameRule
+    possible_variable_overwriting: variables.PossibleVariableOverwritingRule
+    inconsistent_variable_name: variables.InconsistentVariableNameRule
 
     def __init__(self):
         self.assigned_variables = defaultdict(list)

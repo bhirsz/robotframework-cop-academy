@@ -715,6 +715,21 @@ class RobocopImporter:
                 self.deprecated_rules[rule_name] = rule_def
                 self.deprecated_rules[rule_def.rule_id] = rule_def
 
+    def _import_rule_class(self, module: ast.Module, rule_class: str) -> Rule | None:
+        """
+        Import class definition using typing information.
+
+        rule_object: RobocopRule -> imports RobocopRule from current namespace
+        rule_object2: other_module.RobocopRule -> imports RobocopRule from other_module namespace
+        """
+        if "." in rule_class:
+            other_module, rule_class = rule_class.rsplit(".", maxsplit=1)
+            module = getattr(module, other_module)
+        try:
+            return getattr(module, rule_class)
+        except AttributeError:  # TODO: for example dict[type[Node] typing instead of rule def
+            return None
+
     def get_checker_rules(self, checker_class: type[BaseChecker], module) -> dict[str, Rule]:
         # TODO if other checker uses the same rule, return it instead of creating new instance
         rule_types = getattr(checker_class, "__annotations__", None)
@@ -723,11 +738,8 @@ class RobocopImporter:
         rules = {}
         for name, rule_class in rule_types.items():
             if isinstance(rule_class, str):  # if from future import annotations was used
-                try:  # TODO improve, without exception
-                    rule_class = getattr(module, rule_class)
-                except AttributeError:
-                    continue
-            if not (isclass(rule_class) and issubclass(rule_class, Rule)):
+                rule_class = self._import_rule_class(module, rule_class)
+            if not rule_class or not (isclass(rule_class) and issubclass(rule_class, Rule)):
                 continue
             rule_instance = rule_class()
             rules[name] = rule_instance
