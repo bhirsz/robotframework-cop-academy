@@ -332,7 +332,7 @@ Import related rules are now grouped under 'IMP' group:
 - ``10101`` became ``IMP03`` (``non-builtin-imports-not-sorted``)
 - ``10102`` became ``IMP04`` (``resources-imports-not-sorted``)
 
-Spacing and whitespace related rules are now grouped under `SPC` group:
+Spacing and whitespace related rules are now grouped under 'SPC' group:
 
 - ``1001`` became ``SPC01`` (``trailing-whitespace``)
 - ``1002`` became ``SPC02`` (``missing-trailing-blank-line``)
@@ -351,6 +351,28 @@ Spacing and whitespace related rules are now grouped under `SPC` group:
 - ``1016`` became ``SPC16`` (``suite-setting-should-be-left-aligned`` -> ``suite-setting-not-left-aligned``)
 - ``1017`` became ``SPC17`` (``bad-block-indent``)
 - ``1018`` became ``SPC18`` (``first-argument-in-new-line``)
+
+Variable related rules are now grouped under 'VAR' group:
+
+- ``0912`` became ``VAR01`` (``empty-variable``)
+- ``0920`` became ``VAR02`` (``unused-variable``)
+- ``0922`` became ``VAR03`` (``variable-overwritten-before-usage``)
+- ``0929`` became ``VAR04`` (``no-global-variable``)
+- ``0930`` became ``VAR05`` (``no-suite-variable``)
+- ``0931`` became ``VAR06`` (``no-test-variable``)
+- ``0310`` became ``VAR07`` (``non-local-variables-should-be-uppercase``)
+- ``0316`` became ``VAR08`` (``possible-variable-overwriting``)
+- ``0317`` became ``VAR09`` (``hyphen-in-variable-name``)
+- ``0323`` became ``VAR10`` (``inconsistent-variable-name``)
+- ``0324`` became ``VAR11`` (``overwriting-reserved-variable``)
+
+Argument related rules are now grouped under 'ARG' group:
+
+- ``0919`` became ``ARG01`` (``unused-argument``)
+- ``0921`` became ``ARG02`` (``argument-overwritten-before-usage``)
+- ``0932`` became ``ARG03`` (``undefined-argument-default``)
+- ``0933`` became ``ARG04`` (``undefined-argument-value``)
+- ``0407`` became ``ARG05`` (``invalid-argument``)
 
 New features
 =============

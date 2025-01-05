@@ -9,7 +9,7 @@ try:
 except ImportError:
     If = None
 
-from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker
+from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker, arguments
 from robocop.linter.utils import ROBOT_VERSION, find_robot_vars
 
 
@@ -113,31 +113,6 @@ class NotEnoughWhitespaceAfterNewlineMarkerRule(Rule):
     rule_id = "ERR06"
     message = "Provide at least two spaces after '...' marker"
     severity = RuleSeverity.ERROR
-    added_in_version = "1.11.0"
-
-
-class InvalidArgumentsRule(Rule):
-    """
-    Argument names should follow variable naming syntax: start with identifier (``$``, ``@`` or ``&``) and enclosed
-    in curly brackets (``{}``).
-
-    Valid names::
-
-        Keyword
-            [Arguments]    ${var}    @{args}    &{config}    ${var}=default
-
-    Invalid names::
-
-        Keyword
-            [Arguments]    {var}    @args}    var=default
-
-    """
-
-    name = "invalid-argument"
-    rule_id = "ERR07"
-    message = "{error_msg}"
-    severity = RuleSeverity.ERROR
-    version = ">=4.0"
     added_in_version = "1.11.0"
 
 
@@ -296,7 +271,7 @@ class ParsingErrorChecker(VisitorChecker):
     parsing_error: ParsingErrorRule
     invalid_continuation_mark: InvalidContinuationMarkRule
     not_enough_whitespace_after_newline_marker: NotEnoughWhitespaceAfterNewlineMarkerRule
-    invalid_argument: InvalidArgumentsRule
+    invalid_argument: arguments.InvalidArgumentsRule
     non_existing_setting: NonExistingSettingRule
     setting_not_suported: SettingNotSupportedRule
     not_enough_whitespace_after_variable: NotEnoughWhitespaceAfterVariableRule

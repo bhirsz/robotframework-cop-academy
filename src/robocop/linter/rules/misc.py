@@ -21,7 +21,7 @@ try:
 except ImportError:
     InlineIfHeader, Break, Continue = None, None, None
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker, arguments, variables
 from robocop.linter.utils import (  # FIXME: import as module
     ROBOT_VERSION,
     AssignmentTypeDetector,
@@ -40,10 +40,6 @@ from robocop.linter.utils.misc import (
     parse_test_case_order_param,
 )
 from robocop.linter.utils.variable_matcher import VariableMatches
-
-
-def comma_separated_list(value: str) -> list[str]:
-    return value.split(",")
 
 
 class KeywordAfterReturnRule(Rule):
@@ -211,47 +207,6 @@ class InconsistentAssignmentInVariablesRule(Rule):
     added_in_version = "1.7.0"
 
 
-class EmptyVariableRule(Rule):
-    r"""
-
-    Variables with placeholder ${EMPTY} values are more explicit.
-
-    Example of rule violation::
-
-        *** Variables ***
-        ${VAR_NO_VALUE}                   # missing value
-        ${VAR_WITH_EMPTY}       ${EMPTY}
-        @{MULTILINE_FIRST_EMPTY}
-        ...                               # missing value
-        ...  value
-        ${EMPTY_WITH_BACKSLASH}  \       # used backslash
-
-        *** Keywords ***
-        Create Variables
-            VAR    ${var_no_value}  # missing value
-            VAR    ${var_with_empty}    ${EMPTY}
-
-    You can configure ``empty-variable`` rule to run only in ```*** Variables ***``` section or on
-    ``VAR`` statements using ``variable_source`` parameter.
-
-    """
-
-    name = "empty-variable"
-    rule_id = "0912"
-    message = "Use built-in variable {var_type}{{EMPTY}} instead of leaving variable without value or using backslash"
-    severity = RuleSeverity.INFO
-    parameters = [
-        RuleParam(
-            name="variable_source",
-            default="section,var",
-            converter=comma_separated_list,
-            show_type="comma separated list",
-            desc="Variable sources that will be checked",
-        )
-    ]
-    added_in_version = "1.10.0"
-
-
 class CanBeResourceFileRule(Rule):
     """If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension."""
 
@@ -412,110 +367,6 @@ class MultilineInlineIfRule(Rule):
     severity = RuleSeverity.WARNING
     version = ">=5.0"
     added_in_version = "3.1.0"
-
-
-class UnusedArgumentRule(Rule):
-    """
-    Keyword argument was defined but not used::
-
-        *** Keywords ***
-        Keyword
-            [Arguments]    ${used}    ${not_used}  # will report ${not_used}
-            Log    ${used}
-            IF    $used
-                Log    Escaped syntax is supported.
-            END
-
-        Keyword with ${embedded} and ${not_used}  # will report ${not_used}
-            Log    ${embedded}
-
-    """
-
-    name = "unused-argument"
-    rule_id = "0919"
-    message = "Keyword argument '{name}' is not used"
-    severity = RuleSeverity.WARNING
-    added_in_version = "3.2.0"
-
-
-class UnusedVariableRule(Rule):
-    """
-    Variable was assigned but not used::
-
-        *** Keywords ***
-        Get Triangle Base Points
-            [Arguments]       ${triangle}
-            ${p1}    ${p2}    ${p3}    Get Triangle Points    ${triangle}
-            Log      Triangle base points are: ${p1} and ${p2}.
-            RETURN   ${p1}    ${p2}  # ${p3} is never used
-
-    Use ``${_}`` variable name if you purposefully do not use variable::
-
-        *** Keywords ***
-        Process Value 10 Times
-            [Arguments]    ${value}
-            FOR    ${_}   IN RANGE    10
-                Process Value    ${value}
-            END
-
-    Note that some keywords may use your local variables even if you don't pass them directly. For example
-    BuiltIn ``Replace Variables`` or any custom keyword that retrieves variables from local scope. In such case
-    Robocop will still raise ``unused-variable`` even if variable is used.
-
-    """
-
-    name = "unused-variable"
-    rule_id = "0920"
-    message = "Variable '{name}' is assigned but not used"
-    severity = RuleSeverity.INFO
-    added_in_version = "3.2.0"
-
-
-class ArgumentOverwrittenBeforeUsageRule(Rule):
-    """
-
-    Keyword argument was overwritten before it is used::
-
-        *** Keywords ***
-        Overwritten Argument
-            [Arguments]    ${overwritten}  # we do not use ${overwritten} value at all
-            ${overwritten}    Set Variable    value  # we only overwrite it
-
-    """
-
-    name = "argument-overwritten-before-usage"
-    rule_id = "0921"
-    message = "Keyword argument '{name}' is overwritten before usage"
-    severity = RuleSeverity.WARNING
-    added_in_version = "3.2.0"
-
-
-class VariableOverwrittenBeforeUsageRule(Rule):
-    """
-
-    Local variable in Keyword, Test Case or Task is overwritten before it is used::
-
-        *** Keywords ***
-        Overwritten Variable
-            ${value}    Keyword
-            ${value}    Keyword
-
-    In case the value of the variable is not important, it is possible to use ``${_}`` name::
-
-        *** Test Cases ***
-        Call keyword and ignore some return values
-            ${_}    ${item}    Unpack List    @{LIST}
-            FOR    ${_}    IN RANGE  10
-                Log    Run this code 10 times.
-            END
-
-    """
-
-    name = "variable-overwritten-before-usage"
-    rule_id = "0922"
-    message = "Local variable '{name}' is overwritten before usage"
-    severity = RuleSeverity.WARNING
-    added_in_version = "3.2.0"
 
 
 class UnnecessaryStringConversionRule(Rule):
@@ -738,208 +589,6 @@ class KeywordSectionOutOfOrderRule(Rule):
     added_in_version = "5.3.0"
 
 
-class NoGlobalVariableRule(Rule):
-    """
-    Setting or updating global variables in a test/keyword often leads to hard-to-understand
-    code. In most cases, you're better off using local variables.
-
-    Changes in global variables during a test are hard to track because you must remember what's
-    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
-    up your understanding of what the code should be doing.
-
-    Local variables don't suffer from this issue because they are always created in the
-    keyword/test you're looking at.
-
-    In this example, the keyword changes the global variable. This will cause the test to fail.
-    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
-    remember the seemingly unrelated keyword::
-
-        *** Variables ***
-        ${hello}    Hello, world!
-
-        *** Test Cases ***
-        My Amazing Test
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            Set Global Variable    ${hello}    Goodnight, moon!
-
-    Using the VAR-syntax::
-
-        *** Variables ***
-        ${hello}    Hello, world!
-
-        *** Test Cases ***
-        My Amazing Test
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            VAR    ${hello}    Goodnight, moon!    scope=GLOBAL
-
-    In some specific situations, global variables are a great tool. But most of the time, it
-    makes code needlessly hard to understand.
-    """
-
-    name = "no-global-variable"
-    rule_id = "0929"
-    message = "Don't set global variables outside the variables section"
-    severity = RuleSeverity.WARNING
-    added_in_version = "5.6.0"
-
-
-class NoSuiteVariableRule(Rule):
-    """
-    Using suite variables in a test/keyword often leads to hard-to-understand code. In most
-    cases, you're better off using local variables.
-
-    Changes in suite variables during a test are hard to track because you must remember what's
-    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
-    up your understanding of what the code should be doing.
-
-    Local variables don't suffer from this issue because they are always created in the
-    keyword/test you're looking at.
-
-    In this example, the keyword changes the suite variable. This will cause the test to fail.
-    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
-    remember the seemingly unrelated keyword::
-
-        *** Test Cases ***
-        My Amazing Test
-            Set Suite Variable    ${hello}    Hello, world!
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            Set Suite Variable    ${hello}    Goodnight, moon!
-
-    Using the VAR-syntax::
-
-        *** Test Cases ***
-        My Amazing Test
-            VAR    ${hello}    Hello, world!    scope=SUITE
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            VAR    ${hello}    Goodnight, moon!    scope=SUITE
-
-    In some specific situations, suite variables are a great tool. But most of the time, it
-    makes code needlessly hard to understand.
-    """
-
-    name = "no-suite-variable"
-    rule_id = "0930"
-    message = "Don't use suite variables"
-    severity = RuleSeverity.WARNING
-    added_in_version = "5.6.0"
-
-
-class NoTestVariableRule(Rule):
-    """
-    Using test/task variables in a test/keyword often leads to hard-to-understand code. In most
-    cases, you're better off using local variables.
-
-    Changes in test/task variables during a test are hard to track because you must remember what's
-    happening in multiple pieces of code at once. A line in a seemingly unrelated file can mess
-    up your understanding of what the code should be doing.
-
-    Local variables don't suffer from this issue because they are always created in the
-    keyword/test you're looking at.
-
-    In this example, the keyword changes the test/task variable. This will cause the test to fail.
-    Looking at just the test, it's unclear why the test fails. It only becomes clear if you also
-    remember the seemingly unrelated keyword::
-
-        *** Test Cases ***
-        My Amazing Test
-            Set Test Variable    ${hello}    Hello, world!
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            Set Test Variable    ${hello}    Goodnight, moon!
-
-    Using the VAR-syntax::
-
-        *** Test Cases ***
-        My Amazing Test
-            VAR    ${hello}    Hello, world!    scope=TEST
-            Do A Thing
-            Should Be Equal    ${hello}    Hello, world!
-
-        *** Keywords ***
-        Do A Thing
-            VAR    ${hello}    Goodnight, moon!    scope=TEST
-
-    In some specific situations, test/task variables are a great tool. But most of the time, it
-    makes code needlessly hard to understand.
-    """
-
-    name = "no-test-variable"
-    rule_id = "0931"
-    message = "Don't use test/task variables"
-    severity = RuleSeverity.WARNING
-    added_in_version = "5.6.0"
-
-
-class UndefinedArgumentDefaultRule(Rule):
-    """
-    Keyword arguments can define a default value. Every time you call the keyword, you can
-    optionally overwrite this default.
-
-    When you use an argument default, you should be as clear as possible. This improves the
-    readability of your code. The syntax ``${argument}=`` is unclear unless you happen to know
-    that it is technically equivalent to ``${argument}=${EMPTY}``. To prevent people from
-    misreading your keyword arguments, explicitly state that the value is empty using the
-    built-in ``${EMPTY}`` variable.
-
-    Example of a rule violation::
-
-        *** Keywords ***
-        My Amazing Keyword
-            [Arguments]    ${argument_name}=
-    """
-
-    name = "undefined-argument-default"
-    rule_id = "0932"
-    message = "Undefined argument default, use {arg_name}=${{EMPTY}} instead"
-    severity = RuleSeverity.ERROR
-    added_in_version = "5.7.0"
-
-
-class UndefinedArgumentValueRule(Rule):
-    r"""
-    When calling a keyword, it can accept named arguments.
-
-    When you call a keyword, you should be as clear as possible. This improves the
-    readability of your code. The syntax ``argument=`` is unclear unless you happen to know
-    that it is technically equivalent to ``argument=${EMPTY}``. To prevent people from
-    misreading your keyword arguments, explicitly state that the value is empty using the
-    built-in ``${EMPTY}`` variable.
-
-    If your argument is falsly flagged by this rule, escape the ``=`` character in your argument
-    value by like so: ``\=``.
-
-    Example of a rule violation::
-
-        My Amazing Keyword    argument_name=
-
-    """
-
-    name = "undefined-argument-value"
-    rule_id = "0933"
-    message = "Undefined argument value, use {arg_name}=${{EMPTY}} instead"
-    severity = RuleSeverity.ERROR
-    added_in_version = "5.7.0"
-
-
 class ReturnChecker(VisitorChecker):
     """Checker for [Return] and Return From Keyword violations."""
 
@@ -1141,7 +790,7 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
 class EmptyVariableChecker(VisitorChecker):
     """Checker for variables without value."""
 
-    empty_variable: EmptyVariableRule
+    empty_variable: variables.EmptyVariableRule
 
     def __init__(self):
         self.visit_var_section = False
@@ -1168,12 +817,11 @@ class EmptyVariableChecker(VisitorChecker):
         if get_errors(node):
             return
         if not node.value:  # catch variable declaration without any value
-            self.report(self.empty_variable, var_type=node.name[0], node=node, end_col=node.end_col_offset)
+            self.report(self.empty_variable, node=node, end_col=node.end_col_offset)
         for token in node.get_tokens(Token.ARGUMENT):
             if not token.value or token.value == "\\":
                 self.report(
                     self.empty_variable,
-                    var_type="$",
                     node=token,
                     lineno=token.lineno,
                     col=1,
@@ -1187,7 +835,6 @@ class EmptyVariableChecker(VisitorChecker):
             first_data = node.data_tokens[0]
             self.report(
                 self.empty_variable,
-                var_type=node.name[0],
                 node=first_data,
                 col=first_data.col_offset + 1,
                 end_col=first_data.end_col_offset + 1,
@@ -1196,7 +843,6 @@ class EmptyVariableChecker(VisitorChecker):
             if not token.value or token.value == "\\":
                 self.report(
                     self.empty_variable,
-                    var_type="$",
                     node=token,
                     lineno=token.lineno,
                     col=token.col_offset + 1,
@@ -1403,10 +1049,10 @@ class SectionVariablesCollector(ast.NodeVisitor):
 
 
 class UnusedVariablesChecker(VisitorChecker):
-    unused_argument: UnusedArgumentRule
-    unused_variable: UnusedVariableRule
-    argument_overwritten_before_usage: ArgumentOverwrittenBeforeUsageRule
-    variable_overwritten_before_usage: VariableOverwrittenBeforeUsageRule
+    unused_argument: arguments.UnusedArgumentRule
+    unused_variable: variables.UnusedVariableRule
+    argument_overwritten_before_usage: arguments.ArgumentOverwrittenBeforeUsageRule
+    variable_overwritten_before_usage: variables.VariableOverwrittenBeforeUsageRule
 
     def __init__(self):
         self.arguments: dict[str, CachedVariable] = {}
@@ -1918,9 +1564,9 @@ class TestAndKeywordOrderChecker(VisitorChecker):
 
 
 class NonLocalVariableChecker(VisitorChecker):
-    no_global_variable: NoGlobalVariableRule
-    no_suite_variable: NoSuiteVariableRule
-    no_test_variable: NoTestVariableRule
+    no_global_variable: variables.NoGlobalVariableRule
+    no_suite_variable: variables.NoSuiteVariableRule
+    no_test_variable: variables.NoTestVariableRule
 
     non_local_variable_keywords = {
         "setglobalvariable",
@@ -1986,8 +1632,8 @@ class NonLocalVariableChecker(VisitorChecker):
 
 
 class UndefinedArgumentDefaultChecker(VisitorChecker):
-    undefined_argument_default: UndefinedArgumentDefaultRule
-    undefined_argument_value: UndefinedArgumentValueRule
+    undefined_argument_default: arguments.UndefinedArgumentDefaultRule
+    undefined_argument_value: arguments.UndefinedArgumentValueRule
 
     def visit_Arguments(self, node: Arguments):  # noqa: N802
         for token in node.get_tokens(Token.ARGUMENT):
