@@ -29,6 +29,7 @@ from robocop.linter.rules import (
     VisitorChecker,
     arguments,
     deprecated,
+    order,
     variables,
 )
 from robocop.linter.utils import (  # FIXME: import as module
@@ -41,30 +42,26 @@ from robocop.linter.utils import (  # FIXME: import as module
     parse_assignment_sign_type,
     token_col,
 )
-from robocop.linter.utils.misc import (
-    RETURN_CLASSES,
-    _is_var_scope_local,
-    find_escaped_variables,
-    parse_keyword_order_param,
-    parse_test_case_order_param,
-)
+from robocop.linter.utils.misc import RETURN_CLASSES, _is_var_scope_local, find_escaped_variables
 from robocop.linter.utils.variable_matcher import VariableMatches
 
 
 class KeywordAfterReturnRule(Rule):
     """
+    Keyword call after ``[Return]`` setting.
+
     To improve readability use ``[Return]`` setting at the end of the keyword. If you want to return immediately
     from the keyword, use ``RETURN`` statement instead. ``[Return]`` does not return from the keyword but only
     sets the values that will be returned at the end of the keyword.
 
-    Bad::
+    Incorrect code example::
 
         Keyword
             Step
             [Return]    ${variable}
             ${variable}    Other Step
 
-    Good::
+    Correct code::
 
         Keyword
             Step
@@ -74,7 +71,7 @@ class KeywordAfterReturnRule(Rule):
     """
 
     name = "keyword-after-return"
-    rule_id = "0901"
+    rule_id = "MISC01"
     message = "{error_msg}"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
@@ -82,13 +79,28 @@ class KeywordAfterReturnRule(Rule):
 
 class EmptyReturnRule(Rule):
     """
+    ``[Return]`` is empty.
+
     ``[Return]`` statement is used to define variables returned from keyword. If you don't return anything from
     keyword,  don't use ``[Return]``.
+
+    Incorrect code example::
+
+        Keyword
+            Gather Results
+            Assert Results
+            [Return]
+
+    Correct code::
+
+        Keyword
+            Gather Results
+            Assert Results
 
     """
 
     name = "empty-return"
-    rule_id = "0903"
+    rule_id = "MISC02"
     message = "[Return] is empty"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
@@ -96,6 +108,7 @@ class EmptyReturnRule(Rule):
 
 class NestedForLoopRule(Rule):
     """
+    Not supported nested for loop.
 
     Older versions of Robot Framework did not support nested for loops::
 
@@ -108,8 +121,8 @@ class NestedForLoopRule(Rule):
     """
 
     name = "nested-for-loop"
-    rule_id = "0907"
-    message = "Nested for loops are not supported. You can use keyword with for loop instead"
+    rule_id = "MISC03"
+    message = "Not supported nested for loop"
     severity = RuleSeverity.ERROR
     version = "<4.0"
     added_in_version = "1.0.0"
@@ -117,9 +130,11 @@ class NestedForLoopRule(Rule):
 
 class InconsistentAssignmentRule(Rule):
     """
+    Not consistent assignment sign in the file.
+
     Use only one type of assignment sign in a file.
 
-    Example of rule violation::
+    Incorrect code example::
 
         *** Keywords ***
         Keyword
@@ -128,20 +143,35 @@ class InconsistentAssignmentRule(Rule):
 
         Keyword 2
             No Operation
-            ${var}  ${var2}  Some Keyword  # this assignment doesn't use equal sign while the previous one uses ' ='
+            ${var}  ${var2}    Some Keyword
+
+    Correct code::
+
+        *** Keywords ***
+        Keyword
+            ${var}    Other Keyword
+            No Operation
+
+        Keyword 2
+            No Operation
+            ${var}  ${var2}    Some Keyword
 
     By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
     assignment sign by running::
 
-        robocop --configure inconsistent-assignment:assignment_sign_type:equal_sign
+        robocop check --configure inconsistent-assignment.assignment_sign_type=equal_sign
 
-    You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
-    space_and_equal_sign (`` =``).
+    You can choose between following signs:
+
+    - 'autodetect' (default),
+    - 'none',
+    - 'equal_sign' (``=``)
+    - 'space_and_equal_sign' (`` =``).
 
     """
 
     name = "inconsistent-assignment"
-    rule_id = "0909"
+    rule_id = "MISC04"
     message = (
         "The assignment sign is not consistent within the file. "
         "Expected '{expected_sign}' but got '{actual_sign}' instead"
@@ -162,10 +192,11 @@ class InconsistentAssignmentRule(Rule):
 
 class InconsistentAssignmentInVariablesRule(Rule):
     """
+    Not consistent assignment sign in the ``*** Variables ***`` section.
 
     Use one type of assignment sign in Variables section.
 
-    Example of rule violation::
+    Incorrect code example::
 
         *** Variables ***
         ${var} =    1
@@ -174,19 +205,27 @@ class InconsistentAssignmentInVariablesRule(Rule):
         ${var4}     a
         ${var5}     b
 
+    Correct code::
+
+        *** Variables ***
+        ${var}      1
+        ${var2}     2
+        ${var3}     3
+        ${var4}     a
+        ${var5}     b
+
     By default, Robocop looks for the most popular assignment sign in the file. It is possible to define expected
     assignment sign by running::
 
-        robocop --configure inconsistent-assignment-in-variables:assignment_sign_type:equal_sign
+        robocop check --configure inconsistent-assignment-in-variables.assignment_sign_type=equal_sign
 
     You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
     space_and_equal_sign (`` =``).
 
-
     """
 
     name = "inconsistent-assignment-in-variables"
-    rule_id = "0910"
+    rule_id = "MISC05"
     message = (
         "The assignment sign is not consistent inside the variables section. "
         "Expected '{expected_sign}' but got '{actual_sign}' instead"
@@ -206,10 +245,14 @@ class InconsistentAssignmentInVariablesRule(Rule):
 
 
 class CanBeResourceFileRule(Rule):
-    """If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension."""
+    """
+    No tests in the file, consider renaming file extension to ``.resource``.
+
+    If the Robot file contains only keywords or variables, it's a good practice to use ``.resource`` extension.
+    """
 
     name = "can-be-resource-file"
-    rule_id = "0913"
+    rule_id = "MISC06"
     message = "No tests in '{file_name}' file, consider renaming to '{file_name_stem}.resource'"
     severity = RuleSeverity.INFO
     added_in_version = "1.10.0"
@@ -217,6 +260,7 @@ class CanBeResourceFileRule(Rule):
 
 class IfCanBeMergedRule(Rule):
     """
+    IF statement can be merged with previous IF.
 
     ``IF`` statement follows another ``IF`` with identical conditions. It can be possibly merged into one.
 
@@ -246,7 +290,7 @@ class IfCanBeMergedRule(Rule):
     """
 
     name = "if-can-be-merged"
-    rule_id = "0914"
+    rule_id = "MISC07"
     message = "IF statement can be merged with previous IF (defined in line {line})"
     severity = RuleSeverity.INFO
     version = ">=4.0"
@@ -255,6 +299,8 @@ class IfCanBeMergedRule(Rule):
 
 class StatementOutsideLoopRule(Rule):
     """
+    Loop statement used outside loop.
+
     Following keywords and statements should only be used inside loop (``WHILE`` or ``FOR``):
         - ``Exit For Loop``
         - ``Exit For Loop If``
@@ -266,7 +312,7 @@ class StatementOutsideLoopRule(Rule):
     """
 
     name = "statement-outside-loop"
-    rule_id = "0915"
+    rule_id = "MISC08"
     message = "{name} {statement_type} used outside a loop"
     severity = RuleSeverity.ERROR
     version = ">=5.0"
@@ -275,6 +321,8 @@ class StatementOutsideLoopRule(Rule):
 
 class InlineIfCanBeUsedRule(Rule):
     """
+    IF can be replaced with inline IF.
+
     Short and simple ``IF`` statements can be replaced with ``inline IF``.
 
     Following ``IF``::
@@ -291,7 +339,7 @@ class InlineIfCanBeUsedRule(Rule):
     """
 
     name = "inline-if-can-be-used"
-    rule_id = "0916"
+    rule_id = "MISC09"
     message = "IF can be replaced with inline IF"
     severity = RuleSeverity.INFO
     version = ">=5.0"
@@ -309,7 +357,9 @@ class InlineIfCanBeUsedRule(Rule):
 
 class UnreachableCodeRule(Rule):
     """
-    Detect the unreachable code after ``RETURN``, ``BREAK`` or ``CONTINUE`` statements.
+    Unreachable code.
+
+    Detects the unreachable code after ``RETURN``, ``BREAK`` or ``CONTINUE`` statements.
 
     For example::
 
@@ -328,7 +378,7 @@ class UnreachableCodeRule(Rule):
     """
 
     name = "unreachable-code"
-    rule_id = "0917"
+    rule_id = "MISC10"
     message = "Unreachable code after {statement} statement"
     severity = RuleSeverity.WARNING
     version = ">=5.0"
@@ -337,19 +387,21 @@ class UnreachableCodeRule(Rule):
 
 class MultilineInlineIfRule(Rule):
     """
+    Multi-line inline IF.
+
     It's allowed to create ``inline IF`` that spans multiple lines, but it should be avoided,
     since it decreases readability. Try to use normal ``IF``/``ELSE`` instead.
 
-    Bad::
+    Incorrect code example::
 
         IF  ${condition}  Log  hello
         ...    ELSE       Log  hi!
 
-    Good::
+    Correct code::
 
         IF  ${condition}    Log  hello     ELSE    Log  hi!
 
-    or also good::
+    or IF block can be used::
 
         IF  ${condition}
             Log  hello
@@ -360,8 +412,8 @@ class MultilineInlineIfRule(Rule):
     """
 
     name = "multiline-inline-if"
-    rule_id = "0918"
-    message = "Avoid splitting inline IF to multiple lines"
+    rule_id = "MISC11"
+    message = "Inline IF split to multiple lines"
     severity = RuleSeverity.WARNING
     version = ">=5.0"
     added_in_version = "3.1.0"
@@ -369,6 +421,7 @@ class MultilineInlineIfRule(Rule):
 
 class UnnecessaryStringConversionRule(Rule):
     """
+    Variable in condition has unnecessary string conversion.
 
     Expressions in Robot Framework are evaluated using Python's eval function. When a variable is used
     in the expression using the normal ``${variable}`` syntax, its value is replaced before the expression
@@ -409,7 +462,7 @@ class UnnecessaryStringConversionRule(Rule):
     """
 
     name = "unnecessary-string-conversion"
-    rule_id = "0923"
+    rule_id = "MISC12"
     message = "Variable '{name}' in '{block_name}' condition has unnecessary string conversion"
     severity = RuleSeverity.INFO
     version = ">=4.0"
@@ -418,8 +471,11 @@ class UnnecessaryStringConversionRule(Rule):
 
 class ExpressionCanBeSimplifiedRule(Rule):
     """
+    Condition can be simplified.
 
-    Evaluated expression can be simplified. For example::
+    Evaluated expression can be simplified.
+
+    Incorrect code example::
 
         *** Keywords ***
         Click On Element
@@ -431,7 +487,7 @@ class ExpressionCanBeSimplifiedRule(Rule):
             END
             Click    ${locator}
 
-    can be rewritten to::
+    Correct code::
 
         *** Keywords ***
         Click On Element
@@ -454,7 +510,7 @@ class ExpressionCanBeSimplifiedRule(Rule):
     """
 
     name = "expression-can-be-simplified"
-    rule_id = "0924"
+    rule_id = "MISC13"
     message = "'{block_name}' condition can be simplified"
     severity = RuleSeverity.INFO
     version = ">=4.0"
@@ -465,7 +521,7 @@ class MisplacedNegativeConditionRule(Rule):
     """
     Position of not operator can be changed for better readability.
 
-    For example::
+    Incorrect code example::
 
         *** Keywords ***
         Check Unmapped Codes
@@ -478,7 +534,7 @@ class MisplacedNegativeConditionRule(Rule):
                 Fail    Did not receive codes from API.
             END
 
-    Can be rewritten to::
+    Correct code::
 
         *** Keywords ***
         Check Unmapped Codes
@@ -494,97 +550,11 @@ class MisplacedNegativeConditionRule(Rule):
     """
 
     name = "misplaced-negative-condition"
-    rule_id = "0925"
+    rule_id = "MISC14"
     message = "'{block_name}' condition '{original_condition}' can be rewritten to '{proposed_condition}'"
     severity = RuleSeverity.INFO
     version = ">=4.0"
     added_in_version = "4.0.0"
-
-
-class TestCaseSectionOutOfOrderRule(Rule):
-    """
-
-    Sections should be defined in order set by ``sections_order``
-    parameter (default: ``documentation,tags,timeout,setup,template,keyword,teardown``).
-
-    To change the default order use following option::
-
-        robocop --configure test-case-section-out-of-order:sections_order:comma,separated,list,of,sections
-
-    where section should be case-insensitive name from the list:
-    documentation, tags, timeout, setup, template, keywords, teardown.
-    Order of not configured sections is ignored.
-
-    Example of rule violation::
-
-    *** Test Cases ***
-    Keyword After Teardown
-        [Documentation]    This is test Documentation
-        [Tags]    tag1    tag2
-        [Teardown]    Log    abc
-        Keyword1
-
-    """
-
-    name = "test-case-section-out-of-order"
-    rule_id = "0927"
-    message = (
-        "'{section_name}' is in wrong place of Test Case. "
-        "Recommended order of elements in Test Cases: {recommended_order}"
-    )
-    severity = RuleSeverity.WARNING
-    parameters = [
-        RuleParam(
-            name="sections_order",
-            default="documentation,tags,timeout,setup,template,keyword,teardown",
-            converter=parse_test_case_order_param,
-            show_type="str",
-            desc="order of sections in comma-separated list",
-        ),
-    ]
-    added_in_version = "5.3.0"
-
-
-class KeywordSectionOutOfOrderRule(Rule):
-    """
-    Sections should be defined in order set by ``sections_order``
-    parameter (default: ``documentation,tags,arguments,timeout,setup,keyword,teardown``).
-
-    To change the default order use following option::
-
-        robocop --configure keyword-section-out-of-order:sections_order:comma,separated,list,of,sections
-
-    where section should be case-insensitive name from the list:
-    documentation, tags, arguments, timeout, setup, keyword, teardown.
-    Order of not configured sections is ignored.
-
-    Example of rule violation::
-
-        *** Keywords ***
-        Keyword After Teardown
-            [Documentation]    This is keyword Documentation
-            [Tags]    tag1    tag2
-            [Teardown]    Log    abc
-            Keyword1
-
-    """
-
-    name = "keyword-section-out-of-order"
-    rule_id = "0928"
-    message = (
-        "'{section_name}' is in wrong place of Keyword. Recommended order of elements in Keyword: {recommended_order}"
-    )
-    severity = RuleSeverity.WARNING
-    parameters = [
-        RuleParam(
-            name="sections_order",
-            default="documentation,tags,arguments,timeout,setup,keyword,teardown",
-            converter=parse_keyword_order_param,
-            show_type="str",
-            desc="order of sections in comma-separated list",
-        ),
-    ]
-    added_in_version = "5.3.0"
 
 
 class ReturnChecker(VisitorChecker):
@@ -1517,8 +1487,8 @@ class ExpressionsChecker(VisitorChecker):
 
 
 class TestAndKeywordOrderChecker(VisitorChecker):
-    test_case_section_out_of_order: TestCaseSectionOutOfOrderRule
-    keyword_section_out_of_order: KeywordSectionOutOfOrderRule
+    test_case_section_out_of_order: order.TestCaseSectionOutOfOrderRule
+    keyword_section_out_of_order: order.KeywordSectionOutOfOrderRule
 
     def __init__(self):
         self.rules_by_node_type = {}

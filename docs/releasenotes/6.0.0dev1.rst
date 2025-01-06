@@ -387,6 +387,28 @@ Deprecated syntax or code replacement recommendations are now grouped under 'DEP
 - ``0327`` became ``DEPR05`` (``replace-set-variable-with-var``)
 - ``0328`` became ``DEPR06`` (``replace-create-with-var``)
 
+Other rules are now grouped under 'MISC' group:
+
+- ``0901`` became ``MISC01`` (``keyword-after-return``)
+- ``0903`` became ``MISC02`` (``empty-return``)
+- ``0907`` became ``MISC03`` (``nested-for-loop``)
+- ``0909`` became ``MISC04`` (``inconsistent-assignment``)
+- ``0910`` became ``MISC05`` (``inconsistent-assignment-in-variables``)
+- ``0913`` became ``MISC06`` (``can-be-resource-file``)  # TODO: NAM?
+- ``0914`` became ``MISC07`` (``if-can-be-merged``)
+- ``0915`` became ``MISC08`` (``statement-outside-loop``)
+- ``0916`` became ``MISC09`` (``inline-if-can-be-used``)
+- ``0917`` became ``MISC10`` (``unreachable-code``)
+- ``0918`` became ``MISC11`` (``multiline-inline-if``)
+- ``0923`` became ``MISC12`` (``unnecessary-string-conversion``)  # TODO: COND?
+- ``0924`` became ``MISC13`` (``expression-can-be-simplified``)  # TODO: COND?
+- ``0925`` became ``MISC14`` (``misplaced-negative-condition``)  # TODO: COND?
+
+Order related rules (except imports) are now grouped under 'ORD' group:
+
+- ``0927`` became ``ORD01`` (``test-case-section-out-of-order``)
+- ``0928`` became ``ORD02`` (``keyword-section-out-of-order``)
+
 New features
 =============
 
