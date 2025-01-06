@@ -30,7 +30,7 @@ class TagWithSpaceRule(Rule):
     """
 
     name = "tag-with-space"
-    rule_id = "0601"
+    rule_id = "TAG01"
     message = "Tag '{tag}' contains spaces"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
@@ -56,7 +56,7 @@ class TagWithOrAndRule(Rule):
     """
 
     name = "tag-with-or-and"
-    rule_id = "0602"
+    rule_id = "TAG02"
     message = "Tag '{tag}' with reserved word OR/AND"
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
@@ -86,7 +86,7 @@ class TagWithReservedWordRule(Rule):
     """
 
     name = "tag-with-reserved-word"
-    rule_id = "0603"
+    rule_id = "TAG03"
     message = "Tag '{tag}' prefixed with reserved word `robot:`"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
@@ -114,7 +114,7 @@ class CouldBeTestTagsRule(Rule):
     """
 
     name = "could-be-test-tags"
-    rule_id = "0605"
+    rule_id = "TAG05"
     message = "All tests in suite share these tags: '{tags}'"
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
@@ -141,7 +141,7 @@ class TagAlreadySetInTestTagsRule(Rule):
     """
 
     name = "tag-already-set-in-test-tags"
-    rule_id = "0606"
+    rule_id = "TAG06"
     message = "Tag '{tag}' is already set by {test_force_tags} in suite settings"
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
@@ -170,7 +170,7 @@ class UnnecessaryDefaultTagsRule(Rule):
     """
 
     name = "unnecessary-default-tags"
-    rule_id = "0607"
+    rule_id = "TAG07"
     message = "Tags defined in Default Tags are always overwritten"
     severity = RuleSeverity.INFO
     added_in_version = "1.0.0"
@@ -186,7 +186,7 @@ class EmptyTagsRule(Rule):
     """
 
     name = "empty-tags"
-    rule_id = "0608"
+    rule_id = "TAG08"
     message = "[Tags] setting without values{optional_warning}"
     severity = RuleSeverity.WARNING
     added_in_version = "2.0.0"
@@ -208,7 +208,7 @@ class DuplicatedTagsRule(Rule):
     """
 
     name = "duplicated-tags"
-    rule_id = "0609"
+    rule_id = "TAG09"
     message = "Multiple tags with name '{name}' (first occurrence at line {line} column {column})"
     severity = RuleSeverity.WARNING
     added_in_version = "2.0.0"
@@ -235,7 +235,7 @@ class CouldBeKeywordTagsRule(Rule):
     """
 
     name = "could-be-keyword-tags"
-    rule_id = "0610"
+    rule_id = "TAG10"
     message = "All keywords in suite share these tags: '{tags}'"
     severity = RuleSeverity.INFO
     version = ">=6"
@@ -259,7 +259,7 @@ class TagAlreadySetInKeywordTagsRule(Rule):
     """
 
     name = "tag-already-set-in-keyword-tags"
-    rule_id = "0611"
+    rule_id = "TAG11"
     message = "Tag '{tag}' is already set by {keyword_tags} in suite settings"
     severity = RuleSeverity.INFO
     version = ">=6"
