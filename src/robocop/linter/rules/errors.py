@@ -21,7 +21,7 @@ class ParsingErrorRule(Rule):  # TODO docs
     added_in_version = "1.0.0"
 
 
-class NotEnoughWhitespaceAfterSettingRule(Rule):
+class NotEnoughWhitespaceAfterSettingRule(Rule):  # TODO: Move to whitespace related rules
     """
     Example of rule violation::
 
