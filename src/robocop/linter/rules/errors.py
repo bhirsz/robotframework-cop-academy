@@ -9,7 +9,7 @@ try:
 except ImportError:
     If = None
 
-from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker, arguments
+from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker, arguments, whitespace
 from robocop.linter.utils import ROBOT_VERSION, find_robot_vars
 
 
@@ -17,30 +17,6 @@ class ParsingErrorRule(Rule):  # TODO docs
     name = "parsing-error"
     rule_id = "ERR01"
     message = "Robot Framework syntax error: {error_msg}"
-    severity = RuleSeverity.ERROR
-    added_in_version = "1.0.0"
-
-
-class NotEnoughWhitespaceAfterSettingRule(Rule):  # TODO: Move to whitespace related rules
-    """
-    Example of rule violation::
-
-    *** Test Cases ***
-    Test
-        [Documentation] doc  # only one space after [Documentation]
-        Keyword
-
-    *** Keywords ***
-    Keyword
-        [Documentation]  This is doc
-        [Arguments] ${var}  # only one space after [Arguments]
-        Should Be True  ${var}
-
-    """
-
-    name = "not-enough-whitespace-after-setting"
-    rule_id = "ERR02"
-    message = "Provide at least two spaces after '{setting_name}' setting"
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
 
@@ -99,23 +75,6 @@ class InvalidContinuationMarkRule(Rule):
     added_in_version = "1.11.0"
 
 
-class NotEnoughWhitespaceAfterNewlineMarkerRule(Rule):
-    """
-    Example of rule violation::
-
-    @{LIST}  1
-    ... 2  # not enough whitespace
-    ...  3
-
-    """
-
-    name = "not-enough-whitespace-after-newline-marker"
-    rule_id = "ERR06"
-    message = "Provide at least two spaces after '...' marker"
-    severity = RuleSeverity.ERROR
-    added_in_version = "1.11.0"
-
-
 class NonExistingSettingRule(Rule):
     """
     Non-existing setting can't be used in the code.
@@ -161,42 +120,6 @@ class SettingNotSupportedRule(Rule):
     name = "setting-not-supported"
     rule_id = "ERR09"
     message = "Setting '[{setting_name}]' is not supported in {test_or_keyword}. Allowed are: {allowed_settings}"
-    severity = RuleSeverity.ERROR
-    added_in_version = "1.11.0"
-
-
-class NotEnoughWhitespaceAfterVariableRule(Rule):
-    """
-    Example of rule violation::
-
-    ${variable} 1  # not enough whitespace
-    ${other_var}  2
-
-    """
-
-    name = "not-enough-whitespace-after-variable"
-    rule_id = "ERR10"
-    message = "Provide at least two spaces after '{variable_name}' variable name"
-    severity = RuleSeverity.ERROR
-    version = ">=4.0"
-    added_in_version = "1.11.0"
-
-
-class NotEnoughWhitespaceAfterSuiteSettingRule(Rule):
-    """
-    Example of rule violation::
-
-        *** Settings ***
-        Library Collections  # not enough whitespace
-        Force Tags  tag
-        ...  tag2
-        Suite Setup Keyword  # not enough whitespace
-
-    """
-
-    name = "not-enough-whitespace-after-suite-setting"
-    rule_id = "ERR11"
-    message = "Provide at least two spaces after '{setting_name}' setting"
     severity = RuleSeverity.ERROR
     added_in_version = "1.11.0"
 
@@ -270,12 +193,12 @@ class ParsingErrorChecker(VisitorChecker):
 
     parsing_error: ParsingErrorRule
     invalid_continuation_mark: InvalidContinuationMarkRule
-    not_enough_whitespace_after_newline_marker: NotEnoughWhitespaceAfterNewlineMarkerRule
+    not_enough_whitespace_after_newline_marker: whitespace.NotEnoughWhitespaceAfterNewlineMarkerRule
     invalid_argument: arguments.InvalidArgumentsRule
     non_existing_setting: NonExistingSettingRule
     setting_not_suported: SettingNotSupportedRule
-    not_enough_whitespace_after_variable: NotEnoughWhitespaceAfterVariableRule
-    not_enough_whitespace_after_suite_setting: NotEnoughWhitespaceAfterSuiteSettingRule
+    not_enough_whitespace_after_variable: whitespace.NotEnoughWhitespaceAfterVariableRule
+    not_enough_whitespace_after_suite_setting: whitespace.NotEnoughWhitespaceAfterSuiteSettingRule
     invalid_for_loop: InvalidForLoopRule
     invalid_if: InvalidIfRule
     return_in_test_case: ReturnInTestCaseRule
@@ -619,7 +542,7 @@ class ParsingErrorChecker(VisitorChecker):
 class TwoSpacesAfterSettingsChecker(VisitorChecker):
     """Checker for not enough whitespaces after [Setting] header."""
 
-    not_enough_whitespace_after_setting: NotEnoughWhitespaceAfterSettingRule
+    not_enough_whitespace_after_setting: whitespace.NotEnoughWhitespaceAfterSettingRule
 
     def __init__(self):
         self.headers = {
