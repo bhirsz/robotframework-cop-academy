@@ -351,6 +351,10 @@ Spacing and whitespace related rules are now grouped under 'SPC' group:
 - ``1016`` became ``SPC16`` (``suite-setting-should-be-left-aligned`` -> ``suite-setting-not-left-aligned``)
 - ``1017`` became ``SPC17`` (``bad-block-indent``)
 - ``1018`` became ``SPC18`` (``first-argument-in-new-line``)
+- ``0402`` became ``SPC19`` (``not-enough-whitespace-after-setting``)
+- ``0406`` became ``SPC20`` (``not-enough-whitespace-after-newline-marker``)
+- ``0410`` became ``SPC21`` (``not-enough-whitespace-after-variable``)
+- ``0411`` became ``SPC22`` (``not-enough-whitespace-after-suite-setting``)
 
 Variable related rules are now grouped under 'VAR' group:
 
