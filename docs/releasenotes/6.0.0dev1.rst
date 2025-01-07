@@ -371,6 +371,40 @@ Duplications related rules are now grouped under 'DUP' group:
 - ``0810`` became ``DUP09`` (``both-tests-and-tasks``)
 - ``0813`` became ``DUP10`` (``duplicated-setting``)
 
+Length related rules are now grouped under 'LEN' group:
+
+- ``0501`` became ``LEN01`` (``too-long-keyword``)
+- ``0502`` became ``LEN02`` (``too-few-calls-in-keyword``)
+- ``0503`` became ``LEN03`` (``too-many-calls-in-keyword``)
+- ``0504`` became ``LEN04`` (``too-long-test-case``)
+- ``0528`` became ``LEN05`` (``too-few-calls-in-test-case``)
+- ``0505`` became ``LEN06`` (``too-many-calls-in-test-case``)
+- ``0507`` became ``LEN07`` (``too-many-arguments``)
+- ``0508`` became ``LEN08`` (``line-too-long``)
+- ``0509`` became ``LEN09`` (``empty-section``)
+- ``0510`` became ``LEN10`` (``number-of-returned-values``)
+- ``0511`` became ``LEN11`` (``empty-metadata``)
+- ``0512`` became ``LEN12`` (``empty-documentation``)
+- ``0513`` became ``LEN13`` (``empty-force-tags``)
+- ``0514`` became ``LEN14`` (``empty-default-tags``)
+- ``0515`` became ``LEN15`` (``empty-variables-import``)
+- ``0516`` became ``LEN16`` (``empty-resource-import``)
+- ``0517`` became ``LEN17`` (``empty-library-import``)
+- ``0518`` became ``LEN18`` (``empty-setup``)
+- ``0519`` became ``LEN19`` (``empty-suite-setup``)
+- ``0520`` became ``LEN20`` (``empty-test-setup``)
+- ``0521`` became ``LEN21`` (``empty-teardown``)
+- ``0522`` became ``LEN22`` (``empty-suite-teardown``)
+- ``0523`` became ``LEN23`` (``empty-test-teardown``)
+- ``0524`` became ``LEN24`` (``empty-timeout``)
+- ``0525`` became ``LEN25`` (``empty-test-timeout``)
+- ``0526`` became ``LEN26`` (``empty-arguments``)
+- ``0527`` became ``LEN27`` (``too-many-test-cases``)
+- ``0506`` became ``LEN28`` (``file-too-long``)
+- ``0529`` became ``LEN29`` (``empty-test-template``)
+- ``0530`` became ``LEN30`` (``empty-template``)
+- ``0531`` became ``LEN31`` (``empty-keyword-tags``)
+
 Variable related rules are now grouped under 'VAR' group:
 
 - ``0912`` became ``VAR01`` (``empty-variable``)
@@ -394,6 +428,7 @@ Argument related rules are now grouped under 'ARG' group:
 - ``0933`` became ``ARG04`` (``undefined-argument-value``)
 - ``0407`` became ``ARG05`` (``invalid-argument``)
 - ``0811`` became ``ARG06`` (``duplicated-argument-name``)
+- ``0532`` became ``ARG07`` (``arguments-per-line``)
 
 Deprecated syntax or code replacement recommendations are now grouped under 'DEPR' group:
 
@@ -440,6 +475,13 @@ Other rules are now grouped under 'MISC' group:
 - ``0923`` became ``MISC12`` (``unnecessary-string-conversion``)  # TODO: COND?
 - ``0924`` became ``MISC13`` (``expression-can-be-simplified``)  # TODO: COND?
 - ``0925`` became ``MISC14`` (``misplaced-negative-condition``)  # TODO: COND?
+
+Miscellaneous keyword related rules are now grouped under 'KW' group:
+
+- ``10001`` became ``KW01`` (``sleep-keyword-used``)
+- ``10002`` became ``KW02`` (``not-allowed-keyword``)
+- ``10003`` became ``KW03`` (``no-embedded-keyword-arguments``)
+- ``10101`` became ``KW04`` (``unused-keyword``)
 
 Order related rules (except imports) are now grouped under 'ORD' group:
 

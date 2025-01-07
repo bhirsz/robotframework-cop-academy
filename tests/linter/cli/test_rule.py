@@ -43,6 +43,8 @@ class TestDescribeRule:
         Rule: line-too-long (LEN08)
         Message: Line is too long ({line_length}/{allowed_length})
         Severity: W
+        
+        Line is too long.
 
         It is possible to ignore lines that match regex pattern. Configure it using following option::
 
