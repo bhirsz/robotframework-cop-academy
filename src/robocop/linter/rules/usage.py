@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 class UnusedKeywordRule(Rule):
     """
+    Keyword is not used.
 
     Reports not used keywords.
 
@@ -42,7 +43,7 @@ class UnusedKeywordRule(Rule):
     """
 
     name = "unused-keyword"
-    rule_id = "10101"
+    rule_id = "KW04"
     message = "Keyword '{keyword_name}' is not used"
     severity = RuleSeverity.INFO
     enabled = False

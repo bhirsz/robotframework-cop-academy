@@ -1,4 +1,4 @@
-from robocop.linter.rules import Rule, RuleSeverity
+from robocop.linter.rules import Rule, RuleParam, RuleSeverity
 
 
 class UnusedArgumentRule(Rule):
@@ -139,3 +139,41 @@ class DuplicatedArgumentRule(Rule):
     message = "Argument name '{argument_name}' is already used"
     severity = RuleSeverity.ERROR
     added_in_version = "1.11.0"
+
+
+class ArgumentsPerLineRule(Rule):
+    """
+    Too many arguments per continuation line.
+
+    If the keyword's ``[Arguments]`` are split into multiple lines, it is recommended to put only one argument
+    per every line.
+
+    Incorrect code example::
+
+        *** Keywords ***
+        Keyword With Multiple Arguments
+        [Arguments]    ${first_arg}
+        ...    ${second_arg}    ${third_arg}=default
+
+    Correct code::
+
+        *** Keywords ***
+        Keyword With Multiple Arguments
+        [Arguments]    ${first_arg}
+        ...    ${second_arg}
+        ...    ${third_arg}=default
+
+    """
+
+    name = "arguments-per-line"
+    rule_id = "ARG07"
+    message = "There is too many arguments per continuation line ({arguments_count} / {max_arguments_count})"
+    severity = RuleSeverity.INFO
+    parameters = [
+        RuleParam(
+            name="max_args",
+            default=1,
+            converter=int,
+            desc="maximum number of arguments allowed in the continuation line",
+        ),
+    ]

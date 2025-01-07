@@ -25,12 +25,26 @@ try:  # RF7+
 except ImportError:
     Var = None
 
-from robocop.linter.rules import RawFileChecker, Rule, RuleParam, RuleSeverity, SeverityThreshold, VisitorChecker
+from robocop.linter.rules import (
+    RawFileChecker,
+    Rule,
+    RuleParam,
+    RuleSeverity,
+    SeverityThreshold,
+    VisitorChecker,
+    arguments,
+)
 from robocop.linter.utils import get_section_name, normalize_robot_name, pattern_type, str2bool
 from robocop.linter.utils.misc import RETURN_CLASSES
 
 
 class TooLongKeywordRule(Rule):
+    """
+    Keyword is too long.
+
+    Avoid too long keywords for readability and maintainability.
+    """
+
     name = "too-long-keyword"
     rule_id = "LEN01"
     message = "Keyword '{keyword_name}' is too long ({keyword_length}/{allowed_length})"
@@ -44,6 +58,29 @@ class TooLongKeywordRule(Rule):
 
 
 class TooFewCallsInKeywordRule(Rule):
+    """
+    Too few keyword calls in keyword.
+
+    Consider if the custom keyword is required at all.
+
+    Incorrect code example::
+
+        *** Test Cases ***
+        Test
+            Thin Wrapper
+
+        *** Keywords ***
+        Thin Wrapper
+            Other Keyword    ${arg}
+
+    Correct code example::
+
+        *** Test Cases ***
+        Test
+            Other Keyword    ${arg}
+
+    """
+
     name = "too-few-calls-in-keyword"
     rule_id = "LEN02"
     message = "Keyword '{keyword_name}' has too few keywords inside ({keyword_count}/{min_allowed_count})"
@@ -56,6 +93,12 @@ class TooFewCallsInKeywordRule(Rule):
 
 
 class TooManyCallsInKeywordRule(Rule):
+    """
+    Too many keyword calls in keyword.
+
+    Avoid too long keywords for readability and maintainability.
+    """
+
     name = "too-many-calls-in-keyword"
     rule_id = "LEN03"
     message = "Keyword '{keyword_name}' has too many keywords inside ({keyword_count}/{max_allowed_count})"
@@ -68,6 +111,12 @@ class TooManyCallsInKeywordRule(Rule):
 
 
 class TooLongTestCaseRule(Rule):
+    """
+    Test case is too long.
+
+    Avoid too long test cases for readability and maintainability.
+    """
+
     name = "too-long-test-case"
     rule_id = "LEN04"
     message = "Test case '{test_name}' is too long ({test_length}/{allowed_length})"
@@ -81,10 +130,14 @@ class TooLongTestCaseRule(Rule):
 
 
 class TooManyCallsInTestCaseRule(Rule):
-    """Redesign the test and move complex logic to separate keywords to increase readability."""
+    """
+    Too many keyword calls in test case.
+
+    Redesign the test and move complex logic to separate keywords to increase readability.
+    """
 
     name = "too-many-calls-in-test-case"
-    rule_id = "LEN05"
+    rule_id = "LEN06"
     message = "Test case '{test_name}' has too many keywords inside ({keyword_count}/{max_allowed_count})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -98,8 +151,10 @@ class TooManyCallsInTestCaseRule(Rule):
 
 
 class FileTooLongRule(Rule):
+    """File has too many lines."""
+
     name = "file-too-long"
-    rule_id = "LEN06"
+    rule_id = "LEN28"
     message = "File has too many lines ({lines_count}/{max_allowed_count})"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -110,6 +165,8 @@ class FileTooLongRule(Rule):
 
 
 class TooManyArgumentsRule(Rule):
+    """Keyword has too many arguments."""
+
     name = "too-many-arguments"
     rule_id = "LEN07"
     message = "Keyword '{keyword_name}' has too many arguments ({arguments_count}/{max_allowed_count})"
@@ -121,6 +178,8 @@ class TooManyArgumentsRule(Rule):
 
 class LineTooLongRule(Rule):
     r"""
+    Line is too long.
+
     It is possible to ignore lines that match regex pattern. Configure it using following option::
 
         robocop check --configure line-too-long.ignore_pattern=pattern
@@ -148,6 +207,8 @@ class LineTooLongRule(Rule):
 
 
 class EmptySectionRule(Rule):
+    """Section is empty."""
+
     name = "empty-section"
     rule_id = "LEN09"
     message = "Section '{section_name}' is empty"
@@ -156,6 +217,8 @@ class EmptySectionRule(Rule):
 
 
 class NumberOfReturnedValuesRule(Rule):
+    """Too many return values."""
+
     name = "number-of-returned-values"
     rule_id = "LEN10"
     message = "Too many return values ({return_count}/{max_allowed_count})"
@@ -170,6 +233,21 @@ class NumberOfReturnedValuesRule(Rule):
 
 
 class EmptyMetadataRule(Rule):
+    """
+    Metadata settings does not have any value set.
+
+    Incorrect code example::
+
+        *** Settings ***
+        Metadata
+
+    Correct code example::
+
+        *** Settings ***
+        Metadata    Platform    ${PLATFORM}
+
+    """
+
     name = "empty-metadata"
     rule_id = "LEN11"
     message = "Metadata settings does not have any value set"
@@ -178,6 +256,8 @@ class EmptyMetadataRule(Rule):
 
 
 class EmptyDocumentationRule(Rule):
+    """Documentation is empty."""
+
     name = "empty-documentation"
     rule_id = "LEN12"
     message = "Documentation of {block_name} is empty"
@@ -186,6 +266,8 @@ class EmptyDocumentationRule(Rule):
 
 
 class EmptyForceTagsRule(Rule):  # TODO: Rename/deprecate and replace with Test Tags
+    """Force Tags are empty."""
+
     name = "empty-force-tags"
     rule_id = "LEN13"
     message = "Force Tags are empty"
@@ -194,6 +276,8 @@ class EmptyForceTagsRule(Rule):  # TODO: Rename/deprecate and replace with Test 
 
 
 class EmptyDefaultTagsRule(Rule):
+    """Default Tags are empty."""
+
     name = "empty-default-tags"
     rule_id = "LEN14"
     message = "Default Tags are empty"
@@ -202,6 +286,8 @@ class EmptyDefaultTagsRule(Rule):
 
 
 class EmptyVariablesImport(Rule):
+    """Import variables path is empty."""
+
     name = "empty-variables-import"
     rule_id = "LEN15"
     message = "Import variables path is empty"
@@ -210,6 +296,8 @@ class EmptyVariablesImport(Rule):
 
 
 class EmptyResourceImport(Rule):
+    """Import resources path is empty."""
+
     name = "empty-resource-import"
     rule_id = "LEN16"
     message = "Import resource path is empty"
@@ -218,6 +306,8 @@ class EmptyResourceImport(Rule):
 
 
 class EmptyLibraryImport(Rule):
+    """Import library path is empty."""
+
     name = "empty-library-import"
     rule_id = "LEN17"
     message = "Import library path is empty"
@@ -226,6 +316,8 @@ class EmptyLibraryImport(Rule):
 
 
 class EmptySetupRule(Rule):
+    """Empty setup."""
+
     name = "empty-setup"
     rule_id = "LEN18"
     message = "Setup of {block_name} does not have any keywords"
@@ -234,6 +326,8 @@ class EmptySetupRule(Rule):
 
 
 class EmptySuiteSetupRule(Rule):
+    """Empty Suite Setup."""
+
     name = "empty-suite-setup"
     rule_id = "LEN19"
     message = "Suite Setup does not have any keywords"
@@ -242,6 +336,8 @@ class EmptySuiteSetupRule(Rule):
 
 
 class EmptyTestSetupRule(Rule):
+    """Empty Test Setup."""
+
     name = "empty-test-setup"
     rule_id = "LEN20"
     message = "Test Setup does not have any keywords"
@@ -250,6 +346,8 @@ class EmptyTestSetupRule(Rule):
 
 
 class EmptyTeardownRule(Rule):
+    """Empty Teardown."""
+
     name = "empty-teardown"
     rule_id = "LEN21"
     message = "Teardown of {block_name} does not have any keywords"
@@ -258,6 +356,8 @@ class EmptyTeardownRule(Rule):
 
 
 class EmptySuiteTeardownRule(Rule):
+    """Empty Suite Teardown."""
+
     name = "empty-suite-teardown"
     rule_id = "LEN22"
     message = "Suite Teardown does not have any keywords"
@@ -266,6 +366,8 @@ class EmptySuiteTeardownRule(Rule):
 
 
 class EmptyTestTeardownRule(Rule):
+    """Empty Test Teardown."""
+
     name = "empty-test-teardown"
     rule_id = "LEN23"
     message = "Test Teardown does not have any keywords"
@@ -274,6 +376,8 @@ class EmptyTestTeardownRule(Rule):
 
 
 class EmptyTimeoutRule(Rule):
+    """Empty Timeout."""
+
     name = "empty-timeout"
     rule_id = "LEN24"
     message = "Timeout of {block_name} is empty"
@@ -282,6 +386,8 @@ class EmptyTimeoutRule(Rule):
 
 
 class EmptyTestTimeoutRule(Rule):
+    """Empty Test Timeout."""
+
     name = "empty-test-timeout"
     rule_id = "LEN25"
     message = "Test Timeout is empty"
@@ -290,6 +396,8 @@ class EmptyTestTimeoutRule(Rule):
 
 
 class EmptyArgumentsRule(Rule):
+    """Empty ``[Arguments]`` setting."""
+
     name = "empty-arguments"
     rule_id = "LEN26"
     message = "Arguments of {block_name} are empty"
@@ -298,6 +406,8 @@ class EmptyArgumentsRule(Rule):
 
 
 class TooManyTestCasesRule(Rule):
+    """Too many test cases."""
+
     name = "too-many-test-cases"
     rule_id = "LEN27"
     message = "Too many test cases ({test_count}/{max_allowed_count})"
@@ -319,6 +429,8 @@ class TooManyTestCasesRule(Rule):
 
 class TooFewCallsInTestCaseRule(Rule):
     """
+    Too few keyword calls in test cases.
+
     Test without keywords will fail. Add more keywords or set results using ``Fail``, ``Pass Execution`` or
     ``Skip`` keywords::
 
@@ -330,7 +442,7 @@ class TooFewCallsInTestCaseRule(Rule):
     """
 
     name = "too-few-calls-in-test-case"
-    rule_id = "LEN28"
+    rule_id = "LEN05"
     message = "Test case '{test_name}' has too few keywords inside ({keyword_count}/{min_allowed_count})"
     severity = RuleSeverity.ERROR
     parameters = [
@@ -344,6 +456,8 @@ class TooFewCallsInTestCaseRule(Rule):
 
 class EmptyTestTemplateRule(Rule):
     """
+    Test Template is empty.
+
     ``Test Template`` sets the template to all tests in a suite. Empty value is considered an error
     because it leads the users to wrong impression on how the suite operates.
     Without value, the setting is ignored and the tests are not templated.
@@ -358,6 +472,8 @@ class EmptyTestTemplateRule(Rule):
 
 class EmptyTemplateRule(Rule):
     """
+    ``[Template]`` is empty.
+
     The ``[Template]`` setting overrides the possible template set in the Setting section, and an empty value for
     ``[Template]`` means that the test has no template even when Test Template is used.
 
@@ -384,50 +500,14 @@ class EmptyTemplateRule(Rule):
 
 
 class EmptyKeywordTagsRule(Rule):
+    """Keyword Tags are empty."""
+
     name = "empty-keyword-tags"
     rule_id = "LEN31"
     message = "Keyword Tags are empty"
     severity = RuleSeverity.WARNING
     version = ">=6"
     added_in_version = "3.3.0"
-
-
-class ArgumentsPerLineRule(Rule):
-    """
-    If the keyword's ``[Arguments]`` are split into multiple lines, it is recommended to put only one argument
-    per every line.
-
-    Bad |:x:| ::
-
-        *** Keywords ***
-        Keyword With Multiple Arguments
-        [Arguments]    ${first_arg
-        ...    ${second_arg}    ${third_arg}=default
-
-     Good |:white_check_mark:| ::
-
-    ..  code-block:: none
-
-        *** Keywords ***
-        Keyword With Multiple Arguments
-        [Arguments]    ${first_arg
-        ...    ${second_arg}
-        ...    ${third_arg}=default
-
-    """
-
-    name = "arguments-per-line"
-    rule_id = "LEN32"
-    message = "There is too many arguments per continuation line ({arguments_count} / {max_arguments_count})"
-    severity = RuleSeverity.INFO
-    parameters = [
-        RuleParam(
-            name="max_args",
-            default=1,
-            converter=int,
-            desc="maximum number of arguments allowed in the continuation line",
-        ),
-    ]
 
 
 def is_data_statement(node) -> bool:
@@ -880,7 +960,7 @@ class TestCaseNumberChecker(VisitorChecker):  # TODO: good example of checker th
 
 
 class TooManyArgumentsInLineChecker(VisitorChecker):
-    arguments_per_line: ArgumentsPerLineRule
+    arguments_per_line: arguments.ArgumentsPerLineRule
 
     def visit_Arguments(self, node) -> None:  # noqa: N802
         any_cont_token = node.get_token(Token.CONTINUATION)
