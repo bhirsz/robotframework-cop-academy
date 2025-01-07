@@ -4,29 +4,8 @@ from collections import defaultdict
 
 from robot.api import Token
 
-from robocop.linter.rules import Rule, RuleParam, RuleSeverity, VisitorChecker
+from robocop.linter.rules import Rule, RuleSeverity, VisitorChecker, arguments, order, variables
 from robocop.linter.utils import get_errors, normalize_robot_name, normalize_robot_var_name
-
-
-def configure_sections_order(value):
-    section_map = {
-        "settings": Token.SETTING_HEADER,
-        "variables": Token.VARIABLE_HEADER,
-        "testcase": Token.TESTCASE_HEADER,
-        "testcases": Token.TESTCASE_HEADER,
-        "task": "TASK HEADER",
-        "tasks": "TASK HEADER",
-        "keyword": Token.KEYWORD_HEADER,
-        "keywords": Token.KEYWORD_HEADER,
-    }
-    sections_order = {}
-    for index, name in enumerate(value.split(",")):
-        if name.lower() not in section_map or section_map[name.lower()] in sections_order:
-            raise ValueError(f"Invalid section name: `{name}`")
-        sections_order[section_map[name.lower()]] = index
-    if Token.TESTCASE_HEADER in sections_order:
-        sections_order["TASK HEADER"] = sections_order[Token.TESTCASE_HEADER]
-    return sections_order
 
 
 class DuplicatedTestCaseRule(Rule):
@@ -35,14 +14,16 @@ class DuplicatedTestCaseRule(Rule):
 
     It is not allowed to reuse the same name of the test case within the same suite in Robot Framework.
     Name matching is case-insensitive and ignores spaces and underscore characters.
-    Duplicated test cases example::
+
+    Incorrect code example::
 
         *** Test Cases ***
         Test with name
             No Operation
 
-        test_with Name  # it is a duplicate of 'Test with name'
+        test_with Name
             No Operation
+
     """
 
     name = "duplicated-test-case"
@@ -58,7 +39,8 @@ class DuplicatedKeywordRule(Rule):
 
     Do not define keywords with the same name inside the same file. Name matching is case-insensitive and
     ignores spaces and underscore characters.
-    Duplicated keyword names example::
+
+    Incorrect code example::
 
         *** Keywords ***
         Keyword
@@ -98,14 +80,27 @@ class DuplicatedVariableRule(Rule):
     name = "duplicated-variable"
     rule_id = "DUP03"
     message = (
-        "Multiple variables with name '{name}' in Variables section (first occurrence in line "
-        "{first_occurrence_line}). Note that Robot Framework is case-insensitive"
+        "Multiple variables with name '{name}' in Variables section (first occurrence in line {first_occurrence_line})"
     )
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
 
 
 class DuplicatedResourceRule(Rule):
+    """
+    Duplicated resource imports.
+
+    Avoid re-importing the same imports.
+
+    Incorrect code example::
+
+        *** Settings ***
+        Resource    path.resource
+        Resource    other_path.resource
+        Resource    path.resource
+
+    """
+
     name = "duplicated-resource"
     rule_id = "DUP04"
     message = "Multiple resource imports with path '{name}' (first occurrence in line {first_occurrence_line})"
@@ -115,6 +110,8 @@ class DuplicatedResourceRule(Rule):
 
 class DuplicatedLibraryRule(Rule):
     """
+    Duplicated library imports.
+
     If you need to reimport library use alias::
 
         *** Settings ***
@@ -134,6 +131,8 @@ class DuplicatedLibraryRule(Rule):
 
 
 class DuplicatedMetadataRule(Rule):
+    """Duplicated metadata."""
+
     name = "duplicated-metadata"
     rule_id = "DUP06"
     message = "Duplicated metadata '{name}' (first occurrence in line {first_occurrence_line})"
@@ -142,6 +141,8 @@ class DuplicatedMetadataRule(Rule):
 
 
 class DuplicatedVariablesImportRule(Rule):
+    """Duplicated variables import."""
+
     name = "duplicated-variables-import"
     rule_id = "DUP07"
     message = "Duplicated variables import with path '{name}' (first occurrence in line {first_occurrence_line})"
@@ -151,10 +152,12 @@ class DuplicatedVariablesImportRule(Rule):
 
 class SectionAlreadyDefinedRule(Rule):
     """
+    Section header already defined in the file.
+
     Duplicated section in the file. Robot Framework will handle repeated sections but it is recommended to not
     duplicate them.
 
-    Example::
+    Incorrect code example::
 
         *** Test Cases ***
         My Test
@@ -167,6 +170,7 @@ class SectionAlreadyDefinedRule(Rule):
         *** Test Cases ***  # duplicate
         Other Test
             Keyword
+
     """
 
     name = "section-already-defined"
@@ -178,116 +182,40 @@ class SectionAlreadyDefinedRule(Rule):
     added_in_version = "1.0.0"
 
 
-class SectionOutOfOrderRule(Rule):  # FIXME it is not dup, more like ORD
-    """
-    # TODO explain why
-    Sections should be defined in order set by ``sections_order``
-    parameter (default: ``settings,variables,testcases,keywords``).
-
-    To change the default order use following option::
-
-        robocop check configure section-out-of-order:sections_order:comma,separated,list,of,sections
-
-    where section should be case-insensitive name from the list: comments, settings, variables, testcases, keywords.
-    Order of not configured sections is ignored.
-
-    Example::
-
-        *** Settings ***
-
-        *** Keywords ***
-
-        *** Test Cases ***  # it will report issue because Test Cases should be defined before Keywords
-
-    """
-
-    name = "section-out-of-order"
-    rule_id = "DUP09"
-    message = "'{section_name}' section header is defined in wrong order: {recommended_order}"
-    severity = RuleSeverity.WARNING
-    added_in_version = "1.0.0"
-    parameters = [
-        RuleParam(
-            name="sections_order",
-            default="settings,variables,testcases,keywords",
-            converter=configure_sections_order,
-            show_type="str",
-            desc="order of sections in comma-separated list",
-        )
-    ]
-
-
 class BothTestsAndTasksRule(Rule):
     """
+    Both Task(s) and Test Case(s) section headers defined in file.
+
     The file contains both ``*** Test Cases ***`` and ``*** Tasks ***`` sections. Use only one of them. ::
 
-    *** Test Cases ***
+        *** Test Cases ***
 
-    *** Tasks ***
+        *** Tasks ***
+
     """
 
     name = "both-tests-and-tasks"
-    rule_id = "DUP10"
+    rule_id = "DUP09"
     message = "Both Task(s) and Test Case(s) section headers defined in file"
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
 
 
-class DuplicatedArgumentRule(Rule):
-    """
-    Variable names in Robot Framework are case-insensitive and ignores spaces and underscores. Following arguments
-    are duplicates::
-
-        *** Keywords ***
-        Keyword
-            [Arguments]    ${var}  ${VAR}  ${v_ar}  ${v ar}
-            Other Keyword
-    """
-
-    name = "duplicated-argument-name"
-    rule_id = "DUP11"
-    message = "Argument name '{argument_name}' is already used"
-    severity = RuleSeverity.ERROR
-    added_in_version = "1.11.0"
-
-
-class DuplicatedAssignedVarNameRule(Rule):
-    """
-    Variable names in Robot Framework are case-insensitive and ignores spaces and underscores. Following variables
-    are duplicates::
-
-        *** Test Cases ***
-        Test
-            ${var}  ${VAR}  ${v_ar}  ${v ar}  Keyword
-
-    It is possible to use `${_}` to note that variable name is not important and will not be used::
-
-        *** Keywords ***
-        Get Middle Element
-            [Arguments]    ${list}
-            ${_}    ${middle}    ${_}    Split List    ${list}
-            RETURN    ${middle}
-    """
-
-    name = "duplicated-assigned-var-name"
-    rule_id = "DUP12"
-    message = "Assigned variable name '{variable_name}' is already used"
-    severity = RuleSeverity.INFO
-    added_in_version = "1.12.0"
-
-
 class DuplicatedSettingRule(Rule):
     """
+    Duplicated setting.
+
     Some settings can be used only once in a file. Only the first value is used.
     Example::
 
         *** Settings ***
-        Force Tags        F1
-        Force Tags        F2  # this setting will be ignored
+        Test Tags        F1
+        Test Tags        F2  # this setting will be ignored
+
     """
 
     name = "duplicated-setting"
-    rule_id = "DUP13"
+    rule_id = "DUP10"
     message = "{error_msg}"
     severity = RuleSeverity.WARNING
     added_in_version = "2.0"
@@ -303,8 +231,8 @@ class DuplicationsChecker(VisitorChecker):
     duplicated_library: DuplicatedLibraryRule
     duplicated_metadata: DuplicatedMetadataRule
     duplicated_variables_import: DuplicatedVariablesImportRule
-    duplicated_argument_name: DuplicatedArgumentRule
-    duplicated_assigned_var_name: DuplicatedAssignedVarNameRule
+    duplicated_argument_name: arguments.DuplicatedArgumentRule
+    duplicated_assigned_var_name: variables.DuplicatedAssignedVarNameRule
     duplicated_setting: DuplicatedSettingRule
 
     def __init__(self):
@@ -454,7 +382,7 @@ class SectionHeadersChecker(VisitorChecker):
     """Checker for duplicated or out of order section headers."""
 
     section_already_defined: SectionAlreadyDefinedRule
-    section_out_of_order: SectionOutOfOrderRule
+    section_out_of_order: order.SectionOutOfOrderRule
     both_tests_and_tasks: BothTestsAndTasksRule
 
     def __init__(self):
