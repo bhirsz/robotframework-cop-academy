@@ -186,7 +186,7 @@ class SectionOutOfOrderRule(Rule):  # FIXME it is not dup, more like ORD
 
     To change the default order use following option::
 
-        robocop --configure section-out-of-order:sections_order:comma,separated,list,of,sections
+        robocop check configure section-out-of-order:sections_order:comma,separated,list,of,sections
 
     where section should be case-insensitive name from the list: comments, settings, variables, testcases, keywords.
     Order of not configured sections is ignored.

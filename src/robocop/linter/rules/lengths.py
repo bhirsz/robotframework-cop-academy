@@ -123,7 +123,7 @@ class LineTooLongRule(Rule):
     r"""
     It is possible to ignore lines that match regex pattern. Configure it using following option::
 
-        robocop --configure line-too-long:ignore_pattern:pattern
+        robocop check --configure line-too-long.ignore_pattern=pattern
 
     The default pattern is ``https?://\\S+`` that ignores the lines that look like an URL.
 

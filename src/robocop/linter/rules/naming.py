@@ -35,10 +35,12 @@ if TYPE_CHECKING:
 
 class NotAllowedCharInNameRule(Rule):
     r"""
+    Not allowed character found.
+
     Reports not allowed characters found in Test Case or Keyword names. By default it's a dot (``.``). You can
     configure what patterns are reported by calling::
 
-        robocop --configure not-allowed-char-in-name:pattern:regex_pattern
+        robocop check --configure not-allowed-char-in-name.pattern=regex_pattern
 
     ``regex_pattern`` should define regex pattern not allowed in names. For example ``[@\[]`` pattern
     would report any occurrence of ``@[`` characters.
@@ -46,7 +48,7 @@ class NotAllowedCharInNameRule(Rule):
     """
 
     name = "not-allowed-char-in-name"
-    rule_id = "0301"
+    rule_id = "NAME01"
     message = "Not allowed character '{character}' found in {block_name} name"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -63,6 +65,8 @@ class NotAllowedCharInNameRule(Rule):
 
 class WrongCaseInKeywordNameRule(Rule):
     r"""
+    Keyword name does not follow case convention.
+
     Keyword names need to follow a specific case convention.
     The convention can be set using ``convention`` parameter and accepts
     one of the 2 values: ``each_word_capitalized`` or ``first_word_capitalized``.
@@ -97,7 +101,7 @@ class WrongCaseInKeywordNameRule(Rule):
     """
 
     name = "wrong-case-in-keyword-name"
-    rule_id = "0302"
+    rule_id = "NAME02"
     message = "Keyword name '{keyword_name}' does not follow case convention"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -120,6 +124,8 @@ class WrongCaseInKeywordNameRule(Rule):
 
 class KeywordNameIsReservedWordRule(Rule):
     """
+    Keyword name is a reserved word.
+
     Do not use reserved names for keyword names. Following names are reserved:
 
       - IF
@@ -137,7 +143,7 @@ class KeywordNameIsReservedWordRule(Rule):
     """
 
     name = "keyword-name-is-reserved-word"
-    rule_id = "0303"
+    rule_id = "NAME03"
     message = "'{keyword_name}' is a reserved keyword{error_msg}"
     severity = RuleSeverity.ERROR
     added_in_version = "1.0.0"
@@ -145,40 +151,32 @@ class KeywordNameIsReservedWordRule(Rule):
 
 class UnderscoreInKeywordNameRule(Rule):
     """
-    Bad |:x:|
+    Underscores in keyword name.
 
-    ..  code-block:: none
+    You can replace underscores with spaces.
+
+    Incorrect code example::
 
         keyword_with_underscores
 
-    Good |:white_check_mark:|
-
-    ..  code-block:: none
+    Correct code::
 
         Keyword Without Underscores
 
     """
 
     name = "underscore-in-keyword-name"
-    rule_id = "0305"
-    message = "Underscores in keyword name '{keyword_name}' can be replaced with spaces"
+    rule_id = "NAME04"
+    message = "Underscores in keyword name '{keyword_name}'"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
 
 class SettingNameNotInTitleCaseRule(Rule):
     """
-    Good |:white_check_mark:| ::
+    Setting name not in title or upper case.
 
-        *** Settings ***
-        Resource    file.resource
-
-        *** Test Cases ***
-        Test
-            [DOCUMENTATION]  Some documentation
-            Step
-
-    Bad |:x:| ::
+    Incorrect code example::
 
         *** Settings ***
         resource    file.resource
@@ -188,80 +186,102 @@ class SettingNameNotInTitleCaseRule(Rule):
             [documentation]  Some documentation
             Step
 
+    Correct code::
+
+        *** Settings ***
+        Resource    file.resource
+
+        *** Test Cases ***
+        Test
+            [DOCUMENTATION]  Some documentation
+            Step
+
+
     """
 
     name = "setting-name-not-in-title-case"
-    rule_id = "0306"
-    message = "Setting name '{setting_name}' should use title or upper case"
+    rule_id = "NAME05"
+    message = "Setting name '{setting_name}' not in title or uppercase"
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
 
 class SectionNameInvalidRule(Rule):
     """
-    Good |:white_check_mark:| ::
+    Section name does not follow convention.
+
+    Section name should use Title Case or CAP CASE case convention.
+
+    Incorrect code example::
+
+        *** settings ***
+        *** KEYwords ***
+
+    Correct code::
 
         *** SETTINGS ***
         *** Keywords ***
 
-    Bad |:x:| ::
-
-        *** keywords ***
-
-
     """
 
     name = "section-name-invalid"
-    rule_id = "0307"
-    message = "Section name should be in format '{section_title_case}' or '{section_upper_case}'"
+    rule_id = "NAME06"
+    message = "Section name should be in format '{section_title_case}' or '{section_upper_case}'"  # TODO: rename
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"
 
 
 class NotCapitalizedTestCaseTitleRule(Rule):
     """
-    Good |:white_check_mark:| ::
+    Test case title does not start with capital letter.
 
-        *** Test Cases ***
-        Validate user details
-
-    Bad |:x:| ::
+    Incorrect code example::
 
         *** Test Cases ***
         validate user details
 
+    Correct code example::
+
+        *** Test Cases ***
+        Validate user details
+
     """
 
     name = "not-capitalized-test-case-title"
-    rule_id = "0308"
-    message = "Test case '{test_name}' title should start with capital letter"
+    rule_id = "NAME07"
+    message = "Test case '{test_name}' title does not start with capital letter"
     severity = RuleSeverity.WARNING
     added_in_version = "1.4.0"
 
 
 class SectionVariableNotUppercaseRule(Rule):
+    """
+    Section variable name is not uppercase.
+
+    Incorrect code example::
+
+        *** Variables ***
+        ${section_variable}    value
+
+    Correct code::
+
+        *** Variables ***
+        ${SECTION_VARIABLE}    value
+
+    """
+
     name = "section-variable-not-uppercase"
-    rule_id = "0309"
-    message = "Section variable '{variable_name}' name should be uppercase"
+    rule_id = "NAME08"
+    message = "Section variable '{variable_name}' name is not uppercase"
     severity = RuleSeverity.WARNING
     added_in_version = "1.4.0"
 
 
 class ElseNotUpperCaseRule(Rule):
     """
-    Good |:white_check_mark:| ::
+    ELSE and ELSE IF is not uppercase.
 
-        *** Keywords ***
-        Describe Temperature
-            [Arguments]     ${degrees}
-            IF         ${degrees} > ${30}
-                RETURN  Hot
-            ELSE IF    ${degrees} > ${15}
-                RETURN  Warm
-            ELSE
-                RETURN  Cold
-
-    Bad |:x:| ::
+    Incorrect code example::
 
         *** Keywords ***
         Describe Temperature
@@ -273,17 +293,31 @@ class ElseNotUpperCaseRule(Rule):
             Else
                 RETURN  Cold
 
+    Correct code::
+
+        *** Keywords ***
+        Describe Temperature
+            [Arguments]     ${degrees}
+            IF         ${degrees} > ${30}
+                RETURN  Hot
+            ELSE IF    ${degrees} > ${15}
+                RETURN  Warm
+            ELSE
+                RETURN  Cold
+
     """
 
     name = "else-not-upper-case"
-    rule_id = "0311"
-    message = "ELSE and ELSE IF should be upper case"
+    rule_id = "NAME09"
+    message = "ELSE and ELSE IF is not uppercase"
     severity = RuleSeverity.ERROR
     added_in_version = "1.5.0"
 
 
 class KeywordNameIsEmptyRule(Rule):
     """
+    Keyword name is empty.
+
     Remember to always add a keyword name and avoid such code::
 
         *** Keywords ***
@@ -293,14 +327,16 @@ class KeywordNameIsEmptyRule(Rule):
     """
 
     name = "keyword-name-is-empty"
-    rule_id = "0312"
-    message = "Keyword name should not be empty"
+    rule_id = "NAME10"
+    message = "Keyword name is empty"
     severity = RuleSeverity.ERROR
     added_in_version = "1.8.0"
 
 
 class TestCaseNameIsEmptyRule(Rule):
     """
+    Test case name is empty.
+
     Remember to always add a test case name and avoid such code::
 
         *** Test Cases ***
@@ -310,14 +346,16 @@ class TestCaseNameIsEmptyRule(Rule):
     """
 
     name = "test-case-name-is-empty"
-    rule_id = "0313"
-    message = "Test case name should not be empty"
+    rule_id = "NAME11"
+    message = "Test case name is empty"
     severity = RuleSeverity.ERROR
     added_in_version = "1.8.0"
 
 
 class EmptyLibraryAliasRule(Rule):
     """
+    Library alias is empty.
+
     Use non-empty name when using library import with alias.
 
     Good |:white_check_mark:| ::
@@ -333,14 +371,16 @@ class EmptyLibraryAliasRule(Rule):
     """
 
     name = "empty-library-alias"
-    rule_id = "0314"
-    message = "Library alias should not be empty"
+    rule_id = "NAME12"
+    message = "Library alias is empty"
     severity = RuleSeverity.ERROR
     added_in_version = "1.10.0"
 
 
 class DuplicatedLibraryAliasRule(Rule):
     """
+    Library alias is the same as original name.
+
     Examples of rule violation::
 
          *** Settings ***
@@ -350,26 +390,28 @@ class DuplicatedLibraryAliasRule(Rule):
     """
 
     name = "duplicated-library-alias"
-    rule_id = "0315"
-    message = "Library alias should not be the same as original name"
+    rule_id = "NAME13"
+    message = "Library alias is the same as original name"
     severity = RuleSeverity.WARNING
     added_in_version = "1.10.0"
 
 
 class BddWithoutKeywordCallRule(Rule):
     """
+    BDD keyword not followed by any keyword.
+
     When using BDD reserved keywords (such as `GIVEN`, `WHEN`, `AND`, `BUT` or `THEN`) use them together with
     name of the keyword to run.
 
-    Good |:white_check_mark:| ::
+    Incorrect code example::
 
-        Given Setup Is Complete
+        Given
         When User Log In
         Then User Should See Welcome Page
 
-    Bad |:x:| ::
+    Correct code::
 
-        Given
+        Given Setup Is Complete
         When User Log In
         Then User Should See Welcome Page
 
@@ -378,7 +420,7 @@ class BddWithoutKeywordCallRule(Rule):
     """
 
     name = "bdd-without-keyword-call"
-    rule_id = "0318"
+    rule_id = "NAME14"
     message = "BDD reserved keyword '{keyword_name}' not followed by any keyword{error_msg}"
     severity = RuleSeverity.WARNING
     added_in_version = "1.11.0"
@@ -386,10 +428,12 @@ class BddWithoutKeywordCallRule(Rule):
 
 class NotAllowedCharInFilenameRule(Rule):
     r"""
+    Not allowed character found in filename.
+
     Reports not allowed pattern found in Suite names. By default, it's a dot (`.`).
     You can configure what characters are reported by running::
 
-         robocop --configure not-allowed-char-in-filename:pattern:regex_pattern .
+         robocop check --configure not-allowed-char-in-filename.pattern=regex_pattern .
 
     where ``regex_pattern`` should define regex pattern for characters not allowed in names. For example `[@\[]`
     pattern would report any occurrence of ``@[`` characters.
@@ -397,7 +441,7 @@ class NotAllowedCharInFilenameRule(Rule):
     """
 
     name = "not-allowed-char-in-filename"
-    rule_id = "0320"
+    rule_id = "NAME15"
     message = "Not allowed character '{character}' found in {block_name} name"
     severity = RuleSeverity.WARNING
     parameters = [
@@ -414,6 +458,8 @@ class NotAllowedCharInFilenameRule(Rule):
 
 class InvalidSectionRule(Rule):
     """
+    Invalid section found.
+
     Robot Framework 6.1 detects unrecognized sections based on the language defined for the specific files.
     Consider using ``--language`` parameter if the file is defined with different language.
 
@@ -428,11 +474,8 @@ class InvalidSectionRule(Rule):
     """
 
     name = "invalid-section"
-    rule_id = "0325"
-    message = (
-        "Invalid section '{invalid_section}'. "
-        "Consider using --language parameter if the file is defined with different language"
-    )
+    rule_id = "NAME16"
+    message = "Invalid section '{invalid_section}'"
     severity = RuleSeverity.ERROR
     version = ">=6.1"
     added_in_version = "3.2.0"
@@ -440,6 +483,8 @@ class InvalidSectionRule(Rule):
 
 class MixedTaskTestSettingsRule(Rule):
     """
+    Task related setting used with ``*** Test Cases ***`` or Test related setting used with ``*** Tasks ***`` section.
+
     If ``*** Tasks ***`` section is present in the file, use task-related settings like ``Task Setup``,
     ``Task Teardown``, ``Task Template``, ``Task Tags`` and ``Task Timeout`` instead of their `Test` variants.
 
@@ -448,8 +493,8 @@ class MixedTaskTestSettingsRule(Rule):
     """
 
     name = "mixed-task-test-settings"
-    rule_id = "0326"
-    message = "Use {task_or_test}-related setting '{setting}' if {tasks_or_tests} section is used"
+    rule_id = "NAME17"
+    message = "Use {task_or_test}-related setting '{setting}' if {tasks_or_tests} section is used"  # TODO: Rename
     severity = RuleSeverity.WARNING
     added_in_version = "3.3.0"
 

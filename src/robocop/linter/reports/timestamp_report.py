@@ -23,7 +23,7 @@ class TimestampReport(robocop.linter.reports.Report):
     Both of default values, ``timezone`` and ``format`` can be configured by
     ``-c/--configure`` and ``timestamp:timezone:"<timezone name>"`` and/or ``timestamp:format:"<format string>"``::
 
-        robocop --configure timestamp:timezone:"Europe/Paris" --configure timestamp:format:"%Y-%m-%d %H:%M:%S %Z %z"
+        robocop check -c timestamp.timezone="Europe/Paris" -c timestamp.format="%Y-%m-%d %H:%M:%S %Z %z"
 
     This yields following timestamp report::
 
@@ -38,19 +38,19 @@ class TimestampReport(robocop.linter.reports.Report):
     Useful configurations::
 
         Local time to ISO 8601 format:
-        robocop --configure timestamp:format:"%Y-%m-%dT%H:%M:%S%z"
+        robocop check --configure timestamp.format="%Y-%m-%dT%H:%M:%S%z"
 
         UTC time:
-        robocop --configure timestamp:timezone:"UTC" --configure timestamp:format:"%Y-%m-%dT%H:%M:%S %Z %z"
+        robocop check --configure timestamp:timezone:"UTC" --configure timestamp.format="%Y-%m-%dT%H:%M:%S %Z %z"
 
         Timestamp with high precision:
-        robocop --configure timestamp:format:"%Y-%m-%dT%H:%M:%S.%f %z"
+        robocop check --configure timestamp.format="%Y-%m-%dT%H:%M:%S.%f %z"
 
         12-hour clock:
-        robocop --configure timestamp:format:"%Y-%m-%d %I:%M:%S %p %Z %z"
+        robocop check --configure timestamp.format="%Y-%m-%d %I:%M:%S %p %Z %z"
 
         More human-readable format 'On 10 July 2022 07:26:24 +0300':
-        robocop --configure timestamp:format:"On %d %B %Y %H:%M:%S %z"
+        robocop check --configure timestamp.format="On %d %B %Y %H:%M:%S %z"
 
     """
 

@@ -22,7 +22,7 @@ class SarifReport(robocop.linter.reports.Report):
 
     You can configure output directory and report filename::
 
-        robocop --configure sarif:output_dir:C:/sarif_reports --configure sarif:report_filename:.sarif
+        robocop check --configure sarif.output_dir=C:/sarif_reports --configure sarif.report_filename=.sarif
 
     """
 
