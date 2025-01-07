@@ -297,6 +297,8 @@ glance. That's why we have switched to alphanumeric group names (for example ``D
 Various groups are also additionally split into smaller sub-groups. This change leads to backward incompatible
 changes to all rule ids.
 
+# TODO: LEN / DUP
+
 Documentation rules are now grouped under 'DOC' group:
 
 - ``0201`` became ``DOC01`` (``missing-doc-keyword``)
@@ -386,6 +388,26 @@ Deprecated syntax or code replacement recommendations are now grouped under 'DEP
 - ``0322`` became ``DEPR04`` (``deprecated-singular-header``)
 - ``0327`` became ``DEPR05`` (``replace-set-variable-with-var``)
 - ``0328`` became ``DEPR06`` (``replace-create-with-var``)
+
+Naming rules are now grouped under 'NAME' group:
+
+- ``0301`` became ``NAME01`` (``not-allowed-char-in-name``)
+- ``0302`` became ``NAME02`` (``wrong-case-in-keyword-name``)
+- ``0303`` became ``NAME03`` (``keyword-name-is-reserved-word``)
+- ``0305`` became ``NAME04`` (``underscore-in-keyword-name``)
+- ``0306`` became ``NAME05`` (``setting-name-not-in-title-case``)
+- ``0307`` became ``NAME06`` (``section-name-invalid``)
+- ``0308`` became ``NAME07`` (``not-capitalized-test-case-title``)
+- ``0309`` became ``NAME08`` (``section-variable-not-uppercase``)
+- ``0311`` became ``NAME09`` (``else-not-upper-case``)
+- ``0312`` became ``NAME10`` (``keyword-name-is-empty``)
+- ``0313`` became ``NAME11`` (``test-case-name-is-empty``)
+- ``0314`` became ``NAME12`` (``empty-library-alias``)
+- ``0315`` became ``NAME13`` (``duplicated-library-alias``)
+- ``0318`` became ``NAME14`` (``bdd-without-keyword-call``)
+- ``0320`` became ``NAME15`` (``not-allowed-char-in-filename``)
+- ``0325`` became ``NAME16`` (``invalid-section``)
+- ``0326`` became ``NAME17`` (``mixed-task-test-settings``)
 
 Other rules are now grouped under 'MISC' group:
 
