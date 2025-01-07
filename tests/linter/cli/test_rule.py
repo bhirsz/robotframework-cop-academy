@@ -18,7 +18,8 @@ class TestDescribeRule:
 
         Do not define keywords with the same name inside the same file. Name matching is case-insensitive and
         ignores spaces and underscore characters.
-        Duplicated keyword names example::
+
+        Incorrect code example::
 
             *** Keywords ***
             Keyword

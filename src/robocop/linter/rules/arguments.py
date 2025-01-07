@@ -118,3 +118,24 @@ class InvalidArgumentsRule(Rule):
     severity = RuleSeverity.ERROR
     version = ">=4.0"
     added_in_version = "1.11.0"
+
+
+class DuplicatedArgumentRule(Rule):
+    """
+    Argument name is already used.
+
+    Variable names in Robot Framework are case-insensitive and ignores spaces and underscores. Following arguments
+    are duplicates::
+
+        *** Keywords ***
+        Keyword
+            [Arguments]    ${var}  ${VAR}  ${v_ar}  ${v ar}
+            Other Keyword
+
+    """
+
+    name = "duplicated-argument-name"
+    rule_id = "ARG06"
+    message = "Argument name '{argument_name}' is already used"
+    severity = RuleSeverity.ERROR
+    added_in_version = "1.11.0"

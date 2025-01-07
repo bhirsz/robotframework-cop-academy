@@ -297,7 +297,7 @@ glance. That's why we have switched to alphanumeric group names (for example ``D
 Various groups are also additionally split into smaller sub-groups. This change leads to backward incompatible
 changes to all rule ids.
 
-# TODO: LEN / DUP
+# TODO: LEN
 
 Documentation rules are now grouped under 'DOC' group:
 
@@ -358,6 +358,19 @@ Spacing and whitespace related rules are now grouped under 'SPC' group:
 - ``0410`` became ``SPC21`` (``not-enough-whitespace-after-variable``)
 - ``0411`` became ``SPC22`` (``not-enough-whitespace-after-suite-setting``)
 
+Duplications related rules are now grouped under 'DUP' group:
+
+- ``0801`` became ``DUP01`` (``duplicated-test-case"``)
+- ``0802`` became ``DUP02`` (``duplicated-keyword``)
+- ``0803`` became ``DUP03`` (``duplicated-variable``)
+- ``0804`` became ``DUP04`` (``duplicated-resource``)
+- ``0805`` became ``DUP05`` (``duplicated-library``)
+- ``0806`` became ``DUP06`` (``duplicated-metadata``)
+- ``0807`` became ``DUP07`` (``duplicated-variables-import``)
+- ``0808`` became ``DUP08`` (``section-already-defined``)
+- ``0810`` became ``DUP09`` (``both-tests-and-tasks``)
+- ``0813`` became ``DUP10`` (``duplicated-setting``)
+
 Variable related rules are now grouped under 'VAR' group:
 
 - ``0912`` became ``VAR01`` (``empty-variable``)
@@ -371,6 +384,7 @@ Variable related rules are now grouped under 'VAR' group:
 - ``0317`` became ``VAR09`` (``hyphen-in-variable-name``)
 - ``0323`` became ``VAR10`` (``inconsistent-variable-name``)
 - ``0324`` became ``VAR11`` (``overwriting-reserved-variable``)
+- ``0812`` became ``VAR12`` (``duplicated-assigned-var-name``)
 
 Argument related rules are now grouped under 'ARG' group:
 
@@ -379,6 +393,7 @@ Argument related rules are now grouped under 'ARG' group:
 - ``0932`` became ``ARG03`` (``undefined-argument-default``)
 - ``0933`` became ``ARG04`` (``undefined-argument-value``)
 - ``0407`` became ``ARG05`` (``invalid-argument``)
+- ``0811`` became ``ARG06`` (``duplicated-argument-name``)
 
 Deprecated syntax or code replacement recommendations are now grouped under 'DEPR' group:
 

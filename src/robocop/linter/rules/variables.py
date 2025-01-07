@@ -419,3 +419,29 @@ class OverwritingReservedVariableRule(Rule):
     message = "{var_or_arg} '{variable_name}' overwrites reserved variable '{reserved_variable}'"
     severity = RuleSeverity.WARNING
     added_in_version = "3.2.0"
+
+
+class DuplicatedAssignedVarNameRule(Rule):
+    """
+    Variable names in Robot Framework are case-insensitive and ignores spaces and underscores. Following variables
+    are duplicates::
+
+        *** Test Cases ***
+        Test
+            ${var}  ${VAR}  ${v_ar}  ${v ar}  Keyword
+
+    It is possible to use `${_}` to note that variable name is not important and will not be used::
+
+        *** Keywords ***
+        Get Middle Element
+            [Arguments]    ${list}
+            ${_}    ${middle}    ${_}    Split List    ${list}
+            RETURN    ${middle}
+
+    """
+
+    name = "duplicated-assigned-var-name"
+    rule_id = "VAR12"
+    message = "Assigned variable name '{variable_name}' is already used"
+    severity = RuleSeverity.INFO
+    added_in_version = "1.12.0"
