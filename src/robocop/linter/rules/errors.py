@@ -23,12 +23,14 @@ class ParsingErrorRule(Rule):  # TODO docs
 
 class MissingKeywordNameRule(Rule):
     """
+    Missing keyword name.
+
     Example of rule violation::
 
-    *** Keywords ***
-    Keyword
-        ${var}
-        ${one}      ${two}
+        *** Keywords ***
+        Keyword
+            ${var}
+            ${one}      ${two}
 
     """
 
@@ -41,12 +43,14 @@ class MissingKeywordNameRule(Rule):
 
 class VariablesImportWithArgsRule(Rule):
     """
+    YAML variables file import with arguments.
+
     Example of rule violation::
 
-    *** Settings ***
-    Variables    vars.yaml        arg1
-    Variables    variables.yml    arg2
-    Variables    module           arg3  # valid from RF > 5
+        *** Settings ***
+        Variables    vars.yaml        arg1
+        Variables    variables.yml    arg2
+        Variables    module           arg3  # valid from RF > 5
 
     """
 
@@ -59,12 +63,14 @@ class VariablesImportWithArgsRule(Rule):
 
 class InvalidContinuationMarkRule(Rule):
     """
+    Invalid continuation mark.
+
     Example of rule violation::
 
-    Keyword
-    ..  ${var}  # .. instead of ...
-    ...  1
-    ....  2  # .... instead of ...
+        Keyword
+        ..  ${var}  # .. instead of ...
+        ...  1
+        ....  2  # .... instead of ...
 
     """
 
@@ -77,12 +83,12 @@ class InvalidContinuationMarkRule(Rule):
 
 class NonExistingSettingRule(Rule):
     """
-    Non-existing setting can't be used in the code.
+    Non-existing setting used in the code.
 
     Example of rule violation::
 
        *** Test Cases ***
-       My Test Case
+       Test case
            [Not Existing]  arg
            [Arguments]  ${arg}
 
@@ -97,23 +103,29 @@ class NonExistingSettingRule(Rule):
 
 class SettingNotSupportedRule(Rule):
     """
+    Not supported setting.
+
     Following settings are supported in Test Case or Task::
 
-        [Documentation]	 Used for specifying a test case documentation.
-        [Tags]	         Used for tagging test cases.
-        [Setup]	         Used for specifying a test setup.
-        [Teardown]	     Used for specifying a test teardown.
-        [Template]	     Used for specifying a template keyword.
-        [Timeout]	     Used for specifying a test case timeout.
+        *** Test Cases ***
+        Test case
+            [Documentation]	 Used for specifying a test case documentation.
+            [Tags]	         Used for tagging test cases.
+            [Setup]	         Used for specifying a test setup.
+            [Teardown]	     Used for specifying a test teardown.
+            [Template]	     Used for specifying a template keyword.
+            [Timeout]	     Used for specifying a test case timeout.
 
     Following settings are supported in Keyword::
 
-        [Documentation]	 Used for specifying a user keyword documentation.
-        [Tags]	         Used for specifying user keyword tags.
-        [Arguments]	     Used for specifying user keyword arguments.
-        [Return]	     Used for specifying user keyword return values.
-        [Teardown]	     Used for specifying user keyword teardown.
-        [Timeout]	     Used for specifying a user keyword timeout.
+        *** Keywords ***
+        Keyword
+            [Documentation]	 Used for specifying a user keyword documentation.
+            [Tags]	         Used for specifying user keyword tags.
+            [Arguments]	     Used for specifying user keyword arguments.
+            [Return]	     Used for specifying user keyword return values.
+            [Teardown]	     Used for specifying user keyword teardown.
+            [Timeout]	     Used for specifying a user keyword timeout.
 
     """
 
@@ -125,6 +137,8 @@ class SettingNotSupportedRule(Rule):
 
 
 class InvalidForLoopRule(Rule):
+    """Invalid FOR loop syntax."""
+
     name = "invalid-for-loop"
     rule_id = "ERR12"
     message = "Invalid for loop syntax: {error_msg}"
@@ -134,6 +148,8 @@ class InvalidForLoopRule(Rule):
 
 
 class InvalidIfRule(Rule):
+    """Invalid IF syntax."""
+
     name = "invalid-if"
     rule_id = "ERR13"
     message = "Invalid IF syntax: {error_msg}"
@@ -143,6 +159,8 @@ class InvalidIfRule(Rule):
 
 
 class ReturnInTestCaseRule(Rule):
+    """RETURN used outside user keyword."""
+
     name = "return-in-test-case"
     rule_id = "ERR14"
     message = "RETURN can only be used inside a user keyword"
@@ -153,6 +171,8 @@ class ReturnInTestCaseRule(Rule):
 
 class InvalidSectionInResourceRule(Rule):
     """
+    Resource file with not supported section.
+
     The higher-level structure of resource files is the same as that of test case files,
     but they can't contain Test Cases or Tasks sections.
 
@@ -167,6 +187,8 @@ class InvalidSectionInResourceRule(Rule):
 
 class InvalidSettingInResourceRule(Rule):
     """
+    Not supported setting in ``*** Settings ***`` section in a resource file.
+
     The Setting section in resource files can contain only import settings (``Library``,
     ``Resource``, ``Variables``), ``Documentation`` and ``Keyword Tags``.
     """
@@ -179,7 +201,11 @@ class InvalidSettingInResourceRule(Rule):
 
 
 class UnsupportedSettingInIniFileRule(Rule):
-    """Settings ``Default Tags`` and ``Test Template`` are not supported in initialization files."""
+    """
+    Not supported setting in a initialization file.
+
+    Settings ``Default Tags`` and ``Test Template`` are not supported in initialization files.
+    """
 
     name = "unsupported-setting-in-init-file"
     rule_id = "ERR17"

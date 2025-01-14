@@ -87,21 +87,21 @@ class TestCaseSectionOutOfOrderRule(Rule):
 
     Incorrect code example::
 
-    *** Test Cases ***
-    Keyword After Teardown
-        [Documentation]    This is test Documentation
-        [Tags]    tag1    tag2
-        [Teardown]    Log    abc
-        Keyword1
+        *** Test Cases ***
+        Keyword After Teardown
+            [Documentation]    This is test Documentation
+            [Tags]    tag1    tag2
+            [Teardown]    Log    abc
+            Keyword1
 
     Correct code::
 
-    *** Test Cases ***
-    Keyword After Teardown
-        [Documentation]    This is test Documentation
-        [Tags]    tag1    tag2
-        Keyword1
-        [Teardown]    Log    abc
+        *** Test Cases ***
+        Keyword After Teardown
+            [Documentation]    This is test Documentation
+            [Tags]    tag1    tag2
+            Keyword1
+            [Teardown]    Log    abc
 
     """
 

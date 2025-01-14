@@ -79,7 +79,7 @@ class EmptyLinesBetweenSectionsRule(Rule):
     Incorrect code example::
 
         *** Settings ***
-        Suite Documentation    Only one empty line after this section.
+        Documentation    Only one empty line after this section.
 
         *** Keywords ***
         Keyword Definition
@@ -88,7 +88,7 @@ class EmptyLinesBetweenSectionsRule(Rule):
     Correct code::
 
         *** Settings ***
-        Suite Documentation    Only one empty line after this section.
+        Documentation    Only one empty line after this section.
 
 
         *** Keywords ***
@@ -308,23 +308,25 @@ class MisalignedContinuationRule(Rule):
 
     Incorrect code example::
 
+        *** Settings ***
             Default Tags       default tag 1    default tag 2    default tag 3
         ...                default tag 4    default tag 5
 
-            *** Test Cases ***
-            Example
-                Do X    first argument    second argument    third argument
-              ...    fourth argument    fifth argument    sixth argument
+        *** Test Cases ***
+        Example
+            Do X    first argument    second argument    third argument
+          ...    fourth argument    fifth argument    sixth argument
 
     Correct code::
 
+        *** Settings ***
         Default Tags       default tag 1    default tag 2    default tag 3
         ...                default tag 4    default tag 5
 
-            *** Test Cases ***
-            Example
-                Do X    first argument    second argument    third argument
-                ...    fourth argument    fifth argument    sixth argument
+        *** Test Cases ***
+        Example
+            Do X    first argument    second argument    third argument
+            ...    fourth argument    fifth argument    sixth argument
 
     """
 
@@ -395,19 +397,23 @@ class EmptyLinesInStatementRule(Rule):
 
     Incorrect code example::
 
-         Keyword
-         ...  1
-         # empty line in-between multiline statement
-         ...  2
+        *** Test Cases ***
+        Test case
+            Keyword
+            ...  1
+            # empty line in-between multiline statement
+            ...  2
 
-         ...  3
+            ...  3
 
     Correct code::
 
-         Keyword
-         ...  1
-         ...  2
-         ...  3
+        *** Test Cases ***
+        Test case
+            Keyword
+            ...  1
+            ...  2
+            ...  3
 
     """
 

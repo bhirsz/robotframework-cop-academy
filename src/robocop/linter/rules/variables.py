@@ -284,23 +284,27 @@ class NoTestVariableRule(Rule):
 
 class NonLocalVariablesShouldBeUppercaseRule(Rule):
     """
-    Non local variable is not uppercase.
+    Non-local variable is not uppercase.
 
-    Non local variable is not uppercase to easily identify scope of the variable.
+    Non-local variable is not uppercase to easily identify scope of the variable.
 
     Incorrect code example::
 
-        Set Task Variable    ${my_var}           1
-        Set Suite Variable   ${My Var}           1
-        Set Test Variable    ${myvar}            1
-        Set Global Variable  ${my_var${NESTED}}  1
+        *** Test Cases ***
+        Test case
+            Set Task Variable    ${my_var}           1
+            Set Suite Variable   ${My Var}           1
+            Set Test Variable    ${myvar}            1
+            Set Global Variable  ${my_var${NESTED}}  1
 
     Correct code::
 
-        Set Task Variable    ${MY_VAR}           1
-        Set Suite Variable   ${MY VAR}           1
-        Set Test Variable    ${MY_VAR}           1
-        Set Global Variable  ${MY VAR${nested}}  1
+        *** Test Cases ***
+        Test case
+            Set Task Variable    ${MY_VAR}           1
+            Set Suite Variable   ${MY VAR}           1
+            Set Test Variable    ${MY_VAR}           1
+            Set Global Variable  ${MY VAR${nested}}  1
 
     """
 
@@ -344,14 +348,18 @@ class HyphenInVariableNameRule(Rule):
 
     Incorrect code example::
 
-        ${var2}  Set Variable  ${${var}-${var2}}
+        *** Test Cases ***
+        Test case
+            ${var2}  Set Variable  ${${var}-${var2}}
 
     That's why there is a possibility that hyphen in name is not recognized as part of the name but as a minus sign.
     Better to use underscore instead:
 
     Correct code::
 
-        ${var2}  Set Variable  ${${var}_${var2}}
+        *** Test Cases ***
+        Test case
+            ${var2}  Set Variable  ${${var}_${var2}}
 
     """
 

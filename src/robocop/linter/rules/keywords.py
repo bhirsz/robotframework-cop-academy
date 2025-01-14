@@ -65,6 +65,8 @@ class NotAllowedKeywordRule(Rule):
 
         > robocop check --select not-allowed-keyword -c not-allowed-keyword.keywords=click_using_javascript
 
+    ::
+
         *** Keywords ***
         Keyword With Obsolete Implementation
             [Arguments]    ${locator}

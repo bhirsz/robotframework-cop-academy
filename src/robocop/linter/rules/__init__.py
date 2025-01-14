@@ -139,7 +139,6 @@ class RuleFilter(str, Enum):
     ALL = "ALL"
     ENABLED = "ENABLED"
     DISABLED = "DISABLED"
-    COMMUNITY = "COMMUNITY"
     DEPRECATED = "DEPRECATED"
 
 
@@ -350,6 +349,7 @@ class Rule:
         self.enabled_in_version = self.supported_in_rf_version(self.version)
         self.default_severity = self.severity  # used for defaultConfiguration in Sarif report
         self.config = self._parse_parameters()
+        self.supported_version = self.version if self.version else "All"
 
     #     self.docs = dedent(docs)
 
@@ -392,12 +392,16 @@ class Rule:
         # TODO handle missing
 
     @property
+    def docs(self) -> str:
+        return dedent(self.__doc__) if self.__doc__ else ""
+
+    @property
     def description(self) -> str:
         """Description of the rule with rule name, message and documentation."""
         description = f"Rule: [bold]{self.name}[/bold] ({self.rule_id})\n"
         description += f"Message: {self.message}\n"
         description += f"Severity: {self.severity}\n"
-        description += dedent(self.__doc__)
+        description += dedent(self.__doc__) if self.__doc__ else ""  # FIXME
         return description
 
     @property
@@ -595,6 +599,15 @@ def is_checker(checker_class_def: tuple) -> bool:
     return issubclass(checker_class_def[1], BaseChecker)
 
 
+def inherits_from(child, parent_name: str) -> bool:
+    return parent_name in [c.__name__ for c in inspect.getmro(child)[1:-1]]
+
+
+def is_rule(rule_class_def: tuple) -> bool:
+    return inherits_from(rule_class_def[1], "Rule")
+    # return issubclass(rule_class_def[1], Rule) TODO does not work as is_checker for some reason
+
+
 class RobocopImporter:
     def __init__(self, external_rules_paths=None):
         self.internal_checkers_dir = Path(__file__).parent
@@ -704,7 +717,9 @@ class RobocopImporter:
     def get_imported_rules(rule_modules):
         for module in rule_modules:
             module_name = module.__name__.split(".")[-1]
-            for rule in getattr(module, "rules", {}).values():
+            classes = inspect.getmembers(module, inspect.isclass)
+            rules = [rule[1]() for rule in classes if is_rule(rule)]
+            for rule in rules:
                 yield module_name, rule
 
     def register_deprecated_rules(self, module_rules: dict[str, Rule]) -> None:
@@ -776,3 +791,7 @@ def get_builtin_rules() -> Generator[tuple[str, Rule], None, None]:
     robocop_importer = RobocopImporter()
     rule_modules = robocop_importer.get_internal_modules()
     yield from robocop_importer.get_imported_rules(rule_modules)
+
+
+if __name__ == "__main__":
+    rules = list(get_builtin_rules())

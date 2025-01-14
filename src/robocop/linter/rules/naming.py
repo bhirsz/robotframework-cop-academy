@@ -358,15 +358,15 @@ class EmptyLibraryAliasRule(Rule):
 
     Use non-empty name when using library import with alias.
 
-    Good |:white_check_mark:| ::
-
-        *** Settings ***
-        Library  CustomLibrary  AS  AnotherName
-
-    Bad |:x:| ::
+    Incorrect code example::
 
          *** Settings ***
          Library  CustomLibrary  AS
+
+    Correct code::
+
+        *** Settings ***
+        Library  CustomLibrary  AS  AnotherName
 
     """
 
@@ -405,15 +405,19 @@ class BddWithoutKeywordCallRule(Rule):
 
     Incorrect code example::
 
-        Given
-        When User Log In
-        Then User Should See Welcome Page
+        *** Test Cases ***
+        Test case
+            Given
+            When User Log In
+            Then User Should See Welcome Page
 
     Correct code::
 
-        Given Setup Is Complete
-        When User Log In
-        Then User Should See Welcome Page
+        *** Test Cases ***
+        Test case
+            Given Setup Is Complete
+            When User Log In
+            Then User Should See Welcome Page
 
     Since those words are used for BDD style, it's also recommended not to use them within the user keyword name.
 
@@ -540,7 +544,7 @@ class InvalidCharactersInNameChecker(VisitorChecker):
         for variable in robot_vars:
             # Loop and skip variables:
             # Search pattern from start_pos to variable starting position
-            # example `Keyword With ${em.bedded} Two ${second.Argument} Argument``
+            # example `Keyword With ${em.bedded} Two ${second.Argument} Argument`
             # is split to:
             #   1. `Keyword With `
             #   2. ` Two `
