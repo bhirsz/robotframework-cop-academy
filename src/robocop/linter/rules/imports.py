@@ -57,12 +57,12 @@ class BuiltinImportsNotSortedRule(Rule):
 
 class NonBuiltinImportsNotSortedRule(Rule):
     """
-    Custom imports are not sorted in a alphabetical order.
+    Custom imports are not sorted in alphabetical order.
 
-    To increase readability sort the imports in a alphabetical order. Beware that depending on your code, some of the
+    To increase readability sort the imports in alphabetical order. Beware that depending on your code, some of the
     custom imports may be depending on each other and the order of the imports.
 
-    Example of rule violation:
+    Example of rule violation::
 
         *** Settings ***
         Library    Collections
@@ -86,12 +86,11 @@ class ResourcesImportsNotSortedRule(Rule):
     To increase readability sort the resources imports in a alphabetical order. Beware that depending on your code,
     some of the imports may be depending on each other and the order of the imports.
 
-    Example of rule violation:
+    Example of rule violation::
 
         *** Settings ***
         Resource   CustomResource.resource
         Resource   AnotherFile.resource
-
 
     """
 

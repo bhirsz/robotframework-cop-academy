@@ -57,12 +57,14 @@ class NotEnoughWhitespaceAfterNewlineMarkerRule(Rule):
 
     Incorrect code example::
 
+        *** Variables ***
         @{LIST}  1
         ... 2
         ...  3
 
     Correct code::
 
+        *** Variables ***
         @{LIST}  1
         ...  2
         ...  3
@@ -84,11 +86,13 @@ class NotEnoughWhitespaceAfterVariableRule(Rule):
 
     Incorrect code example::
 
+        *** Variables ***
         ${variable} 1
         ${other_var}  2
 
     Correct code::
 
+        *** Variables ***
         ${variable}  1
         ${other_var}  2
 

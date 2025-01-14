@@ -82,6 +82,3 @@ class Diagnostic:
             other.range.start.character,
             other.rule.rule_id,
         )
-
-    def get_fullname(self) -> str:  # can be moved where it is used
-        return f"{self.severity.value}{self.rule.rule_id} ({self.rule.name})"

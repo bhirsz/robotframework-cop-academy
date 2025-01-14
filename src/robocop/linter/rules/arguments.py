@@ -60,6 +60,7 @@ class UndefinedArgumentDefaultRule(Rule):
         *** Keywords ***
         My Amazing Keyword
             [Arguments]    ${argument_name}=
+
     """
 
     name = "undefined-argument-default"
@@ -84,7 +85,9 @@ class UndefinedArgumentValueRule(Rule):
 
     Example of a rule violation::
 
-        My Amazing Keyword    argument_name=
+        *** Test Cases ***
+        Test case
+            My Amazing Keyword    argument_name=
 
     """
 
@@ -102,13 +105,17 @@ class InvalidArgumentsRule(Rule):
 
     Valid names::
 
-        Keyword
-            [Arguments]    ${var}    @{args}    &{config}    ${var}=default
+        *** Test Cases ***
+        Test case
+            Keyword
+                [Arguments]    ${var}    @{args}    &{config}    ${var}=default
 
     Invalid names::
 
-        Keyword
-            [Arguments]    {var}    @args}    var=default
+        *** Test Cases ***
+        Test case
+            Keyword
+                [Arguments]    {var}    @args}    var=default
 
     """
 

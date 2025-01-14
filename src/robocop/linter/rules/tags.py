@@ -24,6 +24,7 @@ class TagWithSpaceRule(Rule):
 
     Example of rule violation::
 
+        *** Test Cases ***
         Test
             [Tags]  tag with space    ${tag with space}
 
@@ -201,9 +202,9 @@ class DuplicatedTagsRule(Rule):
 
     Example of duplicated tags::
 
+        *** Test Cases ***
         Test
             [Tags]    Tag    TAG    tag    t a g
-
 
     """
 
@@ -225,7 +226,7 @@ class CouldBeKeywordTagsRule(Rule):
             [Tags]  featureX  smoke
             Step
 
-        Keyword 2
+        Keyword
             [Tags]  featureX
             Step
 

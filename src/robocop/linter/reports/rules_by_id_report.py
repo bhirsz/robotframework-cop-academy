@@ -28,7 +28,8 @@ class RulesByIdReport(robocop.linter.reports.ComparableReport):
         super().__init__(config)
 
     def add_message(self, message: Diagnostic) -> None:
-        self.message_counter[message.get_fullname()] += 1
+        rule_name = f"{message.rule.rule_id} [{message.severity.value}] ({message.rule.name})"
+        self.message_counter[rule_name] += 1
 
     def persist_result(self) -> dict:
         return dict(self.message_counter.items())

@@ -15,6 +15,7 @@ from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, g
 app = typer.Typer(
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
     "Full documentation available at https://robocop.readthedocs.io .",
+    context_settings={"help_option_names": ["-h", "--help"]},
     rich_markup_mode="rich",
 )
 list_app = typer.Typer(help="List available rules, reports or formatters.")

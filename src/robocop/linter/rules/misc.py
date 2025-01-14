@@ -56,6 +56,7 @@ class KeywordAfterReturnRule(Rule):
 
     Incorrect code example::
 
+        *** Keywords ***
         Keyword
             Step
             [Return]    ${variable}
@@ -63,6 +64,7 @@ class KeywordAfterReturnRule(Rule):
 
     Correct code::
 
+        *** Keywords ***
         Keyword
             Step
             ${variable}    Other Step
@@ -86,6 +88,7 @@ class EmptyReturnRule(Rule):
 
     Incorrect code example::
 
+        *** Keywords ***
         Keyword
             Gather Results
             Assert Results
@@ -93,6 +96,7 @@ class EmptyReturnRule(Rule):
 
     Correct code::
 
+        *** Keywords ***
         Keyword
             Gather Results
             Assert Results
@@ -112,11 +116,13 @@ class NestedForLoopRule(Rule):
 
     Older versions of Robot Framework did not support nested for loops::
 
-        FOR    ${var}    IN RANGE    10
-            FOR   ${other_var}   IN    a  b
-                # Nesting supported from Robot Framework 4.0+
+        *** Test Cases
+        Test case
+            FOR    ${var}    IN RANGE    10
+                FOR   ${other_var}   IN    a  b
+                    # Nesting supported from Robot Framework 4.0+
+                END
             END
-        END
 
     """
 
@@ -156,7 +162,7 @@ class InconsistentAssignmentRule(Rule):
             No Operation
             ${var}  ${var2}    Some Keyword
 
-    By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
+    By default, Robocop looks for most popular assignment sign in the file. It is possible to define expected
     assignment sign by running::
 
         robocop check --configure inconsistent-assignment.assignment_sign_type=equal_sign
@@ -219,8 +225,12 @@ class InconsistentAssignmentInVariablesRule(Rule):
 
         robocop check --configure inconsistent-assignment-in-variables.assignment_sign_type=equal_sign
 
-    You can choose between following signs: 'autodetect' (default), 'none', 'equal_sign' (``=``) or
-    space_and_equal_sign (`` =``).
+    You can choose between following signs:
+
+    - 'autodetect' (default),
+    - 'none',
+    - 'equal_sign' (``=``)
+    - 'space_and_equal_sign' (`` =``).
 
     """
 
@@ -266,26 +276,30 @@ class IfCanBeMergedRule(Rule):
 
     Example of rule violation::
 
-        IF  ${var} == 4
-            Keyword
-        END
-        # comments are ignored
-        IF  ${var}  == 4
-            Keyword 2
-        END
+        *** Test Cases ***
+        Test case
+            IF  ${var} == 4
+                Keyword
+            END
+            # comments are ignored
+            IF  ${var}  == 4
+                Keyword 2
+            END
 
     ``IF`` statement is considered identical only if all branches have identical conditions.
 
     Similar but not identical ``IF``::
 
-        IF  ${variable}
-            Keyword
-        ELSE
-            Other Keyword
-        END
-        IF  ${variable}
-            Keyword
-        END
+        *** Test Cases ***
+        Test case
+            IF  ${variable}
+                Keyword
+            ELSE
+                Other Keyword
+            END
+            IF  ${variable}
+                Keyword
+            END
 
     """
 
@@ -363,6 +377,7 @@ class UnreachableCodeRule(Rule):
 
     For example::
 
+        *** Keywords ***
         Example Keyword
             FOR    ${animal}    IN    cat    dog
                 IF    '${animal}' == 'cat'
@@ -394,20 +409,26 @@ class MultilineInlineIfRule(Rule):
 
     Incorrect code example::
 
-        IF  ${condition}  Log  hello
-        ...    ELSE       Log  hi!
+        *** Keywords ***
+        Keyword
+            IF  ${condition}  Log  hello
+            ...    ELSE       Log  hi!
 
     Correct code::
 
-        IF  ${condition}    Log  hello     ELSE    Log  hi!
+        *** Keywords ***
+        Keyword
+            IF  ${condition}    Log  hello     ELSE    Log  hi!
 
     or IF block can be used::
 
-        IF  ${condition}
-            Log  hello
-        ELSE
-            Log  hi!
-        END
+        *** Keywords ***
+        Keyword
+            IF  ${condition}
+                Log  hello
+            ELSE
+                Log  hi!
+            END
 
     """
 
@@ -679,17 +700,21 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
     """
     Checker for inconsistent assignment signs.
 
-    By default, this checker will try to autodetect most common assignment sign (separately for *** Variables ***
-    section and *** Test Cases ***, *** Keywords *** sections) and report any inconsistent type of sign in particular
-    file.
+    By default, this checker will try to autodetect most common assignment sign (separately for ``*** Variables ***``
+    section and ``*** Test Cases ***``, ``*** Keywords ***`` sections) and report any inconsistent type of sign in
+    particular file.
 
     To force one type of sign type you, can configure two rules::
 
-        --configure inconsistent-assignment:assignment_sign_type:{sign_type}
-        --configure inconsistent-assignment-in-variables:assignment_sign_type:{sign_type}
+        robocop check --configure inconsistent-assignment.assignment_sign_type={sign_type}
+        robocop check --configure inconsistent-assignment-in-variables.assignment_sign_type={sign_type}
 
-    ``${sign_type}`` can be one of: ``autodetect`` (default), ``none`` (''), ``equal_sign`` ('='),
-    ``space_and_equal_sign`` (' =').
+    You can choose between following signs:
+
+    - 'autodetect' (default),
+    - 'none',
+    - 'equal_sign' (``=``)
+    - 'space_and_equal_sign' (`` =``).
 
     """
 
