@@ -7,18 +7,11 @@ Rules list
 This is the complete list of all Robocop rules grouped by categories.
 If you want to learn more about the rules and their features, see :ref:`rules`.
 
-There are over a 160 rules available in Robocop and they are organized into the following categories:
+There are over a {{ rules_length_in_10 }} rules available in Robocop and they are organized into the following categories:
 
-# TODO
-* 02: :ref:`Documentation`
-* 03: :ref:`Naming`
-* 04: :ref:`Errors`
-* 05: :ref:`Lengths`
-* 06: :ref:`Tags`
-* 07: :ref:`Comments`
-* 08: :ref:`Duplications`
-* 09: :ref:`Misc`
-* 10: :ref:`Spacing`
+{% for group in builtin_checkers %}
+* {{ group.group_id }}: :ref:`{{ group.group_name }}`
+{%- endfor %}
 
 Each rule has a unique rule id consisting of:
 
@@ -27,17 +20,19 @@ Each rule has a unique rule id consisting of:
 
 Below is the list of all built-in Robocop rules.
 
-{% for checker_group in builtin_checkers %}
-.. _{{ checker_group[0] }}:
+{% for group in builtin_checkers %}
+.. _{{ group.group_name }}:
 
-{{ checker_group[0] }}
+{{ group.group_name }}
 ----------------------
-{% for rule_doc in checker_group[1] %}
+
+{{ group.group_docs }}
+{% for rule_doc in group.rules %}
 .. _{{ rule_doc.name }}:
 
 
-{{ rule_doc.name }} / {{ rule_doc.severity }}{{ rule_doc.id }}
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+{{ rule_doc.id }}: {{ rule_doc.name }}
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 {% if rule_doc.deprecated %}
 .. warning::
