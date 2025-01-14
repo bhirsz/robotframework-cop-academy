@@ -7,13 +7,13 @@ from robocop.linter.reports.rules_by_id_report import RulesByIdReport
 
 NO_ISSUES = []
 FOUR_ISSUES = ["error-message", "warning-message", "info-message", "warning-message"]
-PREV_SAME_ISSUES = {"W0102 (warning-message)": 1, "E0101 (error-message)": 2, "I0103 (info-message)": 1}
+PREV_SAME_ISSUES = {"0102 [W] (warning-message)": 1, "0101 [E] (error-message)": 2, "0103 [I] (info-message)": 1}
 PREV_EXTRA_ISSUES = {
-    "W0102 (warning-message)": 1,
-    "E0101 (error-message)": 0,
-    "I0103 (info-message)": 1,
-    "W0105 (fixed-message)": 1,
-    "W0104 (fixed-message)": 3,
+    "0102 [W] (warning-message)": 1,
+    "0101 [E] (error-message)": 0,
+    "0103 [I] (info-message)": 1,
+    "0105 [W] (fixed-message)": 1,
+    "0104 [W] (fixed-message)": 3,
 }
 
 EXPECTED_NO_ISSUES = """
@@ -21,26 +21,26 @@ Issues by ID:
 No issues found."""
 EXPECTED_ONLY_PREV = """
 Issues by ID:
-E0101 (error-message)   : 0 (-2)
-W0102 (warning-message) : 0 (-1)
-I0103 (info-message)    : 0 (-1)"""
+0101 [E] (error-message)   : 0 (-2)
+0102 [W] (warning-message) : 0 (-1)
+0103 [I] (info-message)    : 0 (-1)"""
 EXPECTED_NO_PREV = """
 Issues by ID:
-W0102 (warning-message) : 2
-E0101 (error-message)   : 1
-I0103 (info-message)    : 1"""
+0102 [W] (warning-message) : 2
+0101 [E] (error-message)   : 1
+0103 [I] (info-message)    : 1"""
 EXPECTED_SAME_PREV = """
 Issues by ID:
-W0102 (warning-message) : 2 (+1)
-E0101 (error-message)   : 1 (-1)
-I0103 (info-message)    : 1 (+0)"""
+0102 [W] (warning-message) : 2 (+1)
+0101 [E] (error-message)   : 1 (-1)
+0103 [I] (info-message)    : 1 (+0)"""
 EXPECTED_EXTRA_PREV = """
 Issues by ID:
-W0102 (warning-message) : 2 (+1)
-E0101 (error-message)   : 1 (+1)
-I0103 (info-message)    : 1 (+0)
-W0104 (fixed-message)   : 0 (-3)
-W0105 (fixed-message)   : 0 (-1)"""
+0102 [W] (warning-message) : 2 (+1)
+0101 [E] (error-message)   : 1 (+1)
+0103 [I] (info-message)    : 1 (+0)
+0104 [W] (fixed-message)   : 0 (-3)
+0105 [W] (fixed-message)   : 0 (-1)"""
 
 
 class TestRulesByIdReport:
@@ -95,6 +95,6 @@ class TestRulesByIdReport:
                 end_col=None,
             )
             report.add_message(msg)
-        expected = {"I0103 (info-message)": 2, "E0101 (error-message)": 1, "W0102 (warning-message)": 1}
+        expected = {"0103 [I] (info-message)": 2, "0101 [E] (error-message)": 1, "0102 [W] (warning-message)": 1}
         results = report.persist_result()
         assert results == expected
