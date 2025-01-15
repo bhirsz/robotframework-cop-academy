@@ -78,15 +78,15 @@ Severity threshold
 
 Selected rules can be configured to have different severity depending on the parameter value.
 
-Using ``line-too-long`` as an example - this rule issues a warning when line length exceeds
-configured value (default ``120``).
-It is possible to configure this rule to issue a warning for line length above 120
-but an error for line length above 200.
+Using ``line-too-long`` as an example - this rule issues a warning when line length exceeds configured value
+(default ``120``).
+It is possible to configure this rule to issue a warning for line length above 120 but an error for line length
+above 200.
 We can use ``severity_threshold`` for this purpose:
 
 .. tab-set::
 
-    .. tab-item:: CLI
+    .. tab-item:: Cli
 
         .. code:: none
 
@@ -110,9 +110,25 @@ It supports all default severity values:
 The issue needs to be raised in order for severity thresholds to be evaluated. That's why the parameter value needs to
 be configured to raise an issue for at least one of our threshold ranges. In previous example, if we want to issue
 info message if the line is longer than 80 characters, we need to configure ``line_length`` parameter
-(default ``120``) to 80 to trigger the rule::
+(default ``120``) to 80 to trigger the rule:
 
-    robocop check -c line-too-long.line_length=80 -c line-too-long.severity_threshold=info=80:warning=120:error=200
+.. tab-set::
+
+    .. tab-item:: Cli
+
+        .. code:: none
+
+            robocop check -c line-too-long.line_length=80 -c line-too-long.severity_threshold=info=80:warning=120:error=200
+
+    .. tab-item:: Configuration file
+
+        .. code:: toml
+
+            [robocop.linter]
+            configure = [
+                "line-too-long.line_length=80",
+                "line-too-long.severity_threshold=info=80:warning=120:error=200"
+            ]
 
 Following rules support ``severity_threshold``:
 
@@ -124,30 +140,92 @@ Following rules support ``severity_threshold``:
 {% endfor %}
 {% endfor %}
 
-.. _including-rules:
+.. _selecting-rules:
 
-Including and excluding rules
-==============================
+Selecting and ignoring rules
+=============================
 
 You can select or ignore particular rules using rule name or id.
 
-To only select and run ``missing-doc-keyword`` rule::
+To only select and run ``missing-doc-keyword`` rule:
 
-    robocop check --select missing-doc-keyword test.robot
+.. tab-set::
 
-To run all rules except ``missing-doc-keyword`` rule::
+    .. tab-item:: Cli
 
-    robocop check --ignore missing-doc-keyword test.robot
+        .. code:: none
 
+            robocop check --select missing-doc-keyword
 
-Robocop supports glob patterns::
+    .. tab-item:: Configuration file
 
-    robocop check --select *doc* test.robot
+        .. code:: toml
+
+            [robocop.linter]
+            select = [
+                "missing-doc-keyword"
+            ]
+
+To run all rules except ``missing-doc-keyword`` rule:
+
+.. tab-set::
+
+    .. tab-item:: Cli
+
+        .. code:: none
+
+            robocop check --ignore missing-doc-keyword
+
+    .. tab-item:: Configuration file
+
+        .. code:: toml
+
+            [robocop.linter]
+            ignore = [
+                "missing-doc-keyword"
+            ]
+
+Robocop supports glob patterns:
+
+.. tab-set::
+
+    .. tab-item:: Cli
+
+        .. code:: none
+
+             robocop check --select *doc*
+
+    .. tab-item:: Configuration file
+
+        .. code:: toml
+
+            [robocop.linter]
+            select = [
+                "*doc*"
+            ]
 
 All rules will be ignored except those with *doc* in its name (like ``missing-doc-keyword``, ``too-long-doc`` etc).
 
-To configure multiple rules you can repeat option / or add more to array (configuration file)::
+To configure multiple rules you can repeat option / or add more to array (configuration file):
 
-    robocop check --select rule1 --select rule2 --select rule3 --ignore rule2 test.robot
+.. tab-set::
 
+    .. tab-item:: Cli
 
+        .. code:: none
+
+             robocop check --select rule1 --select rule2 --select rule3 --ignore rule2
+
+    .. tab-item:: Configuration file
+
+        .. code:: toml
+
+            [robocop.linter]
+            select = [
+                "rule1",
+                "rule2",
+                "rule3"
+            ]
+            ignore = [
+                "rule2"
+            ]

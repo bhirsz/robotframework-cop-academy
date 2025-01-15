@@ -61,11 +61,30 @@ if TYPE_CHECKING:
 @total_ordering
 class RuleSeverity(Enum):
     """
-    It can be configured with ``--configure id_or_msg_name.severity=value``
-    where value can be first letter of severity value or whole name, case-insensitive.
-    For example ::
+    It can be configured with::
 
-        robocop check -c line-too-long.severity=e
+        robocop check --configure id_or_msg_name.severity=value
+
+    where value can be first letter of severity value or whole name, case-insensitive.
+
+    For example:
+
+    .. tab-set::
+
+        .. tab-item:: Cli
+
+            .. code:: none
+
+                robocop check -c line-too-long.severity=e
+
+        .. tab-item:: Configuration file
+
+            .. code:: toml
+
+                [robocop.linter]
+                configure = [
+                    "line-too-long.severity=e"
+                ]
 
     will change `line-too-long` rule severity to error.
 
@@ -73,9 +92,22 @@ class RuleSeverity(Enum):
 
         robocop check -t <severity value>
 
-    To only report rules with severity W and above::
+    To only report rules with severity W and above:
 
-        robocop check --threshold W
+    .. tab-set::
+
+        .. tab-item:: Cli
+
+            .. code:: none
+
+                robocop check --threshold W
+
+        .. tab-item:: Configuration file
+
+            .. code:: toml
+
+                [robocop.linter]
+                threshold = "W"
 
     """
 
