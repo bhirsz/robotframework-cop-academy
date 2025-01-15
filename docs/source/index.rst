@@ -17,6 +17,7 @@ Table of contents
 
    rule_basics
    rules_list
+   external_rules
 
 Index
 ==================
