@@ -55,7 +55,7 @@ class SplitTooLongLine(Formatter):
     Or using dedicated for this formatter parameter ``line_length``:
 
     ```
-    robocop format --configure SplitTooLongLine:line_length:140 src.robot
+    robocop format --configure SplitTooLongLine.line_length:140 src.robot
     ```
 
     ``split_on_every_arg``, `split_on_every_value`` and ``split_on_every_setting_arg`` flags (``True`` by default)

@@ -1,21 +1,7 @@
 """
 Robocop rules are internally grouped into checkers. Each checker can scan for multiple related issues
 (like ``LengthChecker`` checks both for minimum and maximum length of a keyword). You can refer to
-specific rule reported by checkers by its name or id (for example `too-long-keyword` or `0501`).
-
-Checkers are categorized into following categories with a corresponding ID:
-    * 01: base
-    * 02: documentation
-    * 03: naming
-    * 04: errors
-    * 05: lengths
-    * 06: tags
-    * 07: comments
-    * 08: duplications
-    * 09: misc
-    * 10: spacing
-    * 11-50: not yet used: reserved for future internal checkers
-    * 51-99: reserved for external checkers
+specific rule reported by checkers by its name or id (for example ``too-long-keyword`` or ``LEN01``).
 
 Checkers have three basic types:
 
@@ -25,12 +11,13 @@ Checkers have three basic types:
 
 - ``RawFileChecker`` simply reads Robot file as normal file and scans every line.
 
-Each rule has a unique 4-digit ID that contains:
-- a 2-digit category ID (listed above), followed by
-- a 2-digit rule number.
+Each rule has a unique rule id (for example ``DOC01``) consisting of:
 
-Rule ID as well as rule name can be used to refer to the rule (e.g. in include/exclude statements,
-configurations etc.). You can optionally configure rule severity or other parameters.
+- a alphanumeric group name (for example ``DOC``)
+- a 2-digit rule number (for example ``01``)
+
+Rule ID as well as rule name can be used to refer to the rule (e.g. in select/ignore statements, configurations etc.).
+You can optionally configure rule severity or other parameters.
 """
 
 from __future__ import annotations
@@ -74,21 +61,21 @@ if TYPE_CHECKING:
 @total_ordering
 class RuleSeverity(Enum):
     """
-    It can be configured with ``--configure id_or_msg_name:severity:value``
+    It can be configured with ``--configure id_or_msg_name.severity=value``
     where value can be first letter of severity value or whole name, case-insensitive.
     For example ::
 
-        -c line-too-long:severity:e
+        robocop check -c line-too-long.severity=e
 
     will change `line-too-long` rule severity to error.
 
-    You can filter out all rules below given severity value by using following option::
+    You can filter out all rules below given severity value by using ``-t/--threshold`` option::
 
-        -t/--threshold <severity value>
+        robocop check -t <severity value>
 
     To only report rules with severity W and above::
 
-        --threshold W
+        robocop check --threshold W
 
     """
 

@@ -87,7 +87,7 @@ class MissingSpaceAfterCommentRule(Rule):
 
         robocop check --configure missing-space-after-comment.block=^#[*]+
 
-    Allows commenting like:
+    Allows commenting like::
 
         #*****
         #

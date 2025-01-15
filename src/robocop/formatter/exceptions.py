@@ -29,7 +29,7 @@ class InvalidParameterError(RobotidyConfigError):
 class InvalidParameterFormatError(RobotidyConfigError):
     def __init__(self, formatter):
         super().__init__(
-            f"{formatter}: Invalid parameter format. Pass parameters using MyFormatter:param_name=value syntax."
+            f"{formatter}: Invalid parameter format. Pass parameters using MyFormatter.param_name=value syntax."
         )
 
 

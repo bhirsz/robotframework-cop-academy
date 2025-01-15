@@ -53,7 +53,7 @@ class RenameTestCases(Formatter):
     to set replacement value. This configuration:
 
     ```
-    robocop format --transform RenameTestCases -c RenameTestCases:replace_pattern=[A-Z]{3,}-\d{2,}:replace_to=foo
+    robocop format --transform RenameTestCases -c RenameTestCases.replace_pattern=[A-Z]{3,}-\d{2,} -c RenameTestCases.replace_to=foo
     ```
 
     will transform following code:
@@ -73,7 +73,7 @@ class RenameTestCases(Formatter):
     ```
 
     ```
-    robocop format --transform RenameTestCases -c RenameTestCases:capitalize_each_word=True
+    robocop format --transform RenameTestCases -c RenameTestCases.capitalize_each_word=True
     ```
 
     will transform following code:
