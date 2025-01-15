@@ -163,11 +163,26 @@ class InconsistentAssignmentRule(Rule):
             ${var}  ${var2}    Some Keyword
 
     By default, Robocop looks for most popular assignment sign in the file. It is possible to define expected
-    assignment sign by running::
+    assignment sign by running:
 
-        robocop check --configure inconsistent-assignment.assignment_sign_type=equal_sign
+    .. tab-set::
 
-    You can choose between following signs:
+        .. tab-item:: Cli
+
+            .. code:: none
+
+                robocop check --configure inconsistent-assignment.assignment_sign_type=none
+
+        .. tab-item:: Configuration file
+
+            .. code:: toml
+
+                [robocop.linter]
+                configure = [
+                    "inconsistent-assignment.assignment_sign_type=none"
+                ]
+
+    You can choose between following assignment signs:
 
     - 'autodetect' (default),
     - 'none',
@@ -704,7 +719,7 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
     section and ``*** Test Cases ***``, ``*** Keywords ***`` sections) and report any inconsistent type of sign in
     particular file.
 
-    To force one type of sign type you, can configure two rules::
+    To force one type of sign type you can configure two rules::
 
         robocop check --configure inconsistent-assignment.assignment_sign_type={sign_type}
         robocop check --configure inconsistent-assignment-in-variables.assignment_sign_type={sign_type}
