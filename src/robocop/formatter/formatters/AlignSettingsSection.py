@@ -45,7 +45,7 @@ class AlignSettingsSection(Formatter):
     To align first three columns:
 
     ```
-    robocop format --transform AlignSettingsSection:up_to_column=3
+    robocop format --transform AlignSettingsSection.up_to_column=3
     ```
 
     To align all columns set ``up_to_column`` to 0.

@@ -34,7 +34,7 @@ class OrderSettingsSection(Formatter):
     therefore all metadata will be removed:
 
     ```
-    robocop format --configure OrderSettingsSection:documentation_order=documentation
+    robocop format --configure OrderSettingsSection.documentation_order=documentation
     ```
 
     Parsing errors (such as Resources instead of Resource, duplicated settings) are moved to the end of section.

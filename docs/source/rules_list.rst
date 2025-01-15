@@ -13,11 +13,6 @@ There are over a {{ rules_length_in_10 }} rules available in Robocop and they ar
 * {{ group.group_id }}: :ref:`{{ group.group_name }}`
 {%- endfor %}
 
-Each rule has a unique rule id consisting of:
-
-- a alphanumeric group name (for example ``DOC``)
-- a 2-digit rule number (for example ``01``)
-
 Below is the list of all built-in Robocop rules.
 
 {% for group in builtin_checkers %}

@@ -40,7 +40,7 @@ class AlignVariablesSection(Formatter):
     To align first three columns:
 
     ```console
-    robocop format --transform AlignVariablesSection:up_to_column=3
+    robocop format --transform AlignVariablesSection.up_to_column=3
     ```
 
     To align all columns set ``up_to_column`` to 0.

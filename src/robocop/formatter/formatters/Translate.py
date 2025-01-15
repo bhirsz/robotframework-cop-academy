@@ -45,7 +45,7 @@ class Translate(Formatter):
     source files:
 
     ```
-    robocop format --configure Translate:enabled=True:language=uk --language pl,de source_in_pl_and_de.robot
+    robocop format -c Translate.enabled=True -c Translate.language=uk --language pl,de source_in_pl_and_de.robot
     ```
 
     BDD keywords are not translated by default. Set ``translate_bdd`` parameter to ``True`` to enable it.

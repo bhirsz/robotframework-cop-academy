@@ -18,7 +18,7 @@ class JsonReport(robocop.linter.reports.Report):
 
     You can configure output directory and report filename::
 
-        robocop check --configure json_report:output_dir=C:/json_reports
+        robocop check --configure json_report.output_dir=C:/json_reports
         robocop check --configure json_report.report_filename=robocop_output.json
 
     Example content of the file::

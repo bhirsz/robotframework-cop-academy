@@ -45,7 +45,7 @@ class AlignTemplatedTestCases(Formatter):
     header names) then configure `only_with_headers` parameter:
 
     ```
-    robocop format -c AlignSettingsSection:only_with_headers:True <src>
+    robocop format -c AlignSettingsSection.only_with_headers:True <src>
     ```
 
     For non-templated test cases use ``AlignTestCasesSection`` formatter.

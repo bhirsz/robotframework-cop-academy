@@ -72,7 +72,7 @@ class OrderSettings(Formatter):
 
     Not all settings names need to be passed to given parameter. Missing setting names are not ordered. Example::
 
-        robocop format --configure OrderSettings:keyword_before=:keyword_after=
+        robocop format -c OrderSettings.keyword_before= -c OrderSettings.keyword_after=
 
     It will order only test cases because all setting names for keywords are missing.
     """
