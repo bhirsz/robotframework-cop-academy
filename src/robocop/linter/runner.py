@@ -176,11 +176,7 @@ class RobocopLinter:
         prev_results = reports.load_reports_result_from_cache()
         prev_results = prev_results.get(str(self.config_manager.root)) if prev_results is not None else None
         is_persistent = self.config_manager.default_config.linter.persistent
-        if "print_issues" in self.reports:
-            self.reports["print_issues"].get_report()
         for report in self.reports.values():
-            if report.name == "print_issues":  # TODO: order attribute
-                continue
             if report.name == "sarif":
                 output = report.get_report(self.config_manager.root, self.rules)
             elif isinstance(report, reports.ComparableReport):  # TODO:
