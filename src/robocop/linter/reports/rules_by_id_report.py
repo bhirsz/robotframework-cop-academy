@@ -14,11 +14,11 @@ class RulesByIdReport(robocop.linter.reports.ComparableReport):
     Example::
 
         Issues by ID:
-        W0502 (too-little-calls-in-keyword) : 5
-        W0201 (missing-doc-keyword)         : 4
-        E0401 (parsing-error)               : 3
-        W0301 (not-allowed-char-in-name)    : 2
-        W0901 (keyword-after-return)        : 1
+        VAR03 [W] (variable-overwritten-before-usage) : 5
+        DOC01 [W] (missing-doc-keyword)               : 4
+        ERR01 [E] (parsing-error)                     : 3
+        NAME01 [W] (not-allowed-char-in-name)         : 2
+        MISC01 [W] (keyword-after-return)             : 1
     """
 
     def __init__(self, config: Config):

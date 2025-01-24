@@ -16,9 +16,9 @@ from robocop.linter.reports import (
 @pytest.mark.parametrize(
     ("configured", "expected"),
     [
-        (["timestamp", "sarif"], ["timestamp", "sarif", "print_issues"]),
-        (["timestamp"], ["timestamp", "print_issues"]),
-        (["version", "timestamp", "version"], ["version", "timestamp", "print_issues"]),
+        (["timestamp", "sarif"], ["print_issues", "timestamp", "sarif"]),
+        (["timestamp"], ["print_issues", "timestamp"]),
+        (["version", "timestamp", "version"], ["print_issues", "version", "timestamp"]),
     ],
 )
 def test_get_reports(configured, expected, config):

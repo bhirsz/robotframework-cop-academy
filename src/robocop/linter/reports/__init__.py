@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import json
-from collections import OrderedDict
 from pathlib import Path
 from typing import NoReturn
 
@@ -83,21 +82,22 @@ def get_reports(config: Config):
     If `configured_reports` contains `all` then all default reports are enabled.
     """
     configured_reports = config.linter.reports
+    configured_reports = [csv_report for report in configured_reports for csv_report in report.split(",")]
     if "None" in configured_reports:
         configured_reports = []
     reports = load_reports(config)
-    enabled_reports = OrderedDict()
+    enabled_reports = {name: report_class for name, report_class in reports.items() if report_class.ENABLED}
     for report in configured_reports:
         if report == "all":
             for name, report_class in reports.items():
-                if report_class.DEFAULT:
+                if report_class.DEFAULT and name not in enabled_reports:
                     enabled_reports[name] = report_class
         elif report not in reports:
             raise robocop.linter.exceptions.InvalidReportName(report, reports)
         elif report not in enabled_reports:
             enabled_reports[report] = reports[report]
     for report, report_class in reports.items():
-        if report not in enabled_reports and report_class.ENABLED:
+        if report_class.ENABLED and report not in enabled_reports:
             enabled_reports[report] = report_class
     return enabled_reports
 
