@@ -11,10 +11,10 @@ Checkers
 
 .. automodule:: robocop.linter.rules
 
-.. _listing-rules:
+.. _list-rules:
 
-Listing available rules
------------------------
+List available rules
+--------------------
 
 To get list of available rules (with enabled/disabled status) use ``list rules`` command:
 

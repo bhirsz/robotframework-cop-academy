@@ -92,7 +92,7 @@ class RobocopFormatter:
             )
         if not self.config_manager.default_config.formatter.check or not changed_files:
             return 0
-        return 1
+        return 1  # FIXME: ensure proper exit status is returned
 
     def format_until_stable(self, model: File, disabler_finder: disablers.RegisterDisablers):
         diff, old_model, new_model = self.format(model, disabler_finder.disablers)
