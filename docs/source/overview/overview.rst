@@ -27,8 +27,11 @@ You can install Robocop simply by running::
 Usage
 =====
 
-Robocop runs by default from the current directory and it discovers supported files recursively.
-You can simply run::
+Robocop discovers supported files from the current directory and its sub-directories.
+
+You can simply run:
+
+..  code-block:: none
 
     robocop check
     robocop format
@@ -37,26 +40,14 @@ All command line commands and options can be displayed in help message by execut
 
     robocop -h
 
-Example Output
-==============
+Refer to overview pages to read more (:ref:`linter`, :ref:`formatter`).
 
-Executing command::
+Shell autocompletion
+====================
 
-    robocop check --report rules_by_error_type test.robot
+It is possible use shell autocompletion by installing it for the current shell::
 
-Will result in following output:
-
-# TODO: update
-
-..  code-block:: none
-
-    \Users\OCP\test.robot:7:1 [W] 0509 Section '*** Variables ***' is empty (empty-section)
-    \Users\OCP\test.robot:22:1 [E] 0801 Multiple test cases with name "Simple Test" (first occurrence in line 17) (duplicated-test-case)
-    \Users\OCP\test.robot:42:1 [E] 0810 Both Task(s) and Test Case(s) section headers defined in file (both-tests-and-tasks)
-    \Users\OCP\test.robot:48:1 [W] 0302 Keyword 'my keyword' does not follow case convention (wrong-case-in-keyword-name)
-    \Users\OCP\test.robot:51:13 [I] 0606 Tag 'mytag' is already set by Test Tags in suite settings (tag-already-set-in-test-tags)
-
-    Found 5 issues: 2 ERRORs, 2 WARNINGs, 1 INFO.
+    robocop --install-completion
 
 Values
 ======

@@ -488,8 +488,8 @@ Order related rules (except imports) are now grouped under 'ORD' group:
 - ``0927`` became ``ORD01`` (``test-case-section-out-of-order``)
 - ``0928`` became ``ORD02`` (``keyword-section-out-of-order``)
 
-New features
-=============
+New features & other changes
+============================
 
 Multiple configuration files
 -----------------------------
@@ -536,6 +536,13 @@ Example output::
 
     tests\linter\rules\tags\tag_already_set_in_test_tags\keyword_tag.robot:
       3:1 0319 'Force Tags' is deprecated since Robot Framework version 6.0, use 'Test Tags' instead (deprecated-statement)
+
+Shell autocompletion
+---------------------
+
+You can now use shell autocompletion by installing it for the current shell::
+
+    robocop --install-completion
 
 Fixes
 =====

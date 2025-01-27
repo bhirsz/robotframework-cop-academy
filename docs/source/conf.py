@@ -32,7 +32,7 @@ exclude_patterns = ["**/releasenotes/*"]
 suppress_warnings = ["config.cache"]
 
 html_theme = "furo"
-html_title = f"Robocop {release} documentation"
+html_title = f"Robocop {release}"
 html_logo = "images/robocop_logo_small.png"
 html_theme_options = {
     "footer_icons": [
@@ -47,9 +47,6 @@ html_theme_options = {
             "class": "",
         },
     ],
-    #     "light_css_variables": {
-    #     "color-code-background": "#f8f8f8",
-    # }
 }
 html_static_path = ["images", "_static"]
 html_favicon = "images/robocop.ico"
