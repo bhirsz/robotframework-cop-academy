@@ -510,21 +510,24 @@ class ConfigManager:
         if config_path:
             configuration = files.read_toml_config(config_path)
             config = Config.from_toml(configuration, config_path)
-            config.overwrite_from_config(self.overwrite_config)
-            return config
-        config = Config()
+        else:
+            config = Config()
         config.overwrite_from_config(self.overwrite_config)
         return config
+
+    def is_git_project_root(self, path: Path) -> bool:
+        """Check if current directory contains .git directory and might be a project root."""
+        if self.ignore_git_dir:
+            return False
+        return (path / ".git").is_dir()
 
     def find_closest_config(self, source: Path) -> Config:
         """Look in the directory and its parents for the closest valid configuration file."""
         # we always look for configuration in parent directory, unless we hit the top already
-        if (self.ignore_git_dir or not (source / ".git").is_dir()) and source.parents:
+        if not self.is_git_project_root(source) and source.parents:
             source = source.parent
         check_dirs = [source, *source.parents]
         seen = []  # if we find config, mark all visited directories with resolved config
-        config = self.default_config
-        found_config = False
         for check_dir in check_dirs:
             if check_dir in self.cached_configs:
                 return self.cached_configs[check_dir]
@@ -535,13 +538,11 @@ class ConfigManager:
                     if configuration is not None:
                         config = Config.from_toml(configuration, config_path)
                         config.overwrite_from_config(self.overwrite_config)  # TODO those two lines together
-                        found_config = True
-                        break
-            if found_config or (not self.ignore_git_dir and (check_dir / ".git").is_dir()):
+                        self.cached_configs.update({sub_dir: config for sub_dir in seen})
+                        return config
+            if self.is_git_project_root(check_dir):
                 break
-        for check_dir in seen:
-            self.cached_configs[check_dir] = config
-        return config
+        return self.default_config
 
     def get_config_for_source_file(self, source_file: Path) -> Config:
         """

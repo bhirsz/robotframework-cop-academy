@@ -15,6 +15,7 @@ class TextFile(robocop.linter.reports.Report):
 
         robocop linter --configure json_report.output_path output/robocop.txt
 
+    ``text_file`` report supports only ``simple`` issue output format.
     """
 
     DEFAULT = False
