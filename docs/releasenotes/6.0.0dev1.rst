@@ -37,23 +37,58 @@ See detailed description for command changes.
 Breaking changes
 =================
 
-Robocop --list is deprecated
------------------------------
+Renamed options
+---------------
 
-``--list`` option used to list available rules is now deprecated and replaced with ``list rules`` command::
+Most of the options were renamed to normalize naming between two tools or to make it more user friendly.
+
+Rule selection options are now renamed:
+
+- ``--include`` became ``--select``
+- ``--exclude`` became ``--ignore``
+
+File inclusion options are now renamed:
+
+- ``--ignore-default`` became ``--exclude`` (paths excluded by default)
+- ``--ignore`` became ``--extend-exclude`` (additionally excluded paths)
+
+``--list`` options were overhauled and became commands:
+
+- Robocop ``--list`` used to list available rules became ``list rules`` command::
 
     robocop list rules
 
-Use it with ``--help`` for more information.
-
-Robotidy --list is deprecated
------------------------------
-
-``--list`` option used to list available rules is now deprecated and replaced with ``list formatters`` command::
+- Robotidy ``--list`` used to list available formatters became ``list formatters`` command::
 
     robocop list formatters
 
-Use it with ``--help`` for more information.
+Issue format ``--format`` is now renamed to ``--issue-format``.
+
+Formatting options from Robotidy:
+
+- ``--lineseparator`` became ``--list-ending``
+- ``--startline`` became ``--start-line``
+- ``--endline`` became ``--end-line``
+
+(Robotidy) Formatter deprecated --transform option
+--------------------------------------------------
+
+``--transform`` option used to select formatters is now deprecated. It has been replaced by ``--select`` which function
+in a similar way but has one key difference: it does not support configuration. Configuration can be now passed only
+to dedicated ``--configure`` option.
+
+Previous command::
+
+    robotidy --transform YourTransformer:parameter=value --configure DefaultTransformer:other_parameter=value
+
+Can be now achieved by::
+
+    robocop format --select YourTransformer --configure YourTransformer.parameter=value --configure DefaultTransformer.other_parameter=value
+
+All other ``transform`` mentions were also deprecated, for example:
+
+- ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
+- ``Transformer`` class was renamed to ``Formatter``
 
 Linter configuration syntax change
 -----------------------------------
@@ -92,15 +127,6 @@ Passing configuration through file names that contains formatter is also depreca
 Use implicit name of the formatter instead::
 
     robocop format --configure MyFormatter.param=2
-
-Renamed options from formatter (Robotidy)
------------------------------------------
-
-Following options from Robotidy are now available in robocop under different name:
-
-- ``--lineseparator`` -> ``--line-ending``
-- ``--startline`` -> ``--start-line``
-- ``--endline`` -> ``--end-line``
 
 --target-version different input syntax
 ---------------------------------------
@@ -205,7 +231,7 @@ now making `return_status` report optional. It means that now exit code follows 
 It is possible to always return 0, ignoring any violations, with new ``--exit-zero`` flag. The previous behaviour
 can be reproduced by simply enabling ``return_status`` report again::
 
-    robocop checks --reports return_status
+    robocop check --reports return_status
 
 compare_runs report is replaced with --compare
 -----------------------------------------------
@@ -221,28 +247,6 @@ Remember that you still need results from previous run (saved with ``--persisten
 from the reports. Full example::
 
     robocop check --persistent --compare --reports all
-
-(Robotidy) Formatter deprecated --transform option
----------------------------------------------------
-
-``--transform`` option use to select formatters is now deprecated. It has been replaced by ``--select`` which function
-in a similar way but has one key difference: it does not support configuration.
-
-Previous command::
-
-    robotidy --transform YourTransformer:parameter=value --configure DefaultTransformer:other_parameter=value
-
-Can be now achieved by::
-
-    robocop format --select YourTransformer --configure YourTransformer.parameter=value --configure DefaultTransformer.other_parameter=value
-
-Deprecating configuring through the ``--select`` (formerly ``--transform``) option simplifies the design and enhances
-user experience.
-
-All other ``transform`` mentions were also deprecated, for example:
-
-- ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
-- ``Transformer`` class was renamed to ``Formatter``
 
 Community rules are now simply 'non-default' rules
 --------------------------------------------------
@@ -273,7 +277,7 @@ Rules changes (#30)
 -------------------
 
 We have reviewed all the rules to improve rule ids, names, documentation, messages and overall design.
-It would be too much to list of all changes, but we will list all changes that have impact on the users.
+It would be too much to list of all the changes, but we will list all changes that have impact on the users.
 
 **Renamed messages**
 
@@ -291,7 +295,7 @@ and new output format (which displays source around the issue).
 
 **Rule id changes**
 
-Previous rule ids consistent of group id and unique rule number. For example ``0201`` - ``02`` was documentation group
+Previous rule ids consisted of group id and unique rule number. For example ``0201`` - ``02`` was documentation group
 id while ``01`` was unique rule number. This naming scheme wasn't clear and made it harder to categorize rule on first
 glance. That's why we have switched to alphanumeric group names (for example ``DOC`` instead of ``02``).
 Various groups are also additionally split into smaller sub-groups. This change leads to backward incompatible
@@ -559,3 +563,4 @@ Example of code that is now properly handled::
         ${variable}    Set Variable If
         IF
         END
+
