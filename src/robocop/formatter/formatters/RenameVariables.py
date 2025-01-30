@@ -89,8 +89,7 @@ def is_name_hex_or_binary(variable: str) -> bool:
 
 def resolve_var_name(name: str) -> str:
     r"""Resolve name of the variable from \${name} or $name syntax."""
-    if name.startswith("\\"):
-        name = name[1:]
+    name = name.removeprefix("\\")
     if len(name) < 2 or name[0] not in "$@&":
         return name
     if name[1] != "{":

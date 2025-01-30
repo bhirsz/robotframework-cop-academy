@@ -492,6 +492,11 @@ Order related rules (except imports) are now grouped under 'ORD' group:
 - ``0927`` became ``ORD01`` (``test-case-section-out-of-order``)
 - ``0928`` became ``ORD02`` (``keyword-section-out-of-order``)
 
+# TODO:
+
+deprecate # robocop: disable
+deprecate # robotidy: (maybe denote formatter only with robocop: format off?
+
 New features & other changes
 ============================
 

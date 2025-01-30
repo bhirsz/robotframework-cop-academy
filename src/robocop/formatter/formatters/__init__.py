@@ -323,8 +323,7 @@ def import_custom_formatter(
         similar_finder = misc.RecommendationFinder()
         similar = similar_finder.find_similar(short_name, FORMATTERS)
         raise ImportFormatterError(
-            f"Importing formatter '{short_name}' failed. "
-            f"Verify if correct name or configuration was provided.{similar}"
+            f"Importing formatter '{short_name}' failed. Verify if correct name or configuration was provided.{similar}"
         ) from None
 
 

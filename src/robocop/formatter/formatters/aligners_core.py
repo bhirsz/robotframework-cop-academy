@@ -109,8 +109,7 @@ class AlignKeywordsTestsSection(Formatter):
                 self.__class__.__name__,
                 "alignment_type",
                 value,
-                "Chose between two modes: 'fixed' (align to fixed width) or "
-                "'auto' (align to longest token in column).",
+                "Chose between two modes: 'fixed' (align to fixed width) or 'auto' (align to longest token in column).",
             )
         return value == "fixed"
 

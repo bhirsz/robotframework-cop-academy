@@ -184,8 +184,7 @@ class ReplaceWithVAR(Formatter):
 
     @staticmethod
     def resolve_variable_name(name: str) -> str | None:
-        if name.startswith("\\"):
-            name = name[1:]
+        name = name.removeprefix("\\")
         if len(name) < 2 or name[0] not in "$@&":
             return None
         if name[1] != "{":
