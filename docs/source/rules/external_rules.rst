@@ -175,7 +175,7 @@ Configurable parameter can be referred by its ``name`` in command line options:
 
         .. code:: none
 
-            robocop --ext-rules my/own/rule.py --configure example-in-name:param_name:AnotherExample
+            robocop --ext-rules my/own/rule.py --configure example-in-name.param_name=AnotherExample
 
     .. tab-item:: Configuration file
 

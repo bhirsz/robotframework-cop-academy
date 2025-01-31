@@ -452,8 +452,7 @@ class ParsingErrorChecker(VisitorChecker):
                         )
                     return
             error = error.replace("\n   ", "").replace("Robot Framework syntax error: ", "")
-            if error.endswith("."):
-                error = error[:-1]
+            error = error.removesuffix(".")
             self.report(
                 self.non_existing_setting,
                 error_msg=error,

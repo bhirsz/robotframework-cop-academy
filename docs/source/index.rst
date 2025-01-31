@@ -22,9 +22,16 @@ Table of contents
     :maxdepth: 2
     :caption: Rules
 
-    rule_basics
-    rules_list
-    external_rules
+    rules/rules_basics
+    rules/rules_list
+    rules/external_rules
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Formatters
+
+    formatters/formatters_list/index.rst
+    formatters/skip_formatting.rst
 
 .. toctree::
     :maxdepth: 2

@@ -69,7 +69,6 @@ def setup(app):
 
 def get_checker_docs() -> tuple[list[tuple], int]:
     """Load rules for dynamic docs generation"""
-    checker_docs = defaultdict(list)
     rules = robocop.linter.rules.get_builtin_rules()
     rules_count = 0
     for _, rule in rules:

@@ -81,7 +81,9 @@ Learn more about disablers here - :ref:`disablers`.
 List rules
 ----------
 
-To see the list of all the rules, run::
+To see the list of all the rules, run:
+
+.. code:: none
 
     robocop list rules
 
@@ -108,7 +110,7 @@ Save output to file
 # TODO
 You can redirect output of Robocop to a file by using pipes (``>`` in unix) or by ``-o`` / ``--output`` argument::
 
-  robocop --output robocop.log .
+  robocop --output robocop.log
 
 Generating reports
 ------------------

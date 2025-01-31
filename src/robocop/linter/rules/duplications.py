@@ -176,7 +176,7 @@ class SectionAlreadyDefinedRule(Rule):
     name = "section-already-defined"
     rule_id = "DUP08"
     message = (
-        "'{section_name}' section header already defined in file (first occurrence in line " "{first_occurrence_line})"
+        "'{section_name}' section header already defined in file (first occurrence in line {first_occurrence_line})"
     )
     severity = RuleSeverity.WARNING
     added_in_version = "1.0.0"

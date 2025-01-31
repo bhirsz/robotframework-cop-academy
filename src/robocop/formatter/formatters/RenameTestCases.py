@@ -130,7 +130,6 @@ class RenameTestCases(Formatter):
                 token.value = token.value[0].upper() + token.value[1:]
             if self.replace_pattern is not None:
                 token.value = self.replace_pattern.sub(repl=self.replace_to, string=token.value)
-            if token.value.endswith("."):
-                token.value = token.value[:-1]
+            token.value = token.value.removesuffix(".")
             token.value = token.value.strip()
         return node
