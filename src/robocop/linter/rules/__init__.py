@@ -73,7 +73,7 @@ class RuleSeverity(Enum):
 
         .. tab-item:: Cli
 
-            .. code:: none
+            .. code:: shell
 
                 robocop check -c line-too-long.severity=e
 
@@ -98,7 +98,7 @@ class RuleSeverity(Enum):
 
         .. tab-item:: Cli
 
-            .. code:: none
+            .. code:: shell
 
                 robocop check --threshold W
 

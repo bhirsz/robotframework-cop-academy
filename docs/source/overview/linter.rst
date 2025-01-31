@@ -41,7 +41,7 @@ Use ``--select`` and ``--ignore`` to select only rules to run or run all default
 
     .. tab-item:: Cli
 
-        .. code:: none
+        .. code:: shell
 
              robocop check --select rule1 --select rule2 --select rule3 --ignore rule2
 
@@ -83,7 +83,7 @@ List rules
 
 To see the list of all the rules, run:
 
-.. code:: none
+.. code:: shell
 
     robocop list rules
 
@@ -129,7 +129,7 @@ it is properly configured. You can supply language code or name in the configura
 
     .. tab-item:: Cli
 
-        .. code:: none
+        .. code:: shell
 
              robocop check --language fi
 
@@ -149,7 +149,7 @@ Support multiple languages by either using ``language`` option multiple times:
 
     .. tab-item:: Cli
 
-        .. code:: none
+        .. code:: shell
 
             robocop check -l pl -l pt
 

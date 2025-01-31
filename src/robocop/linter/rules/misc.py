@@ -169,7 +169,7 @@ class InconsistentAssignmentRule(Rule):
 
         .. tab-item:: Cli
 
-            .. code:: none
+            .. code:: shell
 
                 robocop check --configure inconsistent-assignment.assignment_sign_type=none
 
