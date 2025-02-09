@@ -20,10 +20,10 @@ class Report:
     Override `configure` method if you want to allow report configuration.
     Override `add_message`` if your report processes the Robocop issues.
 
-    Set class attribute `DEFAULT` to `False` if you don't want your report to be included in `all` reports.
+    Set class attribute `NO_ALL` to `False` if you don't want your report to be included in `all` reports.
     """
 
-    DEFAULT = True
+    NO_ALL = True
     ENABLED = False
     INTERNAL = False
 
@@ -90,7 +90,7 @@ def get_reports(config: Config):
     for report in configured_reports:
         if report == "all":
             for name, report_class in reports.items():
-                if report_class.DEFAULT and name not in enabled_reports:
+                if report_class.NO_ALL and name not in enabled_reports:
                     enabled_reports[name] = report_class
         elif report not in reports:
             raise robocop.linter.exceptions.InvalidReportName(report, reports)
@@ -124,8 +124,8 @@ def print_reports(reports: dict[str, Report], only_enabled: bool | None) -> str:
         if only_enabled is not None and only_enabled != is_enabled:
             continue
         status = "[green]enabled[/green]" if is_enabled else "[red]disabled[/red]"
-        if not report.DEFAULT:
-            status += " - non-default"
+        if not report.NO_ALL and not report.INTERNAL:
+            status += " - not included in all"
         available_reports += f"\n{report.name:20} - {report.description} ({status})"
     if available_reports:
         available_reports = "Available reports:" + available_reports

@@ -58,17 +58,30 @@ sources_argument = Annotated[
 ]
 include_option = Annotated[
     list[str],
-    typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE), rich_help_panel="File discovery"),
+    typer.Option("--include", show_default=False, rich_help_panel="File discovery"),
 ]
-extend_include_option = Annotated[
-    list[str], typer.Option("--extend-include", show_default=False, rich_help_panel="File discovery")
+default_include_option = Annotated[
+    list[str],
+    typer.Option("--default-include", show_default=str(config.DEFAULT_INCLUDE), rich_help_panel="File discovery"),
 ]
 exclude_option = Annotated[
     list[str],
-    typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE), rich_help_panel="File discovery"),
+    typer.Option("--exclude", "-e", show_default=False, rich_help_panel="File discovery"),
 ]
-extend_exclude_option = Annotated[
-    list[str], typer.Option("--extend-exclude", show_default=False, rich_help_panel="File discovery")
+default_exclude_option = Annotated[
+    list[str],
+    typer.Option("--default-exclude", show_default=str(config.DEFAULT_EXCLUDE), rich_help_panel="File discovery"),
+]
+language_option = Annotated[
+    list[str],
+    typer.Option(
+        "--language",
+        "--lang",
+        show_default="en",
+        metavar="LANG",
+        help="Parse Robot Framework files using additional languages.",
+        rich_help_panel="Other",
+    ),
 ]
 
 
@@ -80,9 +93,9 @@ def parse_rule_severity(value: str):
 def check_files(
     sources: sources_argument = None,
     include: include_option = None,
-    extend_include: extend_include_option = None,
+    default_include: default_include_option = None,
     exclude: exclude_option = None,
-    extend_exclude: extend_exclude_option = None,
+    default_exclude: default_exclude_option = None,
     select: Annotated[
         list[str],
         typer.Option(
@@ -91,7 +104,7 @@ def check_files(
     ] = None,
     ignore: Annotated[
         list[str],
-        typer.Option("--ignore", "-ig", help="Ignore rules", show_default=False, rich_help_panel="Selecting rules"),
+        typer.Option("--ignore", "-i", help="Ignore rules", show_default=False, rich_help_panel="Selecting rules"),
     ] = None,
     threshold: Annotated[
         RuleSeverity,
@@ -131,17 +144,7 @@ def check_files(
     issue_format: Annotated[
         str, typer.Option("--issue-format", show_default=config.DEFAULT_ISSUE_FORMAT, rich_help_panel="Other")
     ] = None,
-    language: Annotated[
-        list[str],
-        typer.Option(
-            "--language",
-            "-l",
-            show_default="en",
-            metavar="LANG",
-            help="Parse Robot Framework files using additional languages.",
-            rich_help_panel="Other",
-        ),
-    ] = None,
+    language: language_option = None,
     ext_rules: Annotated[
         list[str],
         typer.Option("--ext-rules", help="Load custom rules", show_default=False, rich_help_panel="Selecting rules"),
@@ -184,7 +187,7 @@ def check_files(
         compare=compare,
     )
     file_filters = config.FileFiltersOptions(
-        include=include, extend_include=extend_include, exclude=exclude, extend_exclude=extend_exclude
+        include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
     overwrite_config = config.Config(
         linter=linter_config, formatter=None, file_filters=file_filters, language=language, exit_zero=exit_zero
@@ -223,9 +226,9 @@ def format_files(
         ),
     ] = None,
     include: include_option = None,
-    extend_include: extend_include_option = None,
+    default_include: default_include_option = None,
     exclude: exclude_option = None,
-    extend_exclude: extend_exclude_option = None,
+    default_exclude: default_exclude_option = None,
     configure: Annotated[
         list[str],
         typer.Option(
@@ -250,17 +253,7 @@ def format_files(
         ),
     ] = None,
     output: Annotated[Path, typer.Option(rich_help_panel="Other")] = None,
-    language: Annotated[
-        list[str],
-        typer.Option(
-            "--language",
-            "-l",
-            show_default="en",
-            metavar="LANG",
-            help="Parse Robot Framework files using additional languages.",
-            rich_help_panel="Other",
-        ),
-    ] = None,
+    language: language_option = None,
     space_count: Annotated[
         int,
         typer.Option(show_default="4", help="Number of spaces between cells", rich_help_panel="Formatting settings"),
@@ -376,7 +369,7 @@ def format_files(
         target_version=target_version,
     )
     file_filters = config.FileFiltersOptions(
-        include=include, extend_include=extend_include, exclude=exclude, extend_exclude=extend_exclude
+        include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
     overwrite_config = config.Config(
         formatter=formatter_config, linter=None, language=language, file_filters=file_filters

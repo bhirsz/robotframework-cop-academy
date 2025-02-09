@@ -18,7 +18,7 @@ class TestListReports:
         out, _ = capsys.readouterr()
         first_line = out.split("\n")[0]
         assert first_line == "Available reports:"
-        assert "print_issues         - Collect and print rules messages (enabled - non-default)" in out
+        assert "print_issues         - Collect and print rules messages (enabled - not included in all)" in out
         assert "version              - Returns Robocop version (disabled)" not in out
 
     def test_list_reports_enabled_configured_single(self, capsys):
@@ -44,7 +44,7 @@ class TestListReports:
         assert first_line == "Available reports:"
         assert "version              - Returns Robocop version (enabled)" not in out
         assert "version              - Returns Robocop version (disabled)" in out
-        assert "sarif                - Generate SARIF output file (disabled - non-default)" in out
+        assert "sarif                - Generate SARIF output file (disabled - not included in all)" in out
 
     def test_list_reports_disabled_configured_all(self, capsys):
         list_reports(enabled=False, reports=["all"])
@@ -52,4 +52,4 @@ class TestListReports:
         first_line = out.split("\n")[0]
         assert first_line == "Available reports:"
         assert "version              - Returns Robocop version (enabled)" not in out
-        assert "sarif                - Generate SARIF output file (disabled - non-default)" in out
+        assert "sarif                - Generate SARIF output file (disabled - not included in all)" in out
