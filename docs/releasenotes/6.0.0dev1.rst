@@ -66,7 +66,7 @@ Issue format ``--format`` is now renamed to ``--issue-format``.
 
 Formatting options from Robotidy:
 
-- ``--lineseparator`` became ``--list-ending``
+- ``--lineseparator`` became ``--line-ending``
 - ``--startline`` became ``--start-line``
 - ``--endline`` became ``--end-line``
 
