@@ -22,6 +22,7 @@ list_app = typer.Typer(help="List available rules, reports or formatters.")
 app.add_typer(list_app, name="list")
 
 
+# TODO: force-order
 config_option = Annotated[
     Path,
     typer.Option(
@@ -33,6 +34,7 @@ config_option = Annotated[
         readable=True,
         resolve_path=True,
         show_default=False,
+        rich_help_panel="Configuration",
     ),
 ]
 project_root_option = Annotated[
@@ -45,7 +47,28 @@ project_root_option = Annotated[
         dir_okay=True,
         readable=True,
         resolve_path=True,
+        rich_help_panel="Other",
     ),
+]
+sources_argument = Annotated[
+    list[Path],
+    typer.Argument(
+        help="List of paths to be parsed by Robocop", show_default="current directory", rich_help_panel="File discovery"
+    ),
+]
+include_option = Annotated[
+    list[str],
+    typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE), rich_help_panel="File discovery"),
+]
+extend_include_option = Annotated[
+    list[str], typer.Option("--extend-include", show_default=False, rich_help_panel="File discovery")
+]
+exclude_option = Annotated[
+    list[str],
+    typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE), rich_help_panel="File discovery"),
+]
+extend_exclude_option = Annotated[
+    list[str], typer.Option("--extend-exclude", show_default=False, rich_help_panel="File discovery")
 ]
 
 
@@ -55,17 +78,31 @@ def parse_rule_severity(value: str):
 
 @app.command(name="check")
 def check_files(
-    sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
-    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE))] = None,
-    extend_include: Annotated[list[str], typer.Option("--extend-include", show_default=False)] = None,
-    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE))] = None,
-    extend_exclude: Annotated[list[str], typer.Option("--extend-exclude", show_default=False)] = None,
-    select: Annotated[list[str], typer.Option("--select", "-s", show_default=False)] = None,
-    ignore: Annotated[list[str], typer.Option("--ignore", "-ig", show_default=False)] = None,
+    sources: sources_argument = None,
+    include: include_option = None,
+    extend_include: extend_include_option = None,
+    exclude: exclude_option = None,
+    extend_exclude: extend_exclude_option = None,
+    select: Annotated[
+        list[str],
+        typer.Option(
+            "--select", "-s", help="Select rules to run", show_default=False, rich_help_panel="Selecting rules"
+        ),
+    ] = None,
+    ignore: Annotated[
+        list[str],
+        typer.Option("--ignore", "-ig", help="Ignore rules", show_default=False, rich_help_panel="Selecting rules"),
+    ] = None,
     threshold: Annotated[
         RuleSeverity,
         typer.Option(
-            "--threshold", "-t", show_default=RuleSeverity.INFO.value, parser=parse_rule_severity, metavar="I/W/E"
+            "--threshold",
+            "-t",
+            help="Disable rules below given threshold",
+            show_default=RuleSeverity.INFO.value,
+            parser=parse_rule_severity,
+            metavar="I/W/E",
+            rich_help_panel="Selecting rules",
         ),
     ] = None,
     configuration_file: config_option = None,
@@ -77,6 +114,7 @@ def check_files(
             help="Configure checker or report with parameter value",
             metavar="rule.param=value",
             show_default=False,
+            rich_help_panel="Configuration",
         ),
     ] = None,
     reports: Annotated[
@@ -87,9 +125,12 @@ def check_files(
             show_default=False,
             help="Generate reports from reported issues. To list available reports use `list reports` command. "
             "Use `all` to enable all reports.",
+            rich_help_panel="Reports",
         ),
     ] = None,
-    issue_format: Annotated[str, typer.Option("--issue-format", show_default=config.DEFAULT_ISSUE_FORMAT)] = None,
+    issue_format: Annotated[
+        str, typer.Option("--issue-format", show_default=config.DEFAULT_ISSUE_FORMAT, rich_help_panel="Other")
+    ] = None,
     language: Annotated[
         list[str],
         typer.Option(
@@ -98,24 +139,39 @@ def check_files(
             show_default="en",
             metavar="LANG",
             help="Parse Robot Framework files using additional languages.",
+            rich_help_panel="Other",
         ),
     ] = None,
-    ext_rules: Annotated[list[str], typer.Option("--ext-rules", show_default=False)] = None,
-    ignore_git_dir: Annotated[bool, typer.Option()] = False,
-    skip_gitignore: Annotated[bool, typer.Option()] = False,
+    ext_rules: Annotated[
+        list[str],
+        typer.Option("--ext-rules", help="Load custom rules", show_default=False, rich_help_panel="Selecting rules"),
+    ] = None,
+    ignore_git_dir: Annotated[bool, typer.Option(rich_help_panel="Configuration")] = False,
+    skip_gitignore: Annotated[bool, typer.Option(rich_help_panel="File discovery")] = False,
     persistent: Annotated[
-        bool, typer.Option(help="Use this flag to save Robocop reports in cache directory for later comparison.")
+        bool,
+        typer.Option(
+            help="Use this flag to save Robocop reports in cache directory for later comparison.",
+            rich_help_panel="Reports",
+        ),
     ] = None,
     compare: Annotated[
-        bool, typer.Option(help="Compare reports results with previous results (saved with --persistent)")
+        bool,
+        typer.Option(
+            help="Compare reports results with previous results (saved with --persistent)", rich_help_panel="Reports"
+        ),
     ] = None,
     exit_zero: Annotated[
         bool,
-        typer.Option(help="Always exit with 0 unless Robocop terminates abnormally.", show_default="--no-exit-zero"),
+        typer.Option(
+            help="Always exit with 0 unless Robocop terminates abnormally.",
+            show_default="--no-exit-zero",
+            rich_help_panel="Other",
+        ),
     ] = None,
     root: project_root_option = None,
 ) -> None:
-    """Lint files."""
+    """Lint Robot Framework files."""
     linter_config = config.LinterConfig(
         configure=configure,
         select=select,
@@ -147,17 +203,29 @@ def check_files(
 
 @app.command(name="format")
 def format_files(
-    sources: Annotated[list[Path], typer.Argument(show_default="current directory")] = None,
+    sources: sources_argument = None,
     select: Annotated[
-        list[str], typer.Option(show_default=False, metavar="FORMATTER", help="Select formatters to run.")
+        list[str],
+        typer.Option(
+            show_default=False,
+            metavar="FORMATTER",
+            help="Select formatters to run.",
+            rich_help_panel="Selecting formatters",
+        ),
     ] = None,
     custom_formatters: Annotated[
-        list[str], typer.Option(show_default=False, metavar="FORMATTER", help="Run custom formatters.")
+        list[str],
+        typer.Option(
+            show_default=False,
+            metavar="FORMATTER",
+            help="Run custom formatters.",
+            rich_help_panel="Selecting formatters",
+        ),
     ] = None,
-    include: Annotated[list[str], typer.Option("--include", "-i", show_default=str(config.DEFAULT_INCLUDE))] = None,
-    extend_include: Annotated[list[str], typer.Option("--extend-include", show_default=False)] = None,
-    exclude: Annotated[list[str], typer.Option("--exclude", "-e", show_default=str(config.DEFAULT_EXCLUDE))] = None,
-    extend_exclude: Annotated[list[str], typer.Option("--extend-exclude", show_default=False)] = None,
+    include: include_option = None,
+    extend_include: extend_include_option = None,
+    exclude: exclude_option = None,
+    extend_exclude: extend_exclude_option = None,
     configure: Annotated[
         list[str],
         typer.Option(
@@ -166,13 +234,22 @@ def format_files(
             help="Configure checker or report with parameter value",
             metavar="rule.param=value",
             show_default=False,
+            rich_help_panel="Configuration",
         ),
     ] = None,
     configuration_file: config_option = None,
-    overwrite: bool = None,
-    diff: bool = None,
-    check: bool = None,
-    output: Path = None,
+    overwrite: Annotated[bool, typer.Option(help="Write changes back to file", rich_help_panel="Work modes")] = None,
+    diff: Annotated[
+        bool, typer.Option(help="Show difference after formatting the file", rich_help_panel="Work modes")
+    ] = None,
+    check: Annotated[
+        bool,
+        typer.Option(
+            help="Do not overwrite files, and exit with return status depending on if any file would be modified",
+            rich_help_panel="Work modes",
+        ),
+    ] = None,
+    output: Annotated[Path, typer.Option(rich_help_panel="Other")] = None,
     language: Annotated[
         list[str],
         typer.Option(
@@ -181,35 +258,95 @@ def format_files(
             show_default="en",
             metavar="LANG",
             help="Parse Robot Framework files using additional languages.",
+            rich_help_panel="Other",
         ),
     ] = None,
-    space_count: Annotated[int, typer.Option(show_default="4")] = None,
-    indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
-    continuation_indent: Annotated[int, typer.Option(show_default="same as space-count")] = None,
-    line_length: Annotated[int, typer.Option(show_default="120")] = None,
-    separator: Annotated[str, typer.Option(show_default="space")] = None,
-    line_ending: Annotated[str, typer.Option(show_default="native")] = None,
-    start_line: Annotated[int, typer.Option(show_default=False)] = None,
-    end_line: Annotated[int, typer.Option(show_default=False)] = None,
-    target_version: Annotated[config.TargetVersion, typer.Option(case_sensitive=False)] = None,
+    space_count: Annotated[
+        int,
+        typer.Option(show_default="4", help="Number of spaces between cells", rich_help_panel="Formatting settings"),
+    ] = None,
+    indent: Annotated[
+        int,
+        typer.Option(
+            show_default="same as --space-count",
+            help="The number of spaces to be used as indentation",
+            rich_help_panel="Formatting settings",
+        ),
+    ] = None,
+    continuation_indent: Annotated[
+        int,
+        typer.Option(
+            show_default="same as --space-count",
+            help="The number of spaces to be used as separator after ... (line continuation) token",
+            rich_help_panel="Formatting settings",
+        ),
+    ] = None,
+    line_length: Annotated[
+        int,
+        typer.Option(show_default="120", help="Number of spaces between cells", rich_help_panel="Formatting settings"),
+    ] = None,
+    separator: Annotated[
+        str, typer.Option(show_default="space", help="# TODO", rich_help_panel="Formatting settings")
+    ] = None,
+    line_ending: Annotated[
+        str, typer.Option(show_default="native", help="# TODO", rich_help_panel="Formatting settings")
+    ] = None,
+    start_line: Annotated[
+        int,
+        typer.Option(
+            show_default=False,
+            help="Limit formatting only to selected area. "
+            "If --end-line is not provided, format text only at --start-line",
+            rich_help_panel="Formatting settings",
+        ),
+    ] = None,
+    end_line: Annotated[
+        int,
+        typer.Option(
+            show_default=False, help="Limit formatting only to selected area.", rich_help_panel="Formatting settings"
+        ),
+    ] = None,
+    target_version: Annotated[
+        config.TargetVersion,
+        typer.Option(
+            case_sensitive=False, help="Enable only formatters supported by configured version", rich_help_panel="Other"
+        ),
+    ] = None,
     skip: Annotated[
-        list[str], typer.Option(show_default=False, help="Skip formatting of code black with the given type")
+        list[str],
+        typer.Option(
+            show_default=False,
+            help="Skip formatting of code block with the given type",
+            rich_help_panel="Skip formatting",
+        ),
     ] = None,
     skip_sections: Annotated[
-        list[str], typer.Option(show_default=False, help="Skip formatting of selected sections")
+        list[str],
+        typer.Option(
+            show_default=False, help="Skip formatting of selected sections", rich_help_panel="Skip formatting"
+        ),
     ] = None,
     skip_keyword_call: Annotated[
-        list[str], typer.Option(show_default=False, help="Skip formatting of keywords with the given name")
+        list[str],
+        typer.Option(
+            show_default=False,
+            help="Skip formatting of keywords with the given name",
+            rich_help_panel="Skip formatting",
+        ),
     ] = None,
     skip_keyword_call_pattern: Annotated[
         list[str],
-        typer.Option(show_default=False, help="Skip formatting of keywords that matches with the given pattern"),
+        typer.Option(
+            show_default=False,
+            help="Skip formatting of keywords that matches with the given pattern",
+            rich_help_panel="Skip formatting",
+        ),
     ] = None,
-    ignore_git_dir: Annotated[bool, typer.Option()] = False,
-    skip_gitignore: Annotated[bool, typer.Option()] = False,
+    ignore_git_dir: Annotated[bool, typer.Option(rich_help_panel="Configuration")] = False,
+    skip_gitignore: Annotated[bool, typer.Option(rich_help_panel="File discovery")] = False,
     root: project_root_option = None,
 ) -> None:
-    """Format files."""
+    """Format Robot Framework files."""
     whitespace_config = config.WhitespaceConfig(
         space_count=space_count,  # TODO
         indent=indent,
