@@ -315,28 +315,23 @@ class FormatterConfig:
 
 @dataclass
 class FileFiltersOptions(ConfigContainer):
-    include: set[str] | None = field(default_factory=lambda: DEFAULT_INCLUDE)
-    extend_include: set[str] | None = None
-    exclude: set[str] | None = field(default_factory=lambda: DEFAULT_EXCLUDE)
-    extend_exclude: set[str] | None = None
+    include: set[str] | None = None
+    default_include: set[str] | None = field(default_factory=lambda: DEFAULT_INCLUDE)
+    exclude: set[str] | None = None
+    default_exclude: set[str] | None = field(default_factory=lambda: DEFAULT_EXCLUDE)
 
     def path_excluded(self, path: Path) -> bool:
         """Exclude all paths matching exclue patterns."""
+        exclude_paths = self.default_exclude
         if self.exclude:
-            for pattern in self.exclude:
-                if path.match(pattern):
-                    return True
-        if self.extend_exclude:
-            for pattern in self.extend_exclude:
-                if path.match(pattern):
-                    return True
-        return False
+            exclude_paths |= self.exclude
+        return any(path.match(pattern) for pattern in exclude_paths)
 
     def path_included(self, path: Path) -> bool:
         """Only allow paths matching include patterns."""
-        include_paths = self.include
-        if self.extend_include:
-            include_paths.extend(self.extend_include)
+        include_paths = self.default_include
+        if self.include:
+            include_paths |= self.include
         return any(path.match(pattern) for pattern in include_paths)
 
 
@@ -362,7 +357,7 @@ class Config:
         parsed_config = {"config_source": str(config_path)}
         parsed_config["linter"] = LinterConfig.from_toml(config.pop("lint", {}))
         filter_config = {}
-        for key in ("include", "extend_include", "exclude", "extend_exclude"):
+        for key in ("include", "default_include", "exclude", "default_exclude"):
             if key in config:
                 filter_config[key] = config.pop(key)
         parsed_config["file_filters"] = FileFiltersOptions(**filter_config)

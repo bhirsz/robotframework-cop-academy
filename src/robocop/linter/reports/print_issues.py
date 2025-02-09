@@ -26,7 +26,7 @@ class PrintIssuesReport(robocop.linter.reports.Report):
     Report that collect diagnostic messages and print them at the end of the execution.
     """
 
-    DEFAULT = False
+    NO_ALL = False
     ENABLED = True
 
     def __init__(self, config: Config):

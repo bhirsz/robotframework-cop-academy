@@ -13,7 +13,7 @@ class ReturnStatusReport(robocop.linter.reports.Report):
     That information is later used as a return status from Robocop.
     """
 
-    DEFAULT = False
+    NO_ALL = False
 
     def __init__(self, config: Config):
         self.name = "return_status"

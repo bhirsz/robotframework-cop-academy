@@ -50,7 +50,7 @@ class JsonReport(robocop.linter.reports.Report):
 
     """
 
-    DEFAULT = False
+    NO_ALL = False
 
     def __init__(self, config: Config):
         self.name = "json_report"

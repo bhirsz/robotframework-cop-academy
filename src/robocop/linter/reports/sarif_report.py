@@ -26,7 +26,7 @@ class SarifReport(robocop.linter.reports.Report):
 
     """
 
-    DEFAULT = False
+    NO_ALL = False
     SCHEMA_VERSION = "2.1.0"
     SCHEMA = f"https://json.schemastore.org/sarif-{SCHEMA_VERSION}.json"
 

@@ -18,7 +18,7 @@ class TextFile(robocop.linter.reports.Report):
     ``text_file`` report supports only ``simple`` issue output format.
     """
 
-    DEFAULT = False
+    NO_ALL = False
 
     def __init__(self, config: Config):
         self.name = "text_file"

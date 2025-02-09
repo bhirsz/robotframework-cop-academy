@@ -37,20 +37,37 @@ See detailed description for command changes.
 Breaking changes
 =================
 
-Renamed options
----------------
+Command line options changes
+----------------------------
 
 Most of the options were renamed to normalize naming between two tools or to make it more user friendly.
+Some of the old options (like ``--exclude``) are now used for something else.
 
 Rule selection options are now renamed:
 
-- ``--include`` became ``--select``
-- ``--exclude`` became ``--ignore``
+- ``-i/--include`` became ``-s/--select``
+- ``-e/--exclude`` became ``-i/--ignore``
 
-File inclusion options are now renamed:
+---
 
-- ``--ignore-default`` became ``--exclude`` (paths excluded by default)
-- ``--ignore`` became ``--extend-exclude`` (additionally excluded paths)
+File inclusion changes:
+
+Previously, Robocop used ``paths`` argument and Robotidy ``src`` for selecting paths. It was then additionally
+configured using options for filtering based on directory names or file types.
+
+Now it is not possible to use ``paths / src`` in the configuration file. Paths can be configured only via cli,
+and then additionally filtered using new options listed below. The reason behind is that users always selected
+paths from the cli (``robocop src.robot`` or ``robotidy .``) and those arguments were overwritten anyway.
+Default path is ``.`` (current directory) and can be omitted (``robocop check`` / ``robocop format`` will start
+from the current directory).
+
+- ``-g/--ignore`` became ``-e/--exclude`` (additionally excluded paths)
+- ``-gd/--ignore-default`` became ``--exclude-default`` (paths excluded by default)
+- ``-ft/--filetypes`` is now deprecated in favour of using ``--include`` or ``--default-include`` option
+
+More on how to configure file paths in the X section in the documentation. # TODO
+
+---
 
 ``--list`` options were overhauled and became commands:
 
@@ -58,9 +75,15 @@ File inclusion options are now renamed:
 
     robocop list rules
 
+- Robocop ``-lr/--list-reports`` used to list available reports became ``list reports command::
+
+    robocop list reports
+
 - Robotidy ``--list`` used to list available formatters became ``list formatters`` command::
 
     robocop list formatters
+
+---
 
 Issue format ``--format`` is now renamed to ``--issue-format``.
 
@@ -69,6 +92,16 @@ Formatting options from Robotidy:
 - ``--lineseparator`` became ``--line-ending``
 - ``--startline`` became ``--start-line``
 - ``--endline`` became ``--end-line``
+
+
+``-rules / --ext-rules`` can be now only used under ``--ext-rules`` name.
+
+---
+
+``-nr / --no-recursive`` is now deprecated. Similar behaviour can be attained by passing file paths to robocop or
+configuring ``--ignore`` option.
+
+
 
 (Robotidy) Formatter deprecated --transform option
 --------------------------------------------------
@@ -90,35 +123,31 @@ All other ``transform`` mentions were also deprecated, for example:
 - ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
 - ``Transformer`` class was renamed to ``Formatter``
 
-Linter configuration syntax change
------------------------------------
+Linter and formatter configuration syntax change
+------------------------------------------------
 
-Configuration syntax for ``--configure`` changed from::
+Robocop used two ``:`` to separate param and value in ``--config`` option. Robotidy used ``:`` and ``=``.
+New Robocop now uses ``.`` and ``=``. Previous configuration changed from::
 
     robocop --configure rule_or_report:param:value
+    robotidy --configure transformer:param=value
 
 to::
 
     robocop check --configure rule_or_report.param=value
-
-Formatter configuration syntax change
--------------------------------------
-
-Configuration syntax for ``--configure`` changed from::
-
-    robotidy --configure formatter:param=value
-
-to::
-
     robocop format --configure formatter.param=value
 
-It is also no longer possible to chain multiple configurations in one configure call::
+---
+
+It is also no longer possible to chain multiple configurations in one configure call. Following example::
 
     robotidy --configure formatter:param=value:param2=value
 
 For readability reasons it can be now done only using separate options::
 
     robocop format --configure formatter:param=value --configure formatter:param2=value
+
+---
 
 Passing configuration through file names that contains formatter is also deprecated::
 
@@ -148,12 +177,12 @@ New output::
     robot_project/tests/test.robot:19:59 [W] 0601 Tag '${var} space' should not contain spaces (tag-with-space)
 
 Previous issue format keyword ``source_rel`` is deprecated and ``source`` is used instead. It is still possible to use
- absolute paths in output by configuring issue format to ``source_abs``::
+absolute paths in output by configuring issue format to ``source_abs``::
 
     robocop check --issue-format "{source_abs}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
 
-Replace --output option with text_file report (#16)
----------------------------------------------------
+Replaced --output option with text_file report (#16)
+----------------------------------------------------
 
 As part of the improved and safer design, linter option ``--output`` is now deprecated.
 
@@ -163,7 +192,7 @@ Instead, ``text_file`` report can be used::
 
 ``text_file`` report supports only ``simple`` issue output format.
 
-deprecated singular skip options in formatter (Robotidy)
+Deprecated singular skip options in formatter (Robotidy)
 --------------------------------------------------------
 
 Robotidy offered multiple options to skip formatting of different statement types, if the formatter allows it::
@@ -252,7 +281,7 @@ Community rules are now simply 'non-default' rules
 --------------------------------------------------
 
 We have introduced non-default, 'community' rules in effort to increase contributions from the community.
-We have however noticed that it does not make sense to split our rules into 'internal' and 'community' ones -
+However we noticed that it does not make sense to split our rules into 'internal' and 'community' ones -
 the rules contributed from the users are often added as the default rules. For rules that should be optional it is
 enough to set them as non-default rules.
 

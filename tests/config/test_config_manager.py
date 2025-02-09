@@ -105,7 +105,7 @@ class TestConfigFinder:
         subdir_config = Config()
         subdir_config.config_source = str(config_dir / "subdir" / "pyproject.toml")
         subdir_config.linter.configure = ["line-too-long.line_length=110"]
-        subdir_config.file_filters.extend_exclude = ["file3.resource"]
+        subdir_config.file_filters.default_exclude = ["file3.resource"]
         expected_results = {
             config_dir / "file1.robot": default_config,
             config_dir / "subdir" / "file2.robot": subdir_config,
@@ -146,13 +146,13 @@ class TestConfigFinder:
         # Arrange
         config_dir = test_data / "one_config_subdir"
         overwrite_option = ["file2.robot"]
-        overwrite_config.file_filters.extend_exclude = overwrite_option
+        overwrite_config.file_filters.default_exclude = overwrite_option
         default_config = Config()
-        default_config.file_filters.extend_exclude = overwrite_option
+        default_config.file_filters.default_exclude = overwrite_option
         subdir_config = Config()
         subdir_config.config_source = str(config_dir / "subdir" / "pyproject.toml")
         subdir_config.linter.configure = ["line-too-long.line_length=110"]
-        subdir_config.file_filters.extend_exclude = overwrite_option
+        subdir_config.file_filters.default_exclude = overwrite_option
         expected_results = {
             config_dir / "file1.robot": default_config,
             # file2.robot should be included, but cli option overwrites it
@@ -174,8 +174,8 @@ class TestConfigFinder:
         # Arrange
         config_dir = test_data / "one_config_subdir"
         overwrite_option = ["file1.robot"]
-        overwrite_config.file_filters.extend_exclude = overwrite_option
-        cli_config.file_filters.extend_exclude = overwrite_option
+        overwrite_config.file_filters.default_exclude = overwrite_option
+        cli_config.file_filters.default_exclude = overwrite_option
         expected_results = {
             # excluded by cli option
             # config_dir / "file1.robot": cli_config,
@@ -204,11 +204,11 @@ class TestConfigFinder:
         config_dir = test_data / "two_config"
         first_config = Config()
         first_config.config_source = str(config_dir / "pyproject.toml")
-        first_config.file_filters.extend_exclude = ["excluded_dir/"]
+        first_config.file_filters.default_exclude = ["excluded_dir/"]
         first_config.linter.configure = ["line-too-long.line_length=110"]
         second_config = Config()
         second_config.config_source = str(config_dir / "subdir" / "pyproject.toml")
-        second_config.file_filters.extend_exclude = ["file1.robot"]
+        second_config.file_filters.default_exclude = ["file1.robot"]
         second_config.linter.configure = ["line-too-long.line_length=140"]
         expected_results = {
             config_dir / "file1.robot": first_config,
