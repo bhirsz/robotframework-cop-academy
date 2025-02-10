@@ -1,5 +1,3 @@
-:orphan:
-
 =============
 Robocop 6.0
 =============
@@ -34,6 +32,10 @@ The basic usage is::
 
 See detailed description for command changes.
 
+.. contents::
+   :depth: 2
+   :local:
+
 Breaking changes
 =================
 
@@ -62,7 +64,7 @@ Default path is ``.`` (current directory) and can be omitted (``robocop check`` 
 from the current directory).
 
 - ``-g/--ignore`` became ``-e/--exclude`` (additionally excluded paths)
-- ``-gd/--ignore-default`` became ``--exclude-default`` (paths excluded by default)
+- ``-gd/--ignore-default`` became ``--default-exclude`` (paths excluded by default)
 - ``-ft/--filetypes`` is now deprecated in favour of using ``--include`` or ``--default-include`` option
 
 More on how to configure file paths in the X section in the documentation. # TODO
@@ -78,6 +80,12 @@ More on how to configure file paths in the X section in the documentation. # TOD
 - Robocop ``-lr/--list-reports`` used to list available reports became ``list reports command::
 
     robocop list reports
+
+- Robocop ``-lc / --list-configurables`` was overhauled and became ``rule`` command::
+
+    robocop rule line-too-long
+
+  This command will print rule documentation and possible parameters.
 
 - Robotidy ``--list`` used to list available formatters became ``list formatters`` command::
 
@@ -99,9 +107,7 @@ Formatting options from Robotidy:
 ---
 
 ``-nr / --no-recursive`` is now deprecated. Similar behaviour can be attained by passing file paths to robocop or
-configuring ``--ignore`` option.
-
-
+configuring ``--exclude`` option.
 
 (Robotidy) Formatter deprecated --transform option
 --------------------------------------------------
@@ -122,6 +128,14 @@ All other ``transform`` mentions were also deprecated, for example:
 
 - ``TRANSFORMERS`` list inside custom formatters to indicate order of the formatting should be now named ``FORMATTERS``
 - ``Transformer`` class was renamed to ``Formatter``
+
+(Robocop) linter deprecated argument file
+-----------------------------------------
+
+Linter alternative configuration file format - ``--argumentfile`` / ``.robocop`` file is now deprecated.
+From now on we will only support one configuration file format (``toml`` based).
+
+More information on current configuration file syntax at X. TODO
 
 Linter and formatter configuration syntax change
 ------------------------------------------------
@@ -156,6 +170,31 @@ Passing configuration through file names that contains formatter is also depreca
 Use implicit name of the formatter instead::
 
     robocop format --configure MyFormatter.param=2
+
+Configuration file syntax changes
+---------------------------------
+
+Due to merge of the tool, syntax of the configuration file has changed. Most of the changes originate from the
+changes to option names etc. Some of the changes are however dictated by the merge itself.
+
+General settings are now available under ``tool.robocop`` section::
+
+    [tool.robocop]
+    exclude = ["excluded_dir/"]
+
+Linter or formatter specific settings are avaiable under ``lint`` or ``format`` sections::
+
+    [tool.robocop.lint]
+    configure = [
+        "line-too-long.line_length=110"
+    ]
+    [tool.robocop.format]
+    skip = ["documentation"]
+    configure = [
+        "NormalizeSeparators.skip=documentation"
+    ]
+
+Documentation describes with examples where particular options should be configured.
 
 --target-version different input syntax
 ---------------------------------------
