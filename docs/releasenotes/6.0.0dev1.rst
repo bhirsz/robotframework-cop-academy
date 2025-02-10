@@ -81,15 +81,18 @@ More on how to configure file paths in the X section in the documentation. # TOD
 
     robocop list reports
 
-- Robocop ``-lc / --list-configurables`` was overhauled and became ``rule`` command::
+- Robocop ``-lc / --list-configurables`` was overhauled and was incorporated to ``docs`` command::
 
-    robocop rule line-too-long
+    robocop docs line-too-long
 
   This command will print rule documentation and possible parameters.
 
 - Robotidy ``--list`` used to list available formatters became ``list formatters`` command::
 
     robocop list formatters
+
+Describe options (``--desc``) are now replaced by ``docs`` command which can print rule, report or formatter
+documentation.
 
 ---
 

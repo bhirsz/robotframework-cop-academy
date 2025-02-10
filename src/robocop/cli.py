@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -8,7 +9,7 @@ from rich.console import Console
 from robocop import __version__, config
 from robocop.formatter.runner import RobocopFormatter
 from robocop.formatter.skip import SkipConfig
-from robocop.linter.reports import print_reports
+from robocop.linter.reports import load_reports, print_reports
 from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_category, filter_rules_by_pattern
 from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, get_plural_form  # TODO: move higher up
@@ -18,6 +19,14 @@ class CliWithVersion(typer.core.TyperGroup):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         click.version_option(version=__version__)(self)
+
+    def list_commands(self, ctx: typer.Context) -> list[str]:  # noqa: ARG002
+        """Return list of commands in the set order."""
+        commands = ["check", "format", "list", "docs"]
+        for command in self.commands:
+            if command not in commands:
+                commands.append(command)
+        return commands
 
 
 app = typer.Typer(
@@ -491,17 +500,31 @@ def list_formatters(
     # We will need ConfigManager later for listing based on configuration
 
 
-@app.command("rule")
-def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]) -> None:
-    """Print rule documentation."""
+@app.command("docs")
+def print_resource_documentation(name: Annotated[str, typer.Argument(help="Rule name")]) -> None:
+    """Print formatter, rule or report documentation."""
     # TODO load external from cli
     console = Console(soft_wrap=True)
     config_manager = config.ConfigManager()
+
     runner = RobocopLinter(config_manager)
-    if rule not in runner.rules:
-        console.print(f"Rule '{rule}' does not exist.")
+    if name in runner.rules:
+        console.print(runner.rules[name].description_with_configurables)
+        return
+
+    reports = load_reports(config_manager.default_config)
+    if name in reports:
+        docs = textwrap.dedent(reports[name].__doc__)
+        console.print(docs)
+        return
+
+    formatter_config = config.FormatterConfig()
+    if name in formatter_config.formatters:
+        docs = textwrap.dedent(formatter_config.formatters[name].__doc__)
+        console.print(docs)
+    else:
+        console.print(f"There is no rule, formatter or a report with a '{name}' name.")
         raise typer.Exit(code=2)
-    console.print(runner.rules[rule].description_with_configurables)
 
 
 def main() -> None:

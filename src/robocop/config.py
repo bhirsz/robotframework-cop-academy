@@ -202,6 +202,7 @@ class FormatterConfig:
     custom_formatters: list[str] | None = field(default_factory=list)
     configure: list[str] | None = field(default_factory=list)
     force_order: bool | None = False
+    allow_disabled: bool | None = False
     target_version: int | str | None = misc.ROBOT_VERSION.major
     skip_config: SkipConfig = field(default_factory=SkipConfig)
     overwrite: bool | None = False
@@ -227,7 +228,6 @@ class FormatterConfig:
 
     def load_formatters(self):
         self._formatters = {}
-        allow_disabled = False  # TODO
         allow_version_mismatch = False
         self.load_languages()
         for formatter in self.selected_formatters():
@@ -238,7 +238,7 @@ class FormatterConfig:
                     enabled = container.args["enabled"].lower() == "true"
                 else:
                     enabled = getattr(container.instance, "ENABLED", True)
-                if not (enabled or allow_disabled):
+                if not (enabled or self.allow_disabled):
                     continue
                 if formatters.can_run_in_robot_version(
                     container.instance,
@@ -247,7 +247,7 @@ class FormatterConfig:
                 ):
                     container.enabled_by_default = enabled
                     self._formatters[container.name] = container.instance
-                elif allow_version_mismatch and allow_disabled:
+                elif allow_version_mismatch and self.allow_disabled:
                     container.instance.ENABLED = False
                     container.enabled_by_default = False
                     self._formatters[container.name] = container.instance
