@@ -235,6 +235,10 @@ def format_files(
             rich_help_panel="Selecting formatters",
         ),
     ] = None,
+    force_order: Annotated[
+        bool,
+        typer.Option(help="Use formatters in a order as provided in the cli", rich_help_panel="Selecting formatters"),
+    ] = None,
     include: include_option = None,
     default_include: default_include_option = None,
     exclude: exclude_option = None,
@@ -312,7 +316,9 @@ def format_files(
     target_version: Annotated[
         config.TargetVersion,
         typer.Option(
-            case_sensitive=False, help="Enable only formatters supported by configured version", rich_help_panel="Other"
+            case_sensitive=False,
+            help="Enable only formatters supported by configured version",
+            rich_help_panel="Selecting formatters",
         ),
     ] = None,
     skip: Annotated[
@@ -367,6 +373,7 @@ def format_files(
     formatter_config = config.FormatterConfig(
         select=select,
         custom_formatters=custom_formatters,
+        force_order=force_order,
         whitespace_config=whitespace_config,
         skip_config=skip_config,
         configure=configure,

@@ -98,11 +98,13 @@ Issue format ``--format`` is now renamed to ``--issue-format``.
 Formatting options from Robotidy:
 
 - ``--lineseparator`` became ``--line-ending``
-- ``--startline`` became ``--start-line``
-- ``--endline`` became ``--end-line``
+- ``-sl/--startline`` became ``--start-line``
+- ``-el/--endline`` became ``--end-line``
 
 
 ``-rules / --ext-rules`` can be now only used under ``--ext-rules`` name.
+
+``--load-transformers / --custom-transformers`` is now renamed to ``--custom-formatters``.
 
 ---
 
