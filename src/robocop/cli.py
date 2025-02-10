@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Annotated, Optional
 
+import click
 import typer
 from rich.console import Console
 
-from robocop import config
+from robocop import __version__, config
 from robocop.formatter.runner import RobocopFormatter
 from robocop.formatter.skip import SkipConfig
 from robocop.linter.reports import print_reports
@@ -12,11 +13,20 @@ from robocop.linter.rules import RuleFilter, RuleSeverity, filter_rules_by_categ
 from robocop.linter.runner import RobocopLinter
 from robocop.linter.utils.misc import ROBOCOP_RULES_URL, compile_rule_pattern, get_plural_form  # TODO: move higher up
 
+
+class CliWithVersion(typer.core.TyperGroup):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        click.version_option(version=__version__)(self)
+
+
 app = typer.Typer(
+    name="robocop",
     help="Static code analysis tool (linter) and code formatter for Robot Framework. "
     "Full documentation available at https://robocop.readthedocs.io .",
     context_settings={"help_option_names": ["-h", "--help"]},
     rich_markup_mode="rich",
+    cls=CliWithVersion,
 )
 list_app = typer.Typer(help="List available rules, reports or formatters.")
 app.add_typer(list_app, name="list")
@@ -476,7 +486,7 @@ def list_formatters(
 
 @app.command("rule")
 def describe_rule(rule: Annotated[str, typer.Argument(help="Rule name")]) -> None:
-    """Describe a rule."""
+    """Print rule documentation."""
     # TODO load external from cli
     console = Console(soft_wrap=True)
     config_manager = config.ConfigManager()

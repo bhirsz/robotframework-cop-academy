@@ -76,7 +76,7 @@ Both options are configurable using configuration file (:ref:`config-file`).
 
 .. code-block:: toml
 
-    [tool.robotidy]
+    [tool.robocop.format]
     skip-keyword-call = [
         "GlobalSkip",
         "supports spaces too"
@@ -114,7 +114,7 @@ Both options are configurable using configuration file (:ref:`config-file`).
 
 .. code-block:: toml
 
-    [tool.robotidy]
+    [tool.robocop.format]
     skip-keyword-call-pattern = [
         "^Second",
         "(i?)contains\s?words"
@@ -144,7 +144,7 @@ Both options are configurable using configuration file (:ref:`config-file`).
 
 .. code-block:: toml
 
-    [tool.robotidy]
+    [tool.robocop.format]
     skip-sections = "comments"
     configure = [
         "NormalizeSeparators : skip_sections = tasks,keywords"
