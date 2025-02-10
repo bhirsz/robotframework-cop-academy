@@ -210,7 +210,7 @@ class FormatterConfig:
     output: Path | None = None  # TODO
     color: bool | None = False
     check: bool | None = False
-    reruns: int | None = 0  # TODO
+    reruns: int | None = 0
     start_line: int | None = None
     end_line: int | None = None
     language: list[str] | None = field(default_factory=list)
