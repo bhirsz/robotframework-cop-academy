@@ -362,6 +362,16 @@ def format_files(
     ] = None,
     ignore_git_dir: Annotated[bool, typer.Option(rich_help_panel="Configuration")] = False,
     skip_gitignore: Annotated[bool, typer.Option(rich_help_panel="File discovery")] = False,
+    reruns: Annotated[
+        int,
+        typer.Option(
+            "--reruns",
+            "-r",
+            help="Rerun formatting up to reruns times until the code stops changing.",
+            show_default="0",
+            rich_help_panel="Work modes",
+        ),
+    ] = None,
     root: project_root_option = None,
 ) -> None:
     """Format Robot Framework files."""
@@ -393,6 +403,7 @@ def format_files(
         start_line=start_line,
         end_line=end_line,
         target_version=target_version,
+        reruns=reruns,
     )
     file_filters = config.FileFiltersOptions(
         include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
