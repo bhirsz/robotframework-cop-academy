@@ -128,7 +128,7 @@ class RobocopLinter:
         - 2 if Robocop terminated abnormally
 
         """
-        if self.config_manager.default_config.exit_zero:
+        if self.config_manager.default_config.linter.exit_zero:
             exit_code = 0
         elif "return_status" in self.reports:
             exit_code = self.reports["return_status"].exit_code
