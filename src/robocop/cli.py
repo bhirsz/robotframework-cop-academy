@@ -104,10 +104,6 @@ language_option = Annotated[
 ]
 
 
-def parse_rule_severity(value: str):
-    return RuleSeverity.parser(value, rule_severity=False)
-
-
 @app.command(name="check")
 def check_files(
     sources: sources_argument = None,
@@ -132,7 +128,7 @@ def check_files(
             "-t",
             help="Disable rules below given threshold",
             show_default=RuleSeverity.INFO.value,
-            parser=parse_rule_severity,
+            parser=config.parse_rule_severity,
             metavar="I/W/E",
             rich_help_panel="Selecting rules",
         ),
@@ -204,13 +200,12 @@ def check_files(
         reports=reports,
         persistent=persistent,
         compare=compare,
+        exit_zero=exit_zero,
     )
     file_filters = config.FileFiltersOptions(
         include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
-    overwrite_config = config.Config(
-        linter=linter_config, formatter=None, file_filters=file_filters, language=language, exit_zero=exit_zero
-    )
+    overwrite_config = config.Config(linter=linter_config, formatter=None, file_filters=file_filters, language=language)
     config_manager = config.ConfigManager(
         sources=sources,
         config=configuration_file,
@@ -376,7 +371,7 @@ def format_files(
 ) -> None:
     """Format Robot Framework files."""
     whitespace_config = config.WhitespaceConfig(
-        space_count=space_count,  # TODO
+        space_count=space_count,
         indent=indent,
         continuation_indent=continuation_indent,
         line_ending=line_ending,

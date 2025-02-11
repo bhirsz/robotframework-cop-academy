@@ -6,6 +6,7 @@ import pytest
 
 from robocop import files
 from robocop.config import Config, ConfigManager, FileFiltersOptions, FormatterConfig, LinterConfig
+from robocop.linter.rules import RuleSeverity
 
 
 @pytest.fixture(scope="module")
@@ -53,6 +54,7 @@ def overwrite_config() -> Config:
         reports=None,
         persistent=None,
         compare=None,
+        exit_zero=None,
     )
     formatter = FormatterConfig(
         overwrite=None,
@@ -63,9 +65,7 @@ def overwrite_config() -> Config:
         start_line=None,
         end_line=None,
     )
-    return Config(
-        sources=None, file_filters=file_filters, linter=linter, formatter=formatter, language=None, exit_zero=None
-    )
+    return Config(sources=None, file_filters=file_filters, linter=linter, formatter=formatter, language=None)
 
 
 def get_sources_and_configs(config_dir: Path, **kwargs) -> dict[Path, Config]:
@@ -81,11 +81,65 @@ class TestConfigFinder:
         config = Config()
         config.config_source = str(config_dir / "pyproject.toml")
         config.linter.configure = ["line-too-long.line_length=110"]
+
         expected_results = {
             config_dir / "file1.robot": config,
             config_dir / "subdir" / "file2.robot": config,
             config_dir / "subdir" / "file3.resource": config,
         }
+
+        # Act
+        actual_results = get_sources_and_configs(config_dir)
+
+        # Assert
+        assert actual_results == expected_results
+
+    def test_single_config_all_options(self, test_data):
+        # Arrange
+        config_dir = test_data / "config_with_all_options"
+        config = Config()
+        config.config_source = str(config_dir / "pyproject.toml")
+        config.linter.configure = ["line-too-long.line_length=110"]
+        config.file_filters.exclude = {"deprecated.robot"}
+        config.file_filters.default_exclude = {"archived/"}
+        config.file_filters.include = {"custom.txt"}
+        config.file_filters.default_include = {"*.robot"}
+        config.linter.select = ["rulename", "ruleid"]
+        config.linter.ignore = ["ruleid"]
+        config.linter.include_rules = {"rulename", "ruleid"}
+        config.linter.exclude_rules = {"ruleid"}
+        config.linter.threshold = RuleSeverity.WARNING
+        config.linter.reports = ["all", "sarif"]
+        config.linter.issue_format = "{source_abs}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+        config.language = ["eng", "pl"]
+        config.linter.ext_rules = ["CustomRules.py"]
+        config.linter.persistent = True
+        config.linter.compare = True
+        config.linter.exit_zero = True
+
+        config.formatter.select = ["NormalizeNewLines"]
+        config.formatter.custom_formatters = ["CustomFormatter.py"]
+        config.formatter.configure = ["NormalizeNewLines.flatten_lines=True"]
+        config.formatter.force_order = True
+        config.formatter.diff = True
+        config.formatter.overwrite = False
+        config.formatter.check = True
+        config.formatter.start_line = 10
+        config.formatter.end_line = 12
+        config.formatter.target_version = 6
+        config.formatter.whitespace_config.space_count = 2
+        config.formatter.whitespace_config.indent = 3
+        config.formatter.whitespace_config.continuation_indent = 5
+        config.formatter.whitespace_config.line_length = 110
+        config.formatter.whitespace_config.separator = "tab"
+        config.formatter.whitespace_config.line_ending = "windows"
+        config.formatter.skip_config.skip = {"comments", "documentation"}
+        config.formatter.skip_config.sections = {"comments"}
+        config.formatter.skip_config.keyword_call = {"DeprecatedKeyword"}
+        config.formatter.skip_config.keyword_call_pattern = {"DeprecatedKeyword$"}
+        config.formatter.reruns = 5
+
+        expected_results = {config_dir / "test.robot": config}
 
         # Act
         actual_results = get_sources_and_configs(config_dir)
@@ -105,7 +159,7 @@ class TestConfigFinder:
         subdir_config = Config()
         subdir_config.config_source = str(config_dir / "subdir" / "pyproject.toml")
         subdir_config.linter.configure = ["line-too-long.line_length=110"]
-        subdir_config.file_filters.default_exclude = ["file3.resource"]
+        subdir_config.file_filters.default_exclude = {"file3.resource"}
         expected_results = {
             config_dir / "file1.robot": default_config,
             config_dir / "subdir" / "file2.robot": subdir_config,
@@ -204,11 +258,11 @@ class TestConfigFinder:
         config_dir = test_data / "two_config"
         first_config = Config()
         first_config.config_source = str(config_dir / "pyproject.toml")
-        first_config.file_filters.default_exclude = ["excluded_dir/"]
+        first_config.file_filters.default_exclude = {"excluded_dir/"}
         first_config.linter.configure = ["line-too-long.line_length=110"]
         second_config = Config()
         second_config.config_source = str(config_dir / "subdir" / "pyproject.toml")
-        second_config.file_filters.default_exclude = ["file1.robot"]
+        second_config.file_filters.default_exclude = {"file1.robot"}
         second_config.linter.configure = ["line-too-long.line_length=140"]
         expected_results = {
             config_dir / "file1.robot": first_config,

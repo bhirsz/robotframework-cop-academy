@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import dataclasses
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -72,7 +71,7 @@ class ConfigContainer:
 
         If other has value set to None, it was never set and can be ignored.
         """
-        for config_field in dataclasses.fields(other):
+        for config_field in fields(other):
             value = getattr(other, config_field.name)
             if value is not None:
                 setattr(self, config_field.name, value)
@@ -86,6 +85,13 @@ class WhitespaceConfig(ConfigContainer):
     line_ending: str | None = "native"
     separator: str | None = "space"
     line_length: int | None = 120
+
+    @classmethod
+    def from_toml(cls, config: dict) -> WhitespaceConfig:
+        config_fields = {config_field.name for config_field in fields(cls) if config_field.compare}
+        # TODO assert type (list vs list etc)
+        override = {param: value for param, value in config.items() if param in config_fields}
+        return cls(**override)
 
     def process_config(self):
         """Prepare config with processed values. If value is missing, use related config as a default."""
@@ -107,6 +113,10 @@ class WhitespaceConfig(ConfigContainer):
             self.line_ending = "\r\n"
         elif self.line_ending == "unix":
             self.line_ending = "\n"
+
+
+def parse_rule_severity(value: str):
+    return RuleSeverity.parser(value, rule_severity=False)
 
 
 class TargetVersion(Enum):
@@ -144,13 +154,14 @@ class LinterConfig:
     issue_format: str | None = DEFAULT_ISSUE_FORMAT
     threshold: RuleSeverity | None = RuleSeverity.INFO
     ext_rules: list[str] | None = field(default_factory=list)
-    include_rules: set[str] | None = field(default_factory=set)
-    exclude_rules: set[str] | None = field(default_factory=set)
-    include_rules_patterns: set[re.Pattern] | None = field(default_factory=set)
-    exclude_rules_patterns: set[re.Pattern] | None = field(default_factory=set)
+    include_rules: set[str] | None = field(default_factory=set, compare=False)
+    exclude_rules: set[str] | None = field(default_factory=set, compare=False)
+    include_rules_patterns: set[re.Pattern] | None = field(default_factory=set, compare=False)
+    exclude_rules_patterns: set[re.Pattern] | None = field(default_factory=set, compare=False)
     reports: list[str] | None = field(default_factory=list)
     persistent: bool | None = False
     compare: bool | None = False
+    exit_zero: bool | None = False
 
     def __post_init__(self):
         """
@@ -173,12 +184,6 @@ class LinterConfig:
                 else:
                     self.exclude_rules.add(rule)
 
-    # exec_dir: str  # it will not be passed, but generated
-    # extend_ignore: set[str]
-    # reports: list[str]
-    #         self.recursive = True  TODO do we need it anymore?
-    #         self.persistent = False  TODO maybe better name, ie cache-results
-
     #     def validate_rules_exists_and_not_deprecated(self, rules: dict[str, "Rule"]):
     #         for rule in chain(self.include, self.exclude):
     #             if rule not in rules:
@@ -189,10 +194,12 @@ class LinterConfig:
 
     @classmethod
     def from_toml(cls, config: dict) -> LinterConfig:
-        configure = config.pop("configure", [])  # TODO repeat the same for all params (use fields?)
-        return cls(
-            configure=configure,
-        )
+        config_fields = {config_field.name for config_field in fields(cls) if config_field.compare}
+        # TODO assert type (list vs list etc)
+        override = {param: value for param, value in config.items() if param in config_fields}
+        if "threshold" in config:
+            override["threshold"] = parse_rule_severity(config["threshold"])
+        return cls(**override)
 
 
 @dataclass
@@ -213,10 +220,21 @@ class FormatterConfig:
     reruns: int | None = 0
     start_line: int | None = None
     end_line: int | None = None
-    language: list[str] | None = field(default_factory=list)
-    languages: Languages | None = None
-    _parameters: dict[str, dict[str, str]] | None = None
-    _formatters: dict[str, ...] | None = None
+    language: list[str] | None = field(default_factory=list)  # TODO: it is both part of common and formatter
+    languages: Languages | None = field(default=None, compare=False)
+    _parameters: dict[str, dict[str, str]] | None = field(default=None, compare=False)
+    _formatters: dict[str, ...] | None = field(default=None, compare=False)
+
+    @classmethod
+    def from_toml(cls, config: dict) -> FormatterConfig:
+        config_fields = {config_field.name for config_field in fields(cls) if config_field.compare}
+        # TODO assert type (list vs list etc)
+        override = {param: value for param, value in config.items() if param in config_fields}
+        if "target_version" in config:
+            override["target_version"] = validate_target_version(config["target_version"])
+        override["whitespace_config"] = WhitespaceConfig.from_toml(config)
+        override["skip_config"] = SkipConfig.from_toml(config)
+        return cls(**override)
 
     @property
     def formatters(self) -> dict[str, ...]:
@@ -320,16 +338,24 @@ class FileFiltersOptions(ConfigContainer):
     exclude: set[str] | None = None
     default_exclude: set[str] | None = field(default_factory=lambda: DEFAULT_EXCLUDE)
 
+    @classmethod
+    def from_toml(cls, config: dict) -> FileFiltersOptions:
+        filter_config = {}
+        for key in ("include", "default_include", "exclude", "default_exclude"):
+            if key in config:
+                filter_config[key] = set(config.pop(key))
+        return cls(**filter_config)
+
     def path_excluded(self, path: Path) -> bool:
         """Exclude all paths matching exclue patterns."""
-        exclude_paths = self.default_exclude
+        exclude_paths = set(self.default_exclude)
         if self.exclude:
             exclude_paths |= self.exclude
         return any(path.match(pattern) for pattern in exclude_paths)
 
     def path_included(self, path: Path) -> bool:
         """Only allow paths matching include patterns."""
-        include_paths = self.default_include
+        include_paths = set(self.default_include)
         if self.include:
             include_paths |= self.include
         return any(path.match(pattern) for pattern in include_paths)
@@ -342,7 +368,6 @@ class Config:
     linter: LinterConfig = field(default_factory=LinterConfig)
     formatter: FormatterConfig = field(default_factory=FormatterConfig)
     language: list[str] | None = field(default_factory=list)
-    exit_zero: bool | None = False
     config_source: str = "default configuration"
     # keep rules and formatters here, loaded upon first call
 
@@ -356,11 +381,9 @@ class Config:
         # TODO: validate all key and types
         parsed_config = {"config_source": str(config_path)}
         parsed_config["linter"] = LinterConfig.from_toml(config.pop("lint", {}))
-        filter_config = {}
-        for key in ("include", "default_include", "exclude", "default_exclude"):
-            if key in config:
-                filter_config[key] = config.pop(key)
-        parsed_config["file_filters"] = FileFiltersOptions(**filter_config)
+        parsed_config["file_filters"] = FileFiltersOptions.from_toml(config)
+        parsed_config["language"] = config.pop("language", [])
+        parsed_config["formatter"] = FormatterConfig.from_toml(config.pop("format", {}))
         # TODO whitespace config
         parsed_config = {key: value for key, value in parsed_config.items() if value is not None}
         return cls(**parsed_config)
@@ -368,7 +391,7 @@ class Config:
     def overwrite_from_config(self, overwrite_config: Config | None) -> None:
         if not overwrite_config:
             return
-        for config_field in dataclasses.fields(overwrite_config):
+        for config_field in fields(overwrite_config):
             if config_field.name in (
                 "linter",
                 "formatter",
@@ -380,12 +403,12 @@ class Config:
             if value:
                 setattr(self, config_field.name, value)
         if overwrite_config.linter:
-            for config_field in dataclasses.fields(overwrite_config.linter):
+            for config_field in fields(overwrite_config.linter):
                 value = getattr(overwrite_config.linter, config_field.name)
                 if value:
                     setattr(self.linter, config_field.name, value)
         if overwrite_config.formatter:
-            for config_field in dataclasses.fields(overwrite_config.formatter):
+            for config_field in fields(overwrite_config.formatter):
                 if config_field.name in ("whitespace_config", "skip_config") or config_field.name.startswith("_"):
                     continue
                 value = getattr(overwrite_config.formatter, config_field.name)
