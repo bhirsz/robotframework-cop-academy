@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 
     from robot.parsing import File
 
-    from robocop.linter.runner import RobocopLinter
+    from robocop.config import LinterConfig
 
 
 @total_ordering
@@ -797,10 +797,10 @@ class RobocopImporter:
         return checker_instances
 
 
-def init(linter: RobocopLinter) -> None:
-    robocop_importer = RobocopImporter(external_rules_paths=linter.config_manager.default_config.linter.ext_rules)
+def init(config: LinterConfig) -> None:
+    robocop_importer = RobocopImporter(external_rules_paths=config.ext_rules)
     for checker in robocop_importer.get_initialized_checkers():
-        linter.register_checker(checker)
+        config.register_checker(checker)
     # linter.rules.update(robocop_importer.deprecated_rules)
 
 

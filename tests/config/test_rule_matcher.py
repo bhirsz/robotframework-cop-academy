@@ -30,8 +30,8 @@ class TestIncludingExcluding:
     )
     def test_only_selected(self, selected, ignored):
         linter_config = LinterConfig(select=selected, ignore=ignored)
-        config = Config(linter=linter_config)
-        rule_matcher = RuleMatcher(config)
+        linter_config.load_configuration()
+        rule_matcher = RuleMatcher(linter_config)
         assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
         assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
@@ -46,8 +46,8 @@ class TestIncludingExcluding:
     )
     def test_only_selected_patterns(self, patterns, selected, ignored):
         linter_config = LinterConfig(select=patterns)
-        config = Config(linter=linter_config)
-        rule_matcher = RuleMatcher(config)
+        linter_config.load_configuration()
+        rule_matcher = RuleMatcher(linter_config)
         assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
         assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
@@ -61,8 +61,8 @@ class TestIncludingExcluding:
     )
     def test_only_ignored(self, selected, ignored):
         linter_config = LinterConfig(ignore=ignored)
-        config = Config(linter=linter_config)
-        rule_matcher = RuleMatcher(config)
+        linter_config.load_configuration()
+        rule_matcher = RuleMatcher(linter_config)
         assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
         assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
@@ -83,15 +83,15 @@ class TestIncludingExcluding:
         and rule names created using `some-message-{rule_id}` pattern
         """
         linter_config = LinterConfig(ignore=patterns)
-        config = Config(linter=linter_config)
-        rule_matcher = RuleMatcher(config)
+        linter_config.load_configuration()
+        rule_matcher = RuleMatcher(linter_config)
         assert all(rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in selected)
         assert all(not rule_matcher.is_rule_enabled(get_message_with_id(msg)) for msg in ignored)
 
     def test_both_selected_excluded(self):
         linter_config = LinterConfig(select=["0101"], ignore=["0101"])
-        config = Config(linter=linter_config)
-        rule_matcher = RuleMatcher(config)
+        linter_config.load_configuration()
+        rule_matcher = RuleMatcher(linter_config)
         msg = get_message_with_id("0101")
         assert rule_matcher.is_rule_disabled(msg)
         assert not rule_matcher.is_rule_enabled(msg)

@@ -32,6 +32,11 @@ You can use multiple reports with separate arguments (``-r report1 -r report2``)
                 "some_other_report"
             ]
 
+.. note::
+
+    Reports can be only enabled and configured from the configuration file closest to the current working directory.
+    If you configure reports in multiple configuration files, only one configuration file will apply.
+
 To enable all default reports use ``--reports all``.  Non-default reports can be only enabled using their name.
 
 The order of the reports is preserved. For example, if you want ``timestamp`` report to be printed before any

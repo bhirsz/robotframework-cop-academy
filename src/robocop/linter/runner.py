@@ -26,43 +26,8 @@ class RobocopLinter:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.config: Config = self.config_manager.default_config
-        self.checkers: list[BaseChecker] = []
-        self.rules: dict[str, Rule] = {}
-        self.load_checkers()
         self.reports: dict[str, reports.Report] = reports.get_reports(self.config)
-        # TODO: docs - reports can only be enabled / configured in cli / top level config / --config
-        # same with --format
-
-    def load_checkers(self) -> None:  # TODO load builtin once and copy classes for each config
-        """
-        Initialize checkers and rules containers and start rules discovery.
-
-        Instance of this class is passed over since it will be used to populate checkers/rules containers.
-        Additionally rules can also refer to instance of this class to access config class.
-        """
-        self.checkers = []
-        self.rules = {}
-        rules.init(self)
-
-    def register_checker(self, checker: type[BaseChecker]) -> None:  # [type[BaseChecker]]
-        for rule_name_or_id, rule in checker.rules.items():
-            self.rules[rule_name_or_id] = rule
-        self.checkers.append(checker)
-
-    def check_for_disabled_rules(self) -> None:
-        """Check checker configuration to disable rules."""
-        rule_matcher = RuleMatcher(self.config)
-        for checker in self.checkers:  # TODO: each config with own copy of checkers & rules
-            if not self.any_rule_enabled(checker, rule_matcher):
-                checker.disabled = True
-
-    def any_rule_enabled(self, checker: type[BaseChecker], rule_matcher: RuleMatcher) -> bool:
-        any_enabled = False
-        for rule in checker.rules.values():
-            rule.enabled = rule_matcher.is_rule_enabled(rule)
-            if rule.enabled:
-                any_enabled = True
-        return any_enabled
+        self.configure_reports()
 
     def get_model_for_file_type(self, source: Path) -> File:
         """Recognize model type of the file and load the model."""
@@ -77,10 +42,7 @@ class RobocopLinter:
     def run(self) -> None:
         issues_no = 0
         for source, config in self.config_manager.paths:
-            # TODO: If there is only one config, we do not need to reload it every time - some sort of caching?
-            self.config = config  # need to save it for rules to access rules config (also TODO: load rules config)
-            self.configure_checkers_or_reports()
-            self.check_for_disabled_rules()
+            self.config = config
             #             if self.config.verbose:
             #                 print(f"Scanning file: {file}")
             try:
@@ -106,7 +68,7 @@ class RobocopLinter:
             return []
         found_diagnostics = []
         templated = is_suite_templated(ast_model)
-        for checker in self.checkers:
+        for checker in self.config.linter.checkers:
             if checker.disabled:
                 continue
             found_diagnostics += [
@@ -136,40 +98,22 @@ class RobocopLinter:
             exit_code = 1 if issues_count else 0
         raise typer.Exit(code=exit_code)
 
-    def report(self, diagnostic: Diagnostic) -> None:
-        for report in self.reports.values():
-            report.add_message(diagnostic)
-
-    def configure_checkers_or_reports(self) -> None:
-        """
-        Iterate over configuration for rules and reports and apply it.
-
-        Accepted format is rule_name.param=value or report_name.param=value . ``rule_id`` can be used instead of
-        ``rule_name``.
-        """
-        for config in self.config.linter.configure:
-            # TODO: applying configuration change original rule/report. We should have way of restoring it for
-            #  multiple configurations (or store separately)
-            # TODO: should be validated in Config class, here only applying values
-            # TODO: there could be rules and reports containers that accept config and apply,
-            #  instead of doing it in the runner
-            try:  # TODO: replace severity values
+    def configure_reports(self):
+        """Configure reports using default configuration only."""
+        for config in self.config_manager.default_config.linter.configure:
+            try:  # TODO custom parser to apply in linter/formatter/here
                 name, param_and_value = config.split(".", maxsplit=1)
                 param, value = param_and_value.split("=", maxsplit=1)
             except ValueError:
                 raise exceptions.ConfigGeneralError(
                     f"Provided invalid config: '{config}' (general pattern: <rule/report>.<param>=<value>)"
                 ) from None
-            if name in self.rules:
-                rule = self.rules[name]
-                if rule.deprecated:
-                    print(rule.deprecation_warning)
-                else:
-                    rule.configure(param, value)
-            elif name in self.reports:
+            if name in name in self.reports:
                 self.reports[name].configure(param, value)
-            else:
-                raise exceptions.RuleOrReportDoesNotExist(name, self.rules)
+
+    def report(self, diagnostic: Diagnostic) -> None:
+        for report in self.reports.values():
+            report.add_message(diagnostic)
 
     def make_reports(self) -> None:
         report_results = {}
@@ -192,6 +136,3 @@ class RobocopLinter:
                     report_results[report.name] = result
         if is_persistent:
             save_reports_result_to_cache(str(self.config_manager.root), report_results)
-
-
-# should we rediscover checkers/rules for each source config?

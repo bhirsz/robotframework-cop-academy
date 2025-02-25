@@ -49,9 +49,7 @@ class RobocopFormatter:
                 #     source = self.load_from_stdin()
                 # elif self.config.verbose:
                 #     click.echo(f"Found {source} file")
-                # TODO: If there is only one config, we do not need to reload it every time - some sort of caching?
                 self.config = config
-                # self.configure_checkers_or_reports() --select Formatter, different configs
                 all_files += 1
                 disabler_finder = disablers.RegisterDisablers(
                     self.config.formatter.start_line, self.config.formatter.end_line

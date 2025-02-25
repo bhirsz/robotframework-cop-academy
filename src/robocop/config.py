@@ -18,6 +18,7 @@ from robocop import errors, files
 from robocop.formatter import formatters
 from robocop.formatter.skip import SkipConfig
 from robocop.formatter.utils import misc  # TODO merge with linter misc
+from robocop.linter import rules
 from robocop.linter.rules import Rule, RuleSeverity
 from robocop.linter.utils.misc import compile_rule_pattern
 
@@ -33,33 +34,33 @@ if TYPE_CHECKING:
 
 
 class RuleMatcher:
-    def __init__(self, config: Config):
+    def __init__(self, config: LinterConfig):
         self.config = config
 
     def is_rule_enabled(self, rule: Rule) -> bool:
         if self.is_rule_disabled(rule):
             return False
         if (
-            self.config.linter.include_rules or self.config.linter.include_rules_patterns
+            self.config.include_rules or self.config.include_rules_patterns
         ):  # if any include pattern, it must match with something
-            if rule.rule_id in self.config.linter.include_rules or rule.name in self.config.linter.include_rules:
+            if rule.rule_id in self.config.include_rules or rule.name in self.config.include_rules:
                 return True
             return any(
                 pattern.match(rule.rule_id) or pattern.match(rule.name)
-                for pattern in self.config.linter.include_rules_patterns
+                for pattern in self.config.include_rules_patterns
             )
         return rule.enabled
 
     def is_rule_disabled(self, rule: Rule) -> bool:
         if rule.deprecated or not rule.enabled_in_version:
             return True
-        if rule.severity < self.config.linter.threshold and not rule.config.get("severity_threshold"):
+        if rule.severity < self.config.threshold and not rule.config.get("severity_threshold"):
             return True
-        if rule.rule_id in self.config.linter.exclude_rules or rule.name in self.config.linter.exclude_rules:
+        if rule.rule_id in self.config.exclude_rules or rule.name in self.config.exclude_rules:
             return True
         return any(
             pattern.match(rule.rule_id) or pattern.match(rule.name)
-            for pattern in self.config.linter.exclude_rules_patterns
+            for pattern in self.config.exclude_rules_patterns
         )
 
 
@@ -162,15 +163,84 @@ class LinterConfig:
     persistent: bool | None = False
     compare: bool | None = False
     exit_zero: bool | None = False
+    _checkers: list[BaseChecker] | None = field(default=None, compare=False)
+    _rules: dict[str, Rule] | None = field(default=None, compare=False)
 
-    def __post_init__(self):
+    @property
+    def checkers(self):
+        if self._checkers is None:
+            self.load_configuration()
+        return self._checkers
+
+    @property
+    def rules(self):
+        if self._rules is None:
+            self.load_configuration()
+        return self._rules
+
+    def load_configuration(self):
+        """Load rules, checkers and their configuration."""
+        self.split_inclusions_exclusions_into_patterns()
+        self.load_checkers()
+        self.configure_checkers_or_reports()
+        self.check_for_disabled_rules()
+
+    def load_checkers(self) -> None:
         """
-        --include and --exclude accept both rule names and rule patterns.
+        Initialize checkers and rules containers and start rules discovery.
 
-        We need to remove optional severity and split it into patterns and not patterns for easier filtering.
-
+        Instance of this class is passed over since it will be used to populate checkers/rules containers.
+        Additionally rules can also refer to instance of this class to access config class.
         """
-        # TODO: with overwrite, it will not be called
+        self._checkers = []
+        self._rules = {}
+        rules.init(self)
+
+    def register_checker(self, checker: type[BaseChecker]) -> None:  # [type[BaseChecker]]
+        for rule_name_or_id, rule in checker.rules.items():
+            self._rules[rule_name_or_id] = rule
+        self._checkers.append(checker)
+
+    def check_for_disabled_rules(self) -> None:
+        """Check checker configuration to disable rules."""
+        rule_matcher = RuleMatcher(self)
+        for checker in self._checkers:
+            if not self.any_rule_enabled(checker, rule_matcher):
+                checker.disabled = True
+
+    def any_rule_enabled(self, checker: type[BaseChecker], rule_matcher: RuleMatcher) -> bool:
+        any_enabled = False
+        for rule in checker.rules.values():
+            rule.enabled = rule_matcher.is_rule_enabled(rule)
+            if rule.enabled:
+                any_enabled = True
+        return any_enabled
+
+    def configure_checkers_or_reports(self) -> None:
+        """
+        Iterate over configuration for rules and reports and apply it.
+
+        Accepted format is rule_name.param=value or report_name.param=value . ``rule_id`` can be used instead of
+        ``rule_name``.
+        """
+        for config in self.configure:
+            try:
+                name, param_and_value = config.split(".", maxsplit=1)
+                param, value = param_and_value.split("=", maxsplit=1)
+            except ValueError:
+                raise exceptions.ConfigGeneralError(
+                    f"Provided invalid config: '{config}' (general pattern: <rule/report>.<param>=<value>)"
+                ) from None
+            if name in self._rules:
+                rule = self._rules[name]
+                if rule.deprecated:
+                    print(rule.deprecation_warning)
+                else:
+                    rule.configure(param, value)
+            # else:  TODO
+            #     raise exceptions.RuleOrReportDoesNotExist(name, self._rules)
+
+    def split_inclusions_exclusions_into_patterns(self):
         if self.select:
             for rule in self.select:
                 if "*" in rule:
@@ -521,7 +591,27 @@ class ConfigManager:
             sources = self.sources if self.sources else self.default_config.sources
             ignore_file_filters = bool(sources)
             self.resolve_paths(sources, gitignores=None, ignore_file_filters=ignore_file_filters)
+            self.find_default_config()
         yield from self._paths.items()
+
+    def find_default_config(self):
+        """
+        Find default config from all loaded configs and set it.
+
+        Default configuration file is configuration closest to cwd. It's options are used for global-like
+        settings such as reports or exit codes.
+
+        """
+        if not self.cached_configs:
+            return self.default_config
+        # look for path as cwd or any of parents of cwd
+        cwd = Path.cwd()
+        if cwd in self.cached_configs:
+            return self.cached_configs[cwd]
+        for parent in cwd.parents:
+            if parent in self.cached_configs:
+                return self.cached_configs[parent]
+        return self.default_config
 
     def get_default_config(self, config_path: Path | None) -> Config:
         """Get default config either from --config option or from the cli."""
