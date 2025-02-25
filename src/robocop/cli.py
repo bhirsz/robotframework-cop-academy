@@ -444,12 +444,11 @@ def list_rules(
     console = Console(soft_wrap=True)
     config_manager = config.ConfigManager()
     runner = RobocopLinter(config_manager)
-    runner.check_for_disabled_rules()
     if filter_pattern:
         filter_pattern = compile_rule_pattern(filter_pattern)
-        rules = filter_rules_by_pattern(runner.rules, filter_pattern)
+        rules = filter_rules_by_pattern(runner.config.linter.rules, filter_pattern)
     else:
-        rules = filter_rules_by_category(runner.rules, filter_category)
+        rules = filter_rules_by_category(runner.config.linter.rules, filter_category)
     severity_counter = {"E": 0, "W": 0, "I": 0}
     for rule in rules:
         console.print(str(rule))
@@ -514,8 +513,8 @@ def print_resource_documentation(name: Annotated[str, typer.Argument(help="Rule 
     config_manager = config.ConfigManager()
 
     runner = RobocopLinter(config_manager)
-    if name in runner.rules:
-        console.print(runner.rules[name].description_with_configurables)
+    if name in runner.config.linter.rules:
+        console.print(runner.config.linter.rules[name].description_with_configurables)
         return
 
     reports = load_reports(config_manager.default_config)

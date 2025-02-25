@@ -414,7 +414,11 @@ class RenameVariables(Formatter):
 
     @skip_if_disabled
     def visit_Try(self, node):  # noqa: N802
-        if node.variable is not None:
+        if misc.ROBOT_VERSION.major < 7:
+            try_variable = node.variable
+        else:
+            try_variable = node.assign
+        if try_variable is not None:
             error_var = node.header.get_token(Token.VARIABLE)
             if error_var is not None:
                 self.variables_scope.add_local(error_var.value)

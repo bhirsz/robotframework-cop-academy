@@ -8,8 +8,8 @@ from robocop.linter.runner import RobocopLinter
 def empty_linter() -> RobocopLinter:
     config_manager = ConfigManager()
     runner = RobocopLinter(config_manager)
-    runner.checkers = []
-    runner.rules = {}
+    runner.config.linter._checkers = []
+    runner.config.linter._rules = {}
     return runner
 
 

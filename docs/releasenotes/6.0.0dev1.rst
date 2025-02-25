@@ -594,6 +594,10 @@ We will end up with the following files:
 This feature allow to apply different configuration (for example exclude specific rules in the directory) for all
 directories in your project.
 
+Note that settings that affect whole run (reports or flags such as ``--persistent`` or ``--exit-zero``) are only
+loaded from the file which is closest to the current working directory or from the cli. Multiple configuration files
+are usually best to use for rules and formatters configuration.
+
 Print Issues report
 --------------------
 
