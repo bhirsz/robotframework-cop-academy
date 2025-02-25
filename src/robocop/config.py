@@ -438,8 +438,8 @@ class Config:
     linter: LinterConfig = field(default_factory=LinterConfig)
     formatter: FormatterConfig = field(default_factory=FormatterConfig)
     language: list[str] | None = field(default_factory=list)
+    verbose: bool | None = field(default_factory=bool)
     config_source: str = "default configuration"
-    # keep rules and formatters here, loaded upon first call
 
     @classmethod
     def from_toml(cls, config: dict, config_path: Path) -> Config:
@@ -453,8 +453,8 @@ class Config:
         parsed_config["linter"] = LinterConfig.from_toml(config.pop("lint", {}))
         parsed_config["file_filters"] = FileFiltersOptions.from_toml(config)
         parsed_config["language"] = config.pop("language", [])
+        parsed_config["verbose"] = config.pop("verbose", False)
         parsed_config["formatter"] = FormatterConfig.from_toml(config.pop("format", {}))
-        # TODO whitespace config
         parsed_config = {key: value for key, value in parsed_config.items() if value is not None}
         return cls(**parsed_config)
 
@@ -647,6 +647,8 @@ class ConfigManager:
                         config = Config.from_toml(configuration, config_path)
                         config.overwrite_from_config(self.overwrite_config)  # TODO those two lines together
                         self.cached_configs.update({sub_dir: config for sub_dir in seen})
+                        if config.verbose:
+                            print(f"Loaded {config_path} configuration file.")
                         return config
             if self.is_git_project_root(check_dir):
                 break

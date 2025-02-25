@@ -47,8 +47,8 @@ class RobocopFormatter:
                 #     if self.config.verbose:
                 #         click.echo("Loading file from stdin")
                 #     source = self.load_from_stdin()
-                # elif self.config.verbose:
-                #     click.echo(f"Found {source} file")
+                if self.config.verbose:
+                    print(f"Formatting {source} file")
                 self.config = config
                 all_files += 1
                 disabler_finder = disablers.RegisterDisablers(
