@@ -102,6 +102,13 @@ language_option = Annotated[
         rich_help_panel="Other",
     ),
 ]
+verbose_option = Annotated[
+        bool,
+        typer.Option(
+            help="More verose output.",
+            rich_help_panel="Other",
+        ),
+]
 
 
 @app.command(name="check")
@@ -188,6 +195,7 @@ def check_files(
         ),
     ] = None,
     root: project_root_option = None,
+    verbose: verbose_option = None
 ) -> None:
     """Lint Robot Framework files."""
     linter_config = config.LinterConfig(
@@ -205,7 +213,7 @@ def check_files(
     file_filters = config.FileFiltersOptions(
         include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
-    overwrite_config = config.Config(linter=linter_config, formatter=None, file_filters=file_filters, language=language)
+    overwrite_config = config.Config(linter=linter_config, formatter=None, file_filters=file_filters, language=language, verbose=verbose)
     config_manager = config.ConfigManager(
         sources=sources,
         config=configuration_file,
@@ -368,6 +376,7 @@ def format_files(
         ),
     ] = None,
     root: project_root_option = None,
+    verbose: verbose_option = None
 ) -> None:
     """Format Robot Framework files."""
     whitespace_config = config.WhitespaceConfig(
@@ -404,7 +413,7 @@ def format_files(
         include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
     overwrite_config = config.Config(
-        formatter=formatter_config, linter=None, language=language, file_filters=file_filters
+        formatter=formatter_config, linter=None, language=language, file_filters=file_filters, verbose=verbose
     )
     config_manager = config.ConfigManager(
         sources=sources,

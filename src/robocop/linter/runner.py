@@ -43,8 +43,8 @@ class RobocopLinter:
         issues_no = 0
         for source, config in self.config_manager.paths:
             self.config = config
-            #             if self.config.verbose:
-            #                 print(f"Scanning file: {file}")
+            if self.config.verbose:
+                print(f"Scanning file: {file}")
             try:
                 model = self.get_model_for_file_type(source)
             except DataError:
@@ -56,11 +56,10 @@ class RobocopLinter:
             issues_no += len(diagnostics)
             for diagnostic in diagnostics:
                 self.report(diagnostic)
+        if "file_stats" in self.reports:
+            self.reports["file_stats"].files_count = len(self.files)
         self.make_reports()
         self.return_with_exit_code(issues_no)
-        # print(f"\n\n{issues_no} issues found.")
-        # if "file_stats" in self.reports:  # TODO:
-        #     self.reports["file_stats"].files_count = len(self.files)
 
     def run_check(self, ast_model: File, filename: str, source: str | None = None) -> list[Diagnostic]:
         disablers = DisablersFinder(ast_model)
