@@ -6,10 +6,8 @@ import typer
 from robot.api import get_init_model, get_model, get_resource_model
 from robot.errors import DataError
 
-from robocop.config import Config, ConfigManager, RuleMatcher
-from robocop.linter import exceptions, reports, rules
+from robocop.linter import exceptions, reports
 from robocop.linter.reports import save_reports_result_to_cache
-from robocop.linter.rules import Rule
 from robocop.linter.utils.disablers import DisablersFinder
 from robocop.linter.utils.misc import is_suite_templated
 
@@ -18,14 +16,15 @@ if TYPE_CHECKING:
 
     from robot.parsing import File
 
+    from robocop.config import Config, ConfigManager
     from robocop.linter.diagnostics import Diagnostic
-    from robocop.linter.rules import BaseChecker, Rule  # TODO: Check if circular import will not happen
 
 
 class RobocopLinter:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.config: Config = self.config_manager.default_config
+        self.current_model: File = None
         self.reports: dict[str, reports.Report] = reports.get_reports(self.config)
         self.configure_reports()
 
@@ -44,15 +43,15 @@ class RobocopLinter:
         for source, config in self.config_manager.paths:
             self.config = config
             if self.config.verbose:
-                print(f"Scanning file: {file}")
+                print(f"Scanning file: {source}")
             try:
-                model = self.get_model_for_file_type(source)
+                self.current_model = self.get_model_for_file_type(source)
             except DataError:
                 print(
                     f"Failed to decode {source}. Default supported encoding by Robot Framework is UTF-8. Skipping file"
                 )
                 continue
-            diagnostics = self.run_check(model, str(source))
+            diagnostics = self.run_check(str(source))
             issues_no += len(diagnostics)
             for diagnostic in diagnostics:
                 self.report(diagnostic)
@@ -61,18 +60,18 @@ class RobocopLinter:
         self.make_reports()
         self.return_with_exit_code(issues_no)
 
-    def run_check(self, ast_model: File, filename: str, source: str | None = None) -> list[Diagnostic]:
-        disablers = DisablersFinder(ast_model)
+    def run_check(self, filename: str, source: str | None = None) -> list[Diagnostic]:
+        disablers = DisablersFinder(self.current_model)
         if disablers.file_disabled:
             return []
         found_diagnostics = []
-        templated = is_suite_templated(ast_model)
+        templated = is_suite_templated(self.current_model)
         for checker in self.config.linter.checkers:
             if checker.disabled:
                 continue
             found_diagnostics += [
                 diagnostic
-                for diagnostic in checker.scan_file(ast_model, filename, source, templated)
+                for diagnostic in checker.scan_file(self.current_model, filename, source, templated)
                 if not disablers.is_rule_disabled(diagnostic) and not diagnostic.severity < self.config.linter.threshold
             ]
         return found_diagnostics
@@ -107,10 +106,11 @@ class RobocopLinter:
                 raise exceptions.ConfigGeneralError(
                     f"Provided invalid config: '{config}' (general pattern: <rule/report>.<param>=<value>)"
                 ) from None
-            if name in name in self.reports:
+            if name in self.reports:
                 self.reports[name].configure(param, value)
 
     def report(self, diagnostic: Diagnostic) -> None:
+        diagnostic.model = self.current_model  # TODO: Embed it into diagnostic where the report is raised
         for report in self.reports.values():
             report.add_message(diagnostic)
 

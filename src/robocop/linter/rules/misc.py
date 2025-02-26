@@ -280,6 +280,7 @@ class CanBeResourceFileRule(Rule):
     rule_id = "MISC06"
     message = "No tests in '{file_name}' file, consider renaming to '{file_name_stem}.resource'"
     severity = RuleSeverity.INFO
+    file_wide_rule = True
     added_in_version = "1.10.0"
 
 

@@ -18,8 +18,8 @@ from robocop import errors, files
 from robocop.formatter import formatters
 from robocop.formatter.skip import SkipConfig
 from robocop.formatter.utils import misc  # TODO merge with linter misc
-from robocop.linter import rules
-from robocop.linter.rules import Rule, RuleSeverity
+from robocop.linter import exceptions, rules
+from robocop.linter.rules import BaseChecker, RuleSeverity
 from robocop.linter.utils.misc import compile_rule_pattern
 
 CONFIG_NAMES = frozenset(("robotidy.toml", "pyproject.toml"))
@@ -31,6 +31,8 @@ DEFAULT_ISSUE_FORMAT = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({na
 if TYPE_CHECKING:
     import re
     from collections.abc import Generator
+
+    from robocop.linter.rules import Rule
 
 
 class RuleMatcher:
@@ -59,8 +61,7 @@ class RuleMatcher:
         if rule.rule_id in self.config.exclude_rules or rule.name in self.config.exclude_rules:
             return True
         return any(
-            pattern.match(rule.rule_id) or pattern.match(rule.name)
-            for pattern in self.config.exclude_rules_patterns
+            pattern.match(rule.rule_id) or pattern.match(rule.name) for pattern in self.config.exclude_rules_patterns
         )
 
 

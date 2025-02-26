@@ -1,8 +1,7 @@
 import pytest
 
-from robocop.config import Config, LinterConfig
+from robocop.config import LinterConfig, RuleMatcher
 from robocop.linter.rules import Rule, RuleSeverity
-from robocop.linter.runner import RuleMatcher
 
 
 class CustomRule(Rule):

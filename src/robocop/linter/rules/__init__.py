@@ -349,6 +349,7 @@ class Rule:
         added_in_version (str): (class attribute) version of the Robocop when the Rule was created
         enabled (bool): (class attribute) enable/disable rule by default using this parameter
         deprecated (bool): (class attribute) deprecated rule. If rule is used in configuration, it will issue a warning
+        file_wide_rule (bool): (class attribute) If set, rule is reported for whole file
 
     """
 
@@ -361,6 +362,7 @@ class Rule:
     added_in_version: str | None = None
     enabled: bool = True
     deprecated: bool = False
+    file_wide_rule: bool = False
     parameters: list[RuleParam] | None = None
 
     def __init__(self):
@@ -508,16 +510,6 @@ class BaseChecker:
         self.rules: dict[str, Rule] = {}
         self.templated_suite = False
 
-    # def param(self, rule, param_name):  TODO
-    #     try:
-    #         return self.rules[rule].config[param_name].value
-    #     except KeyError:
-    #         if rule not in self.rules:
-    #             raise RuleNotFoundError(rule, self) from None
-    #         if param_name not in self.rules[rule].config:
-    #             raise RuleParamNotFoundError(self.rules[rule], param_name, self) from None
-    #         raise
-
     def report(
         self,
         rule: Rule,
@@ -531,9 +523,6 @@ class BaseChecker:
         source: str | None = None,
         **kwargs,
     ) -> None:
-        # rule_def = self.rules.get(rule, None)
-        # if rule_def is None:
-        #     raise ValueError(f"Missing definition for message with name {rule}")
         if not rule.enabled:
             return
         # following code is used to dynamically update maximum allowed number if rule has dynamic threshold
