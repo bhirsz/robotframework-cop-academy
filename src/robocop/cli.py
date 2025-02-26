@@ -103,11 +103,11 @@ language_option = Annotated[
     ),
 ]
 verbose_option = Annotated[
-        bool,
-        typer.Option(
-            help="More verose output.",
-            rich_help_panel="Other",
-        ),
+    bool,
+    typer.Option(
+        help="More verose output.",
+        rich_help_panel="Other",
+    ),
 ]
 
 
@@ -195,7 +195,7 @@ def check_files(
         ),
     ] = None,
     root: project_root_option = None,
-    verbose: verbose_option = None
+    verbose: verbose_option = None,
 ) -> None:
     """Lint Robot Framework files."""
     linter_config = config.LinterConfig(
@@ -213,7 +213,9 @@ def check_files(
     file_filters = config.FileFiltersOptions(
         include=include, default_include=default_include, exclude=exclude, default_exclude=default_exclude
     )
-    overwrite_config = config.Config(linter=linter_config, formatter=None, file_filters=file_filters, language=language, verbose=verbose)
+    overwrite_config = config.Config(
+        linter=linter_config, formatter=None, file_filters=file_filters, language=language, verbose=verbose
+    )
     config_manager = config.ConfigManager(
         sources=sources,
         config=configuration_file,
@@ -376,7 +378,7 @@ def format_files(
         ),
     ] = None,
     root: project_root_option = None,
-    verbose: verbose_option = None
+    verbose: verbose_option = None,
 ) -> None:
     """Format Robot Framework files."""
     whitespace_config = config.WhitespaceConfig(

@@ -43,6 +43,7 @@ class Diagnostic:
         self.extended_disablers = extended_disablers if extended_disablers else []
         self.reported_arguments = kwargs
         self.severity = rule.get_severity_with_threshold(sev_threshold_value)
+        self.model = None
         self._message = None
 
     @property
@@ -68,7 +69,6 @@ class Diagnostic:
             lineno = node.lineno if node and node.lineno > -1 else 1
         if not col:
             col = node.col_offset + 1 if node else 1
-
         start = Position(line=lineno, character=col)
         end_lineno = lineno if end_lineno is None else end_lineno
         end_col = col if end_col is None else end_col
